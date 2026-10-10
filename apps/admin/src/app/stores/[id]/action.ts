@@ -23,6 +23,7 @@ export async function toggleStorePublish(storeId: string, currentState: boolean)
 export async function updateStorePalette(storeId: string, formData: FormData) {
   const supabase = await createClient()
   const primary = formData.get('primary') as string
+  if (!/^#[0-9a-fA-F]{6}$/.test(primary ?? '')) return { error: 'Pick a valid colour.' }
 
   const { error } = await supabase
     .from('stores')

@@ -6,16 +6,14 @@ import { createOrder } from './actions'
 import { ArrowLeft, AlertTriangle,Upload, Check } from 'switch-icons'
 import Link from 'next/link'
 import { DELIVERY_ZONES } from '../../../lib/delivery-zones'
-import { useCartStore } from '../../../lib/cart-store'
+import { useCart } from '../../../lib/cart-store'
 import { uploadToCloudinary } from '../../../lib/cloudinary-upload'
 
 
 export default function CheckoutPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const router = useRouter()
-  const items = useCartStore((s) => s.items)
-  const total = useCartStore((s) => s.total())
-  const clear = useCartStore((s) => s.clear)
+  const { items, total, clear } = useCart(slug)
 
 
   const mounted = useSyncExternalStore(
@@ -36,13 +34,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-    useEffect(() => {
-    fetch(`/api/store-id?slug=${slug}`)
-      .then((r) => r.json())
+  useEffect(() => {
+    fetch(`/api/store-id?slug=${encodeURIComponent(slug)}`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
       .then((d) => {
         setStoreId(d.id)
         setBankDetails({ bank_name: d.bank_name, account_number: d.account_number, account_name: d.account_name })
       })
+      .catch(() => setError('This store is not taking orders right now. Please try again later.'))
   }, [slug])
 
   const deliveryFee = deliveryMethod === 'delivery'
@@ -75,22 +74,28 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
     setLoading(true)
     setError(null)
 
-    const result = await createOrder({
-      storeId,
-      storeSlug: slug,
-      customerName: name,
-      customerPhone: phone,
-      customerEmail: email,
-      deliveryMethod,
-      deliveryArea: deliveryMethod === 'delivery' ? area : undefined,
-      deliveryFee,
-      paymentMethod,
-      paymentProofUrl: paymentMethod === 'bank_transfer' ? proofUrl : undefined,
-      items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
-    })
+    let result: Awaited<ReturnType<typeof createOrder>>
+    try {
+      result = await createOrder({
+        storeId,
+        storeSlug: slug,
+        customerName: name,
+        customerPhone: phone,
+        customerEmail: email,
+        deliveryMethod,
+        deliveryArea: deliveryMethod === 'delivery' ? area : undefined,
+        paymentMethod,
+        paymentProofUrl: paymentMethod === 'bank_transfer' ? proofUrl : undefined,
+        items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
+      })
+    } catch {
+      setError('We couldn’t reach the store. Check your connection and try again.')
+      setLoading(false)
+      return
+    }
 
-    if (result?.error) {
-      setError(result.error)
+    if (result.error || !result.orderId) {
+      setError(result.error ?? 'Could not place your order. Please try again.')
       setLoading(false)
       return
     }

@@ -4,7 +4,10 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '../../../../lib/supabase/server'
 
+const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+
 export async function saveBrandColor(storeId: string, color: string) {
+  if (!HEX_COLOR_RE.test(color)) return { error: 'Pick a valid colour.' }
   const supabase = await createClient()
   const { error } = await supabase.from('stores').update({ palette: { primary: color } }).eq('id', storeId)
   if (error) return { error: error.message }
@@ -126,6 +129,15 @@ export async function reorderSection(storeId: string, sectionType: string, direc
 }
 
 export async function saveBankDetails(storeId: string, bankName: string, accountNumber: string, accountName: string) {
+  // Customers transfer money to these details, so hold them to the same rules as store creation.
+  bankName = (bankName ?? '').trim()
+  accountName = (accountName ?? '').trim()
+  accountNumber = (accountNumber ?? '').replace(/\s/g, '')
+  if (!bankName || !accountName || bankName.length > 100 || accountName.length > 100) {
+    return { error: 'Enter your bank name and account name.' }
+  }
+  if (!/^\d{10}$/.test(accountNumber)) return { error: 'Account number must be 10 digits.' }
+
   const supabase = await createClient()
   const { error } = await supabase
     .from('stores')

@@ -14,25 +14,62 @@ function slugify(name: string) {
     .replace(/-+/g, '-')
 }
 
+const MAX_IMAGES = 8
+
+type ParsedProduct =
+  | { ok: true; name: string; description: string | null; price: number; stockQuantity: number; category: string | null; images: string[] }
+  | { ok: false; error: string }
+
+// Server actions are public endpoints: never trust the form, even though the
+// UI already constrains these inputs.
+function parseProductForm(formData: FormData): ParsedProduct {
+  const name = ((formData.get('name') as string) || '').trim()
+  const description = ((formData.get('description') as string) || '').trim() || null
+  const price = Number(formData.get('price'))
+  const stockRaw = Number(formData.get('stock_quantity') || 0)
+  const category = ((formData.get('category') as string) || '').trim() || null
+
+  if (name.length < 2 || name.length > 120) {
+    return { ok: false, error: 'Product name must be between 2 and 120 characters.' }
+  }
+  if (!Number.isFinite(price) || price <= 0 || price > 100_000_000) {
+    return { ok: false, error: 'Valid price is required.' }
+  }
+  if (!Number.isInteger(stockRaw) || stockRaw < 0 || stockRaw > 1_000_000) {
+    return { ok: false, error: 'Stock must be a whole number of 0 or more.' }
+  }
+  if (description && description.length > 5000) {
+    return { ok: false, error: 'Description is too long.' }
+  }
+
+  let images: unknown = []
+  const imagesRaw = formData.get('images') as string | null
+  if (imagesRaw) {
+    try {
+      images = JSON.parse(imagesRaw)
+    } catch {
+      return { ok: false, error: 'Invalid images.' }
+    }
+  }
+  if (
+    !Array.isArray(images) ||
+    images.length > MAX_IMAGES ||
+    !images.every((u) => typeof u === 'string' && u.startsWith('https://res.cloudinary.com/'))
+  ) {
+    return { ok: false, error: 'Invalid images.' }
+  }
+
+  return { ok: true, name, description, price: Math.round(price * 100) / 100, stockQuantity: stockRaw, category, images }
+}
+
 export async function createProduct(storeId: string, prevState: { error?: string } | undefined, formData: FormData) {
   const supabase = await createClient()
 
-  const name = formData.get('name') as string
-  const description = formData.get('description') as string
-  const price = parseFloat(formData.get('price') as string)
-  const stockQuantity = parseInt(formData.get('stock_quantity') as string) || 0
-  const category = formData.get('category') as string
-  const imagesRaw = formData.get('images') as string // JSON array string
-  const images = imagesRaw ? JSON.parse(imagesRaw) : []
+  const parsed = parseProductForm(formData)
+  if (!parsed.ok) return { error: parsed.error }
+  const { name, description, price, stockQuantity, category, images } = parsed
 
-  if (!name || name.trim().length < 2) {
-    return { error: 'Product name is required.' }
-  }
-  if (isNaN(price) || price <= 0) {
-    return { error: 'Valid price is required.' }
-  }
-
-  const baseSlug = slugify(name)
+  const baseSlug = slugify(name).replace(/^-+|-+$/g, '').slice(0, 80) || 'product'
   let slug = baseSlug
   let attempt = 0
 
@@ -46,12 +83,14 @@ export async function createProduct(storeId: string, prevState: { error?: string
 
     if (!existing) break
     attempt++
-    slug = `${baseSlug}-${attempt}`
+    slug = attempt < 5
+      ? `${baseSlug}-${attempt}`
+      : `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`
   }
 
   const { error } = await supabase.from('products').insert({
     store_id: storeId,
-    name: name.trim(),
+    name,
     slug,
     description,
     price,
@@ -61,7 +100,7 @@ export async function createProduct(storeId: string, prevState: { error?: string
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: 'Could not save the product. Try again.' }
   }
 
   revalidatePath(`/stores/${storeId}/products`)
@@ -71,19 +110,15 @@ export async function createProduct(storeId: string, prevState: { error?: string
 export async function updateProduct(productId: string, storeId: string, prevState: { error?: string } | undefined, formData: FormData) {
   const supabase = await createClient()
 
-  const name = formData.get('name') as string
-  const description = formData.get('description') as string
-  const price = parseFloat(formData.get('price') as string)
-  const stockQuantity = parseInt(formData.get('stock_quantity') as string) || 0
-  const category = formData.get('category') as string
+  const parsed = parseProductForm(formData)
+  if (!parsed.ok) return { error: parsed.error }
+  const { name, description, price, stockQuantity, category, images } = parsed
   const isActive = formData.get('is_active') === 'on'
-  const imagesRaw = formData.get('images') as string
-  const images = imagesRaw ? JSON.parse(imagesRaw) : []
 
   const { error } = await supabase
     .from('products')
     .update({
-      name: name.trim(),
+      name,
       description,
       price,
       stock_quantity: stockQuantity,
@@ -92,9 +127,10 @@ export async function updateProduct(productId: string, storeId: string, prevStat
       images,
     })
     .eq('id', productId)
+    .eq('store_id', storeId)
 
   if (error) {
-    return { error: error.message }
+    return { error: 'Could not save the product. Try again.' }
   }
 
   revalidatePath(`/stores/${storeId}/products`)
@@ -103,6 +139,8 @@ export async function updateProduct(productId: string, storeId: string, prevStat
 
 export async function deleteProduct(productId: string, storeId: string) {
   const supabase = await createClient()
-  await supabase.from('products').delete().eq('id', productId)
+  const { error } = await supabase.from('products').delete().eq('id', productId).eq('store_id', storeId)
+  // Used directly as a <form action>, so it can't return an error object.
+  if (error) throw new Error('Could not delete the product. Try again.')
   revalidatePath(`/stores/${storeId}/products`)
 }

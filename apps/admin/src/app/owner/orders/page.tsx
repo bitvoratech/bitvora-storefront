@@ -1,8 +1,9 @@
-
 import { createAdminClient } from '../../../lib/supabase/admin'
+import { requireOwnerPage } from '../../../lib/auth/require-owner'
 import { OwnerOrdersTable } from './OwnerOrdersTable'
 
 export default async function OwnerOrdersPage() {
+  await requireOwnerPage()
   const admin = createAdminClient()
   const { data: orders } = await admin
     .from('orders')

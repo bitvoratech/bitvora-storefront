@@ -3,6 +3,8 @@ import { KpiCard } from '@bitvora/ui/src/KpiCard'
 import { createAdminClient } from '../../lib/supabase/admin';
 import { computeTrend } from '../../lib/computeTrend'
 import { Sparkline } from './SparkLine';
+import { requireOwnerPage } from '../../lib/auth/require-owner'
+
 
 function rangeCount(rows: { created_at: string }[], start: Date, end: Date) {
   return rows.filter((r) => {
@@ -12,6 +14,7 @@ function rangeCount(rows: { created_at: string }[], start: Date, end: Date) {
 }
 
 export default async function OwnerOverviewPage() {
+  await requireOwnerPage()
   const admin = createAdminClient()
 
   const { data: merchants } = await admin.from('merchants').select('id, created_at')

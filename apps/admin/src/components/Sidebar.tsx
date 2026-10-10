@@ -9,7 +9,6 @@ import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLog
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
-import Image from 'next/image'
 
 type NavItem = { href: string; icon: React.ComponentType<{ className?: string }>; label: string }
 

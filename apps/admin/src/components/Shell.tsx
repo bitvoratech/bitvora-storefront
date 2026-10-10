@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 import { Sidebar } from './Sidebar'
-import { Storefront } from 'switch-icons'
 import { IconMenu2 } from '@tabler/icons-react'
 
 export function Shell({

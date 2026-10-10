@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCartStore } from '../../../../lib/cart-store'
+import { useCart } from '../../../../lib/cart-store'
 import { IconShoppingBag } from '@tabler/icons-react'
 
 export function AddToCartButton({
@@ -23,7 +23,7 @@ export function AddToCartButton({
   inStock: boolean
   accent: string
 }) {
-  const addItem = useCartStore((s) => s.addItem)
+  const { addItem } = useCart(slug)
   const [added, setAdded] = useState(false)
   const router = useRouter()
 

@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
 import { getClientIp, rateLimit } from '../../../lib/rate-limit'
+import { PAYMENT_PROOF_FOLDER } from '../../../lib/cloudinary-url'
+
+const ALLOWED_FORMATS = 'jpg,jpeg,png,webp,avif,heic'
 
 export async function POST() {
   const rl = await rateLimit('cloudinary-sig', await getClientIp(), 10, '1 m')
@@ -11,18 +14,25 @@ export async function POST() {
     )
   }
 
+  const apiSecret = process.env.CLOUDINARY_API_SECRET
+  if (!apiSecret || !process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY) {
+    return NextResponse.json({ error: 'Uploads are not configured' }, { status: 500 })
+  }
+
   cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+    api_secret: apiSecret,
   })
 
   const timestamp = Math.round(Date.now() / 1000)
-  const folder = 'bitvora-storefront/payment-proofs'
 
+  // This endpoint is public (customers aren't logged in), so the signature is
+  // locked to one folder and to image formats only. Every param signed here
+  // must be sent with the upload request, unchanged.
   const signature = cloudinary.utils.api_sign_request(
-    { timestamp, folder },
-    process.env.CLOUDINARY_API_SECRET!
+    { timestamp, folder: PAYMENT_PROOF_FOLDER, allowed_formats: ALLOWED_FORMATS },
+    apiSecret
   )
 
   return NextResponse.json({
@@ -30,6 +40,7 @@ export async function POST() {
     timestamp,
     cloudName: process.env.CLOUDINARY_CLOUD_NAME,
     apiKey: process.env.CLOUDINARY_API_KEY,
-    folder,
+    folder: PAYMENT_PROOF_FOLDER,
+    allowedFormats: ALLOWED_FORMATS,
   })
 }

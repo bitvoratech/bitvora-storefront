@@ -4,7 +4,7 @@ import Link from 'next/link'
 
 import { useRouter } from 'next/navigation'
 import { PackageBox } from 'switch-icons'
-import { useCartStore } from '../../lib/cart-store'
+import { useCart } from '../../lib/cart-store'
 
 type Product = {
   id: string
@@ -17,7 +17,7 @@ type Product = {
 }
 
 export function ProductCard({ product, storeSlug, accent }: { product: Product; storeSlug: string; accent: string }) {
-  const addItem = useCartStore((s) => s.addItem)
+  const { addItem } = useCart(storeSlug)
   const router = useRouter()
   const inStock = product.stock_quantity > 0
 

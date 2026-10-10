@@ -13,7 +13,6 @@ import {
   saveTypography, saveLogo, saveGridDensity,
   saveAboutSection, saveSocialLinks, toggleSectionVisibility, reorderSection, saveBankDetails,
 } from './actions'
-import { Check } from 'switch-icons'
 import { FONT_PAIRINGS, SCALES } from '../../../../lib/font-pairings'
 
 type Tile = { heading: string; image_url: string; cta_text: string }
@@ -73,6 +72,7 @@ export function CustomizeWorkspace({
   const [cta, setCta] = useState(initialCta)
   const [isPending, startTransition] = useTransition()
   const [savedTab, setSavedTab] = useState<Tab | null>(null)
+  const [saveError, setSaveError] = useState<string | null>(null)
   const [bankDetails, setBankDetails] = useState(initialBankDetails)
 
   // Mobile-only: which pane is showing. Desktop always shows both.
@@ -103,20 +103,33 @@ export function CustomizeWorkspace({
 
   function save() {
     setSavedTab(null)
+    setSaveError(null)
     startTransition(async () => {
-      if (tab === 'brand') await saveBrandColor(storeId, color)
-      if (tab === 'hero') await saveHeroSection(storeId, hero)
-      if (tab === 'collections') await saveBannerGridSection(storeId, tiles)
-      if (tab === 'banner') await saveCtaBannerSection(storeId, cta)
-      if (tab === 'design') {
-        await saveTypography(storeId, typography.pairing, typography.scale)
-        await saveLogo(storeId, logo)
-        await saveGridDensity(storeId, gridDensity)
+      const results: ({ error?: string } | void)[] = []
+      try {
+        if (tab === 'brand') results.push(await saveBrandColor(storeId, color))
+        if (tab === 'hero') results.push(await saveHeroSection(storeId, hero))
+        if (tab === 'collections') results.push(await saveBannerGridSection(storeId, tiles))
+        if (tab === 'banner') results.push(await saveCtaBannerSection(storeId, cta))
+        if (tab === 'design') {
+          results.push(await saveTypography(storeId, typography.pairing, typography.scale))
+          results.push(await saveLogo(storeId, logo))
+          results.push(await saveGridDensity(storeId, gridDensity))
+        }
+        if (tab === 'about') results.push(await saveAboutSection(storeId, about.heading, about.body))
+        if (tab === 'social') results.push(await saveSocialLinks(storeId, social))
+        if (tab === 'payments') results.push(await saveBankDetails(storeId, bankDetails.bank_name, bankDetails.account_number, bankDetails.account_name))
+      } catch {
+        setSaveError('Could not save. Check your connection and try again.')
+        return
       }
-      if (tab === 'about') await saveAboutSection(storeId, about.heading, about.body)
-      if (tab === 'social') await saveSocialLinks(storeId, social)
+      // Only report "Saved" when every save for this tab actually succeeded.
+      const failed = results.find((r) => r && r.error)
+      if (failed && failed.error) {
+        setSaveError(failed.error)
+        return
+      }
       setSavedTab(tab)
-      if (tab === 'payments') await saveBankDetails(storeId, bankDetails.bank_name, bankDetails.account_number, bankDetails.account_name)
     })
   }
 
@@ -412,6 +425,10 @@ export function CustomizeWorkspace({
               <Input value={bankDetails.account_name} onChange={(e) => setBankDetails({ ...bankDetails, account_name: e.target.value })} placeholder="e.g. Ada Okonkwo" />
             </div>
           </div>
+        )}
+
+        {saveError && (
+          <p role="alert" className="text-sm text-red-600 mt-4">{saveError}</p>
         )}
 
         {/* Desktop save button — mobile uses the sticky bar below instead */}

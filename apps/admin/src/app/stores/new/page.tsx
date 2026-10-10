@@ -11,7 +11,7 @@ export default async function NewStorePage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('phone, verification_status')
+    .select('phone, phone_verified_at, verification_status')
     .eq('user_id', user.id)
     .single()
 
@@ -29,7 +29,7 @@ export default async function NewStorePage() {
         </p>
       )}
       <Card>
-        {isVerified ? <StoreForm /> : <VerifyWizard initialPhone={merchant?.phone ?? null} />}
+        {isVerified ? <StoreForm /> : <VerifyWizard initialPhone={merchant?.phone ?? null} phoneVerified={!!merchant?.phone_verified_at} />}
       </Card>
     </div>
   )

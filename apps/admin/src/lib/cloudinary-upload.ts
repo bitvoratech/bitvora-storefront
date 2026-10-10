@@ -1,6 +1,15 @@
+const MAX_BYTES = 10 * 1024 * 1024 // 10 MB, client-side convenience check
+
 export async function uploadToCloudinary(file: File): Promise<string> {
+  if (file.size > MAX_BYTES) {
+    throw new Error('Image is too large (max 10 MB)')
+  }
+
   const sigRes = await fetch('/api/cloudinary-signature', { method: 'POST' })
-  const { signature, timestamp, cloudName, apiKey, folder } = await sigRes.json()
+  if (!sigRes.ok) {
+    throw new Error('Could not authorize upload')
+  }
+  const { signature, timestamp, cloudName, apiKey, folder, allowedFormats } = await sigRes.json()
 
   const formData = new FormData()
   formData.append('file', file)
@@ -8,6 +17,7 @@ export async function uploadToCloudinary(file: File): Promise<string> {
   formData.append('timestamp', timestamp)
   formData.append('api_key', apiKey)
   formData.append('folder', folder)
+  formData.append('allowed_formats', allowedFormats)
 
   const uploadRes = await fetch(
     `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,

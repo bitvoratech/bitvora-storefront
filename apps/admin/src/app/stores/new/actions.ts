@@ -4,6 +4,13 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
 
+// Top-level storefront paths a store slug must never shadow.
+const RESERVED_SLUGS = new Set([
+  'api', 'admin', 'app', 'www', 'static', 'assets', 'images', 'login', 'signup',
+  'cart', 'checkout', 'order', 'orders', 'product', 'products', 'favicon.ico',
+  'robots.txt', 'sitemap.xml', 'bitvora', 'support', 'help',
+])
+
 function slugify(name: string) {
   return name
     .toLowerCase()
@@ -23,7 +30,7 @@ export async function createStore(prevState: { error?: string } | undefined, for
 
   const { data: merchant, error: merchantError } = await supabase
     .from('merchants')
-    .select('id')
+    .select('id, verification_status, is_suspended')
     .eq('user_id', user.id)
     .single()
 
@@ -31,21 +38,39 @@ export async function createStore(prevState: { error?: string } | undefined, for
     return { error: 'Could not find your merchant profile. Try logging in again.' }
   }
 
-  const name = formData.get('name') as string
-  const industry = formData.get('industry') as string
-  const bankName = formData.get('bank_name') as string
-  const accountNumber = formData.get('account_number') as string
-  const accountName = formData.get('account_name') as string
+  // Server actions are public POST endpoints — the page hiding the form for
+  // unverified merchants is not enough on its own. (RLS enforces this too.)
+  if (merchant.is_suspended) {
+    return { error: 'Your account is suspended.' }
+  }
+  if (merchant.verification_status !== 'verified') {
+    return { error: 'Verify your account before creating a store.' }
+  }
+
+  const name = ((formData.get('name') as string) || '').trim()
+  const industry = ((formData.get('industry') as string) || '').trim() || null
+  const bankName = ((formData.get('bank_name') as string) || '').trim()
+  const accountNumber = ((formData.get('account_number') as string) || '').replace(/\s/g, '')
+  const accountName = ((formData.get('account_name') as string) || '').trim()
+
+  if (name.length < 2 || name.length > 80) {
+    return { error: 'Store name must be between 2 and 80 characters.' }
+  }
 
   if (!bankName || !accountNumber || !accountName) {
     return { error: 'Bank account details are required to create a store.' }
   }
 
-  if (!name || name.trim().length < 2) {
-    return { error: 'Store name is required.' }
+  if (!/^\d{10}$/.test(accountNumber)) {
+    return { error: 'Account number must be 10 digits.' }
   }
 
-  const baseSlug = slugify(name)
+  if (bankName.length > 100 || accountName.length > 100) {
+    return { error: 'Bank details are too long.' }
+  }
+
+  let baseSlug = slugify(name).replace(/^-+|-+$/g, '').slice(0, 60) || 'store'
+  if (RESERVED_SLUGS.has(baseSlug)) baseSlug = `${baseSlug}-store`
   let slug = baseSlug
   let attempt = 0
 
@@ -59,25 +84,30 @@ export async function createStore(prevState: { error?: string } | undefined, for
 
     if (!existing) break
     attempt++
-    slug = `${baseSlug}-${attempt}`
+    slug = attempt < 5
+      ? `${baseSlug}-${attempt}`
+      : `${baseSlug}-${Math.random().toString(36).slice(2, 8)}`
   }
 
     const { data: store, error: storeError } = await supabase
     .from('stores')
     .insert({
       merchant_id: merchant.id,
-      name: name.trim(),
+      name,
       slug,
       industry,
-      bank_name: bankName.trim(),
-      account_number: accountNumber.trim(),
-      account_name: accountName.trim(),
+      bank_name: bankName,
+      account_number: accountNumber,
+      account_name: accountName,
     })
     .select()
     .single()
 
   if (storeError) {
-    return { error: storeError.message }
+    if (storeError.code === '23505') {
+      return { error: 'That store name is taken. Try a slightly different name.' }
+    }
+    return { error: 'Could not create your store. Try again.' }
   }
 
 redirect(`/stores/${store.id}/setup`)

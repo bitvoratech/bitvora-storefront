@@ -58,7 +58,7 @@ export async function verifyNin(nin: string, firstName: string, lastName: string
 
   const token = await getAccessToken()
 
-  const res = await fetch(`${QOREID_BASE_URL}/v1/ng/identities/nin/${nin}`, {
+  const res = await fetch(`${QOREID_BASE_URL}/v1/ng/identities/nin/${encodeURIComponent(nin)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -70,7 +70,12 @@ export async function verifyNin(nin: string, firstName: string, lastName: string
     }),
   })
 
-  const data = await res.json()
+  // A provider outage must surface as "try again later", not be recorded as
+  // the merchant's details failing to match.
+  if (res.status >= 500 || res.status === 401 || res.status === 429) {
+    throw new Error(`QoreID request failed with ${res.status}`)
+  }
+  const data = await res.json().catch(() => null)
 
   const status = data?.status?.state === 'complete' && data?.summary?.nin_check?.status === 'EXACT_MATCH'
     ? 'verified'
@@ -91,7 +96,7 @@ export async function verifyCac(rcNumber: string, companyName: string): Promise<
 
   const token = await getAccessToken()
 
-  const res = await fetch(`${QOREID_BASE_URL}/v1/ng/identities/cac-basic/${rcNumber}`, {
+  const res = await fetch(`${QOREID_BASE_URL}/v1/ng/identities/cac-basic/${encodeURIComponent(rcNumber)}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -102,7 +107,10 @@ export async function verifyCac(rcNumber: string, companyName: string): Promise<
     }),
   })
 
-  const data = await res.json()
+  if (res.status >= 500 || res.status === 401 || res.status === 429) {
+    throw new Error(`QoreID request failed with ${res.status}`)
+  }
+  const data = await res.json().catch(() => null)
 
   const status = data?.status?.state === 'complete' && data?.summary?.cac_check?.status === 'EXACT_MATCH'
     ? 'verified'

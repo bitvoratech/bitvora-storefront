@@ -1,15 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { IconShoppingBag } from '@tabler/icons-react'
-import { useCartStore } from '../lib/cart-store'
+import { useCart } from '../lib/cart-store'
 
 export function CartIcon({ slug }: { slug: string }) {
-  const items = useCartStore((s) => s.items)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => setMounted(true), [])
+  const { items } = useCart(slug)
+  // The cart lives in localStorage, so render 0 on the server and first paint.
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
 
   const count = mounted ? items.reduce((sum, i) => sum + i.quantity, 0) : 0
 

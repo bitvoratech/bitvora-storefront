@@ -11,8 +11,16 @@ import { AlertTriangle, Check } from 'switch-icons'
 
 type Stage = 'phone' | 'otp' | 'identity' | 'done'
 
-export function VerifyWizard({ initialPhone }: { initialPhone: string | null }) {
-  const [stage, setStage] = useState<Stage>(initialPhone ? 'otp' : 'phone')
+export function VerifyWizard({
+  initialPhone,
+  phoneVerified = false,
+}: {
+  initialPhone: string | null
+  phoneVerified?: boolean
+}) {
+  // A merchant whose phone is already verified (e.g. a failed identity check
+  // earlier) resumes at the identity step instead of redoing the OTP.
+  const [stage, setStage] = useState<Stage>(phoneVerified ? 'identity' : initialPhone ? 'otp' : 'phone')
   const [idType, setIdType] = useState<'nin' | 'cac'>('nin')
   const router = useRouter()
 

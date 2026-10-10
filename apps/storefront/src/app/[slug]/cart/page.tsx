@@ -4,14 +4,11 @@ import { use } from 'react'
 import Link from 'next/link'
 import { PackageBox, ArrowLeft } from 'switch-icons'
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
-import { useCartStore } from '../../../lib/cart-store'
+import { useCart } from '../../../lib/cart-store'
 
 export default function CartPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
-  const items = useCartStore((s) => s.items)
-  const updateQuantity = useCartStore((s) => s.updateQuantity)
-  const removeItem = useCartStore((s) => s.removeItem)
-  const total = useCartStore((s) => s.total())
+  const { items, updateQuantity, removeItem, total } = useCart(slug)
 
   return (
     <div>

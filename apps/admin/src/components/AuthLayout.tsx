@@ -1,5 +1,4 @@
 import Image from 'next/image'
-import { Storefront } from 'switch-icons'
 
 export function AuthLayout({ children }: { children: React.ReactNode }) {
   return (

@@ -1,24 +1,33 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import { IconSun, IconMoon } from '@tabler/icons-react'
 
 const THEME_STORAGE_KEY = 'bitvora-admin-theme'
 
-export function ThemeToggle({ collapsed }: { collapsed?: boolean }) {
-  // Real state lives on the <html> class (set pre-hydration by ThemeScript).
-  // We just mirror it here after mount to pick the right icon/label.
-  const [isDark, setIsDark] = useState(false)
+// Real state lives on the <html> class (set pre-hydration by ThemeScript).
+// We subscribe to that class so every toggle instance stays in sync.
+function subscribe(onChange: () => void) {
+  const observer = new MutationObserver(onChange)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  return () => observer.disconnect()
+}
 
-  useEffect(() => {
-    setIsDark(document.documentElement.classList.contains('dark'))
-  }, [])
+export function ThemeToggle({ collapsed }: { collapsed?: boolean }) {
+  const isDark = useSyncExternalStore(
+    subscribe,
+    () => document.documentElement.classList.contains('dark'),
+    () => false,
+  )
 
   function toggle() {
     const next = !isDark
-    setIsDark(next)
     document.documentElement.classList.toggle('dark', next)
-    localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light')
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, next ? 'dark' : 'light')
+    } catch {
+      // Storage can be unavailable (private mode); the toggle still works for this page.
+    }
   }
 
   const label = isDark ? 'Light mode' : 'Dark mode'

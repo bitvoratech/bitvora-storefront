@@ -9,42 +9,86 @@ export type CartItem = {
   quantity: number
 }
 
+// Matches the per-line cap enforced by the create_order RPC.
+export const MAX_ITEM_QUANTITY = 999
+
+// Carts are kept per store slug: every store shares this origin (and so this
+// localStorage key), and an order can only contain one store's products.
 type CartState = {
-  items: CartItem[]
-  addItem: (item: Omit<CartItem, 'quantity'>) => void
-  removeItem: (productId: string) => void
-  updateQuantity: (productId: string, quantity: number) => void
-  clear: () => void
-  total: () => number
+  carts: Record<string, CartItem[]>
+  addItem: (slug: string, item: Omit<CartItem, 'quantity'>) => void
+  removeItem: (slug: string, productId: string) => void
+  updateQuantity: (slug: string, productId: string, quantity: number) => void
+  clear: (slug: string) => void
 }
 
 export const useCartStore = create<CartState>()(
   persist(
-    (set, get) => ({
-      items: [],
-      addItem: (item) =>
+    (set) => ({
+      carts: {},
+      addItem: (slug, item) =>
         set((state) => {
-          const existing = state.items.find((i) => i.productId === item.productId)
-          if (existing) {
-            return {
-              items: state.items.map((i) =>
-                i.productId === item.productId ? { ...i, quantity: i.quantity + 1 } : i
-              ),
-            }
-          }
-          return { items: [...state.items, { ...item, quantity: 1 }] }
+          const items = state.carts[slug] ?? []
+          const existing = items.find((i) => i.productId === item.productId)
+          const next = existing
+            ? items.map((i) =>
+                i.productId === item.productId
+                  ? { ...i, quantity: Math.min(i.quantity + 1, MAX_ITEM_QUANTITY) }
+                  : i
+              )
+            : [...items, { ...item, quantity: 1 }]
+          return { carts: { ...state.carts, [slug]: next } }
         }),
-      removeItem: (productId) =>
-        set((state) => ({ items: state.items.filter((i) => i.productId !== productId) })),
-      updateQuantity: (productId, quantity) =>
+      removeItem: (slug, productId) =>
         set((state) => ({
-          items: quantity <= 0
-            ? state.items.filter((i) => i.productId !== productId)
-            : state.items.map((i) => (i.productId === productId ? { ...i, quantity } : i)),
+          carts: {
+            ...state.carts,
+            [slug]: (state.carts[slug] ?? []).filter((i) => i.productId !== productId),
+          },
         })),
-      clear: () => set({ items: [] }),
-      total: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+      updateQuantity: (slug, productId, quantity) =>
+        set((state) => {
+          const items = state.carts[slug] ?? []
+          const next = quantity <= 0
+            ? items.filter((i) => i.productId !== productId)
+            : items.map((i) =>
+                i.productId === productId ? { ...i, quantity: Math.min(quantity, MAX_ITEM_QUANTITY) } : i
+              )
+          return { carts: { ...state.carts, [slug]: next } }
+        }),
+      clear: (slug) =>
+        set((state) => {
+          const carts = { ...state.carts }
+          delete carts[slug]
+          return { carts }
+        }),
     }),
-    { name: 'bitvora-storefront-cart' }
+    {
+      name: 'bitvora-storefront-cart',
+      version: 1,
+      // v0 was a single cart shared by every store; we can't tell which store
+      // its items belonged to, so start fresh rather than mix stores.
+      migrate: () => ({ carts: {} }),
+    }
   )
 )
+
+const EMPTY: CartItem[] = []
+
+/** The cart for one store. */
+export function useCart(slug: string) {
+  const items = useCartStore((s) => s.carts[slug] ?? EMPTY)
+  const addItem = useCartStore((s) => s.addItem)
+  const removeItem = useCartStore((s) => s.removeItem)
+  const updateQuantity = useCartStore((s) => s.updateQuantity)
+  const clear = useCartStore((s) => s.clear)
+
+  return {
+    items,
+    total: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
+    addItem: (item: Omit<CartItem, 'quantity'>) => addItem(slug, item),
+    removeItem: (productId: string) => removeItem(slug, productId),
+    updateQuantity: (productId: string, quantity: number) => updateQuantity(slug, productId, quantity),
+    clear: () => clear(slug),
+  }
+}
