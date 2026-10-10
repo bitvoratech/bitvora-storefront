@@ -15,6 +15,7 @@ type Product = {
   description: string | null
   price: number
   stock_quantity: number
+  compare_at_price: number | null
   category: string | null
   is_active: boolean
   images: string[] | null
@@ -49,6 +50,10 @@ export function EditProductForm({ product, storeId }: { product: Product; storeI
           <Label htmlFor="stock_quantity">Stock</Label>
           <Input id="stock_quantity" name="stock_quantity" type="number" min="0" defaultValue={product.stock_quantity} className="font-mono" />
         </div>
+      </div>
+      <div>
+        <Label htmlFor="compare_at_price">Was price (₦) <span className="font-normal text-ink/40">— optional</span></Label>
+        <Input id="compare_at_price" name="compare_at_price" type="number" step="0.01" min="0" placeholder="Shows the price as a discount" className="font-mono" defaultValue={product.compare_at_price ?? ''} />
       </div>
       <div>
         <Label htmlFor="category">Category</Label>

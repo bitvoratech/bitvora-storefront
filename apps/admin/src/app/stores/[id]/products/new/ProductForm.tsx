@@ -40,6 +40,10 @@ export function ProductForm({ storeId }: { storeId: string }) {
         </div>
       </div>
       <div>
+        <Label htmlFor="compare_at_price">Was price (₦) <span className="font-normal text-ink/40">— optional</span></Label>
+        <Input id="compare_at_price" name="compare_at_price" type="number" step="0.01" min="0" placeholder="Shows the price as a discount" className="font-mono" />
+      </div>
+      <div>
         <Label htmlFor="category">Category</Label>
         <Input id="category" name="category" type="text" placeholder="e.g. Dresses" />
       </div>

@@ -40,8 +40,8 @@ export function Shell({
       />
 
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="lg:hidden flex items-center gap-3 border-b border-sand-200 bg-white px-4 py-3 sticky top-0 z-20">
-          <button onClick={() => setSidebarOpen(true)} className="p-1.5 -ml-1.5 text-ink/70">
+        <div className="lg:hidden flex items-center gap-3 border-b border-sand-200 bg-white dark:bg-sand-100 px-4 py-3 sticky top-0 z-20">
+          <button onClick={() => setSidebarOpen(true)} aria-label="Open menu" className="p-1.5 -ml-1.5 text-ink/70">
             <IconMenu2 className="w-5 h-5" stroke={1.75} />
           </button>
          </div>

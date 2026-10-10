@@ -2,13 +2,16 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { deleteProduct } from './actions'
 import { Card } from '@bitvora/ui/src/Card'
-import { Edit, Trash, PackageBox } from 'switch-icons'
+import { Edit, PackageBox } from 'switch-icons'
+import { IconBell, IconPhotoDown } from '@tabler/icons-react'
+import { DeleteProductButton } from './DeleteProductButton'
+import { cldImage } from '../../../../lib/cloudinary-image'
 import { IconSearch } from '@tabler/icons-react'
 
 type Product = {
   id: string
+  slug: string
   name: string
   price: number
   stock_quantity: number
@@ -23,7 +26,18 @@ function stockBadge(stock: number) {
   return null
 }
 
-export function ProductsTable({ storeId, products }: { storeId: string; products: Product[] }) {
+export function ProductsTable({
+  storeId,
+  products,
+  storeUrl,
+  waitingByProduct = {},
+}: {
+  storeId: string
+  products: Product[]
+  /** Public store URL, or null when the storefront URL isn't configured. */
+  storeUrl: string | null
+  waitingByProduct?: Record<string, number>
+}) {
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
 
@@ -58,16 +72,18 @@ export function ProductsTable({ storeId, products }: { storeId: string; products
           <input
             type="text"
             placeholder="Search products…"
+            aria-label="Search products"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white focus:outline-none focus:border-indigo-600"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 focus:outline-none focus:border-indigo-600"
           />
         </div>
         {categories.length > 1 && (
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="text-sm rounded-lg border border-sand-200 bg-white px-3 py-2 capitalize focus:outline-none focus:border-indigo-600"
+            aria-label="Filter by category"
+            className="text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2 capitalize focus:outline-none focus:border-indigo-600"
           >
             {categories.map((c) => (
               <option key={c} value={c}>{c === 'all' ? 'All categories' : c}</option>
@@ -99,7 +115,8 @@ export function ProductsTable({ storeId, products }: { storeId: string; products
               >
                 <div className="flex items-center gap-3 min-w-0">
                   {product.images?.[0] ? (
-                    <img src={product.images[0]} alt="" className="w-10 h-10 object-cover rounded-lg shrink-0" />
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={cldImage(product.images[0], 120)} alt="" loading="lazy" className="w-10 h-10 object-cover rounded-lg shrink-0" />
                   ) : (
                     <div className="w-10 h-10 rounded-lg bg-sand-100 flex items-center justify-center shrink-0">
                       <PackageBox className="w-4 h-4 text-ink/20" />
@@ -109,6 +126,15 @@ export function ProductsTable({ storeId, products }: { storeId: string; products
                     <p className="font-medium text-sm truncate">{product.name}</p>
                     {!product.is_active && (
                       <p className="text-xs text-pepper-600">Inactive</p>
+                    )}
+                    {(waitingByProduct[product.id] ?? 0) > 0 && (
+                      <Link
+                        href={`/stores/${storeId}/products/${product.id}/edit#restock`}
+                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:underline"
+                      >
+                        <IconBell className="w-3 h-3" stroke={2} />
+                        {waitingByProduct[product.id]} waiting for restock
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -126,17 +152,26 @@ export function ProductsTable({ storeId, products }: { storeId: string; products
 
                 <div className="flex items-center gap-1 shrink-0">
                   <span className="font-mono text-sm sm:hidden mr-1">₦{Number(product.price).toLocaleString()}</span>
+                  {storeUrl && product.is_active && (
+                    // Ready-made 1080×1920 image for the merchant's WhatsApp Status.
+                    <a
+                      href={`${storeUrl}/product/${product.slug}/status-image?download=1`}
+                      aria-label={`Download WhatsApp Status image for ${product.name}`}
+                      title="Status image"
+                      className="p-2 text-ink/40 hover:text-palm-600 hover:bg-palm-50 rounded-lg transition-colors"
+                    >
+                      <IconPhotoDown className="w-4 h-4" stroke={1.75} />
+                    </a>
+                  )}
                   <Link
                     href={`/stores/${storeId}/products/${product.id}/edit`}
+                    aria-label={`Edit ${product.name}`}
+                    title="Edit"
                     className="p-2 text-ink/40 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                   >
                     <Edit className="w-4 h-4" />
                   </Link>
-                  <form action={deleteProduct.bind(null, product.id, storeId)}>
-                    <button type="submit" className="p-2 text-ink/40 hover:text-pepper-600 hover:bg-pepper-50 rounded-lg transition-colors">
-                      <Trash className="w-4 h-4" />
-                    </button>
-                  </form>
+                  <DeleteProductButton productId={product.id} storeId={storeId} productName={product.name} />
                 </div>
               </div>
             )

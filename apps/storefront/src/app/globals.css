@@ -1,7 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Playfair+Display:wght@600;700&family=Sora:wght@600;700&family=Bricolage+Grotesque:wght@600;700&family=Lora:wght@600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap');
 @import "tailwindcss";
 @import "../../../../packages/config/storefront-tokens.css";
 
 body {
-  font-family: var(--font-storefront);
+  font-family: var(--font-inter), system-ui, sans-serif;
 }

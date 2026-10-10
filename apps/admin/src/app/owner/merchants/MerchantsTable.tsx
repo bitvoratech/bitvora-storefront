@@ -51,9 +51,10 @@ export function MerchantsTable({ merchants }: { merchants: Merchant[] }) {
         <input
           type="text"
           placeholder="Search merchants…"
+          aria-label="Search merchants"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white focus:outline-none focus:border-indigo-600"
+          className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 focus:outline-none focus:border-indigo-600"
         />
       </div>
 

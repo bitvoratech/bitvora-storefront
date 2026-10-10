@@ -3,6 +3,7 @@ import { Button } from '@bitvora/ui/src/Button'
 import { Plus } from 'switch-icons'
 import { createClient } from '../../../../lib/supabase/server'
 import { ProductsTable } from './Productstable'
+import { storefrontUrl } from '../../../../lib/storefront-url'
 
 export default async function ProductsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: storeId } = await params
@@ -13,6 +14,17 @@ export default async function ProductsPage({ params }: { params: Promise<{ id: s
     .select('*')
     .eq('store_id', storeId)
     .order('created_at', { ascending: false })
+
+  const { data: store } = await supabase.from('stores').select('slug').eq('id', storeId).single()
+
+  // Shoppers waiting on a restock, per product.
+  const { data: waiting } = await supabase
+    .from('restock_requests')
+    .select('product_id')
+    .eq('store_id', storeId)
+    .is('notified_at', null)
+  const waitingByProduct: Record<string, number> = {}
+  for (const w of waiting ?? []) waitingByProduct[w.product_id] = (waitingByProduct[w.product_id] ?? 0) + 1
 
   return (
     <div className="max-w-5xl">
@@ -29,7 +41,12 @@ export default async function ProductsPage({ params }: { params: Promise<{ id: s
         {products?.length ?? 0} product{products?.length === 1 ? '' : 's'}
       </p>
 
-      <ProductsTable storeId={storeId} products={products ?? []} />
+      <ProductsTable
+        storeId={storeId}
+        products={products ?? []}
+        storeUrl={store ? storefrontUrl(store.slug) : null}
+        waitingByProduct={waitingByProduct}
+      />
     </div>
   )
 }

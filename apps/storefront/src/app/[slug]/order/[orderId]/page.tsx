@@ -3,12 +3,19 @@ import { Check } from 'switch-icons'
 import Link from 'next/link'
 import { createClient } from '../../../../lib/supabase/server';
 import { PaymentProofUpload } from './PaymentProofUpload'
+import { getPublishedStore, whatsappLink } from '../../../../lib/store'
+import { CopyButton } from '../../../../components/CopyButton'
+import { BrandIcon } from '../../../../components/BrandIcon'
+
+export const metadata = { title: 'Order placed', robots: { index: false } }
 
 type OrderConfirmation = {
   id: string
   customer_name: string
   payment_method: 'bank_transfer' | 'pay_on_delivery'
   payment_proof_url: string | null
+  delivery_method?: 'pickup' | 'delivery'
+  delivery_area?: string | null
   delivery_fee: number
   total: number
   status: string
@@ -25,6 +32,14 @@ export default async function OrderConfirmationPage({
   const { data } = await supabase.rpc('get_order_confirmation', { p_order_id: orderId })
   const order = data as OrderConfirmation | null
   if (!order) notFound()
+
+  const store = await getPublishedStore(slug)
+  // Short, human-friendly reference; the full id is what the merchant sees too.
+  const reference = order.id.slice(0, 8).toUpperCase()
+  const contactSeller = whatsappLink(
+    store?.social_links,
+    `Hi ${store?.name ?? ''}, I just placed order #${reference} (₦${Number(order.total).toLocaleString()}).`
+  )
   return (
     <div className="max-w-lg mx-auto text-center py-10">
       <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
@@ -42,15 +57,26 @@ export default async function OrderConfirmationPage({
             <span className="font-mono">₦{(item.unit_price * item.quantity).toLocaleString()}</span>
           </div>
         ))}
-        <div className="border-t border-[#e5e5e5] pt-2 mt-2 flex justify-between text-sm">
-          <span className="text-[#737373]">Delivery</span>
-          <span className="font-mono">₦{Number(order.delivery_fee).toLocaleString()}</span>
+        <div className="border-t border-[#e5e5e5] pt-2 mt-2 flex justify-between gap-3 text-sm">
+          <span className="text-[#737373]">
+            {order.delivery_method === 'pickup' ? 'Pickup' : `Delivery${order.delivery_area ? ` · ${order.delivery_area}` : ''}`}
+          </span>
+          <span className="font-mono shrink-0">
+            {Number(order.delivery_fee) === 0 ? 'Free' : `₦${Number(order.delivery_fee).toLocaleString()}`}
+          </span>
         </div>
         <div className="flex justify-between font-medium pt-1">
           <span>Total</span>
           <span className="font-mono">₦{Number(order.total).toLocaleString()}</span>
         </div>
       </div>
+
+      {order.delivery_method === 'pickup' && store?.pickup_address && (
+        <div className="mt-4 rounded-xl bg-[#fafafa] p-4 text-left text-sm">
+          <p className="font-medium mb-0.5">Pick up your order from</p>
+          <p className="text-[#525252] whitespace-pre-line">{store.pickup_address}</p>
+        </div>
+      )}
 
       {order.payment_method === 'bank_transfer' && (
         <div className="mt-6 text-left">
@@ -63,9 +89,24 @@ export default async function OrderConfirmationPage({
         </div>
       )}
 
-      <p className="text-xs text-[#a3a3a3] mt-6">
-        Order reference: <span className="font-mono">{order.id.slice(0, 8)}</span>
-      </p>
+      <div className="mt-6 inline-flex items-center gap-2 rounded-lg bg-[#fafafa] px-3 py-2">
+        <span className="text-xs text-[#737373]">Order reference</span>
+        <span className="font-mono text-sm font-medium">#{reference}</span>
+        <CopyButton value={reference} label="Copy order reference" />
+      </div>
+      <p className="text-xs text-[#737373] mt-2">Save this reference — the seller will use it to find your order.</p>
+
+      {contactSeller && (
+        <a
+          href={contactSeller}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-5 flex items-center justify-center gap-2 w-full rounded-lg border border-[#e5e5e5] px-4 py-3 text-sm font-medium hover:bg-[#fafafa] transition-colors"
+        >
+          <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+          Message the seller on WhatsApp
+        </a>
+      )}
       <Link href={`/${slug}`} className="inline-block text-sm underline mt-6">
         Continue shopping
       </Link>

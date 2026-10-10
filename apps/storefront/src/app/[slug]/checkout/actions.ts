@@ -2,7 +2,6 @@
 
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { getClientIp, rateLimit } from '../../../lib/rate-limit'
-import { DELIVERY_ZONES } from '../../../lib/delivery-zones'
 import { isPaymentProofUrl } from '../../../lib/cloudinary-url'
 
 type CheckoutInput = {
@@ -13,8 +12,6 @@ type CheckoutInput = {
   customerEmail?: string
   deliveryMethod: 'pickup' | 'delivery'
   deliveryArea?: string
-  /** Ignored — the fee is always recomputed from DELIVERY_ZONES below. */
-  deliveryFee?: number
   paymentMethod: 'bank_transfer' | 'pay_on_delivery'
   paymentProofUrl?: string
   items: { productId: string; name: string; price: number; quantity: number }[]
@@ -33,15 +30,18 @@ const CUSTOMER_FACING_DB_ERRORS = [
   'Too many items',
   'Invalid item quantity',
   'One or more items are no longer available',
+  'does not offer pickup',
+  'does not deliver to that area',
+  'does not accept pay on delivery',
   'out of stock',
   'left in stock',
 ]
 
 // The create_order RPC is only executable by the service role, so this
-// action is the single path for creating orders: it rate-limits, validates,
-// and derives the delivery fee server-side. The RPC then recomputes prices
-// from live product rows and enforces stock, so name/price in `items` are
-// only used for optimistic UI on the client.
+// action is the single path for creating orders: it rate-limits and
+// validates. The RPC then derives the delivery fee from the merchant's own
+// delivery zones, recomputes prices from live product rows and enforces
+// stock — so name/price in `items` are only used for optimistic UI.
 export async function createOrder(input: CheckoutInput) {
   const rl = await rateLimit('order', await getClientIp(), 5, '10 m')
   if (!rl.ok) return { error: 'Too many orders from this device. Try again in a few minutes.' }
@@ -70,12 +70,9 @@ export async function createOrder(input: CheckoutInput) {
   }
 
   let deliveryArea: string | null = null
-  let deliveryFee = 0
   if (input.deliveryMethod === 'delivery') {
-    const zone = DELIVERY_ZONES.find((z) => z.area === input.deliveryArea)
-    if (!zone) return { error: 'Choose a delivery area.' }
-    deliveryArea = zone.area
-    deliveryFee = zone.fee
+    deliveryArea = (input.deliveryArea ?? '').trim()
+    if (!deliveryArea || deliveryArea.length > 80) return { error: 'Choose a delivery area.' }
   }
 
   let paymentProofUrl: string | null = null
@@ -113,7 +110,7 @@ export async function createOrder(input: CheckoutInput) {
     p_customer_email: customerEmail || null,
     p_delivery_method: input.deliveryMethod,
     p_delivery_area: deliveryArea,
-    p_delivery_fee: deliveryFee,
+    p_delivery_fee: 0, // ignored: computed from the store's delivery zones
     p_payment_method: input.paymentMethod,
     p_payment_proof_url: paymentProofUrl,
     p_items: input.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),

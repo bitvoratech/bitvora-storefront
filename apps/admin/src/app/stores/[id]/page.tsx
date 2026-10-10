@@ -8,8 +8,9 @@ import { Card } from '@bitvora/ui/src/Card'
 import { KpiCard } from '@bitvora/ui/src/KpiCard'
 import { RevenueChart } from './RevenueChart'
 import { computeTrend } from '../../../lib/computeTrend'
-
-const STOREFRONT_URL = process.env.NEXT_PUBLIC_STOREFRONT_URL || 'http://localhost:3001'
+import { storefrontUrl } from '../../../lib/storefront-url'
+import { ShareStoreCard } from './ShareStoreCard'
+import { NeedsAttention, type AttentionItem } from './NeedsAttention'
 
 export default async function StoreDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -30,11 +31,32 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
     .eq('type', 'hero')
     .maybeSingle()
 
+  const { count: zoneCount } = await supabase
+    .from('delivery_zones')
+    .select('id', { count: 'exact', head: true })
+    .eq('store_id', id)
+
   const { data: orders } = await supabase
     .from('orders')
-    .select('id, customer_name, total, status, created_at')
+    .select('id, customer_name, total, status, created_at, payment_method, payment_proof_url')
     .eq('store_id', id)
     .order('created_at', { ascending: false })
+
+  const LOW_STOCK = 5
+  const { data: lowStockProducts } = await supabase
+    .from('products')
+    .select('name, stock_quantity')
+    .eq('store_id', id)
+    .eq('is_active', true)
+    .lte('stock_quantity', LOW_STOCK)
+    .order('stock_quantity', { ascending: true })
+
+  // Shoppers waiting on restocks, with the product's current stock.
+  const { data: restockRows } = await supabase
+    .from('restock_requests')
+    .select('product_id, products(name, stock_quantity)')
+    .eq('store_id', id)
+    .is('notified_at', null)
 
   const { data: orderItems } = await supabase
     .from('order_items')
@@ -68,6 +90,67 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
     .reduce((sum, o) => sum + Number(o.total), 0)
 
   const pendingCount = allOrders.filter((o) => o.status === 'pending').length
+
+  const pendingOrders = allOrders.filter((o) => o.status === 'pending')
+  const toVerify = pendingOrders.filter((o) => o.payment_method === 'bank_transfer' && o.payment_proof_url)
+  const awaitingPayment = pendingOrders.filter((o) => o.payment_method === 'bank_transfer' && !o.payment_proof_url)
+  const toConfirm = pendingOrders.filter((o) => o.payment_method === 'pay_on_delivery')
+  const lowStock = lowStockProducts ?? []
+  const soldOut = lowStock.filter((p) => (p.stock_quantity ?? 0) <= 0).length
+  const names = (list: { customer_name: string }[]) =>
+    list.slice(0, 3).map((o) => o.customer_name.split(' ')[0]).join(', ') + (list.length > 3 ? '…' : '')
+
+  type RestockRow = { product_id: string; products: { name: string; stock_quantity: number | null } | null }
+  const restock = (restockRows ?? []) as unknown as RestockRow[]
+  const backInStock = restock.filter((r) => (r.products?.stock_quantity ?? 0) > 0)
+  const backInStockProducts = [...new Map(backInStock.map((r) => [r.product_id, r.products?.name ?? 'Product'])).entries()]
+
+  const attention: AttentionItem[] = [
+    {
+      key: 'restock',
+      count: backInStock.length,
+      title: backInStock.length === 1 ? 'shopper to message — item is back' : 'shoppers to message — items are back',
+      detail: `They asked to be told · ${backInStockProducts.slice(0, 3).map(([, n]) => n).join(', ')}`,
+      href: backInStockProducts.length === 1
+        ? `/stores/${id}/products/${backInStockProducts[0][0]}/edit#restock`
+        : `/stores/${id}/products`,
+      tone: 'urgent',
+    },
+    {
+      key: 'verify',
+      count: toVerify.length,
+      title: toVerify.length === 1 ? 'transfer to verify' : 'transfers to verify',
+      detail: `Check your bank app, then confirm · ${names(toVerify)}`,
+      href: `/stores/${id}/orders?status=pending`,
+      tone: 'urgent',
+    },
+    {
+      key: 'confirm',
+      count: toConfirm.length,
+      title: toConfirm.length === 1 ? 'pay-on-delivery order to confirm' : 'pay-on-delivery orders to confirm',
+      detail: `Call or WhatsApp to confirm · ${names(toConfirm)}`,
+      href: `/stores/${id}/orders?status=pending`,
+      tone: 'warning',
+    },
+    {
+      key: 'stock',
+      count: lowStock.length,
+      title: lowStock.length === 1 ? 'product low on stock' : 'products low on stock',
+      detail: soldOut
+        ? `${soldOut} sold out · ${lowStock.slice(0, 3).map((p) => p.name).join(', ')}`
+        : lowStock.slice(0, 3).map((p) => `${p.name} (${p.stock_quantity})`).join(', '),
+      href: `/stores/${id}/products`,
+      tone: soldOut ? 'urgent' : 'warning',
+    },
+    {
+      key: 'awaiting',
+      count: awaitingPayment.length,
+      title: awaitingPayment.length === 1 ? 'order waiting for payment' : 'orders waiting for payment',
+      detail: 'Customer chose bank transfer but hasn’t uploaded proof yet',
+      href: `/stores/${id}/orders?status=pending`,
+      tone: 'info',
+    },
+  ]
 
   const ordersThisWeekCount = activeOrders.filter((o) => new Date(o.created_at) >= sevenDaysAgo).length
   const ordersLastWeekCount = activeOrders.filter((o) => {
@@ -105,24 +188,33 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
   const checklistItems = [
     { label: 'Add your bank account', done: !!store.bank_name && !!store.account_number, href: `/stores/${id}/customize` },
     { label: 'Set your brand color', done: !!store.palette?.primary, href: `/stores/${id}/customize` },
+    {
+      label: 'Set up delivery or pickup',
+      done: (zoneCount ?? 0) > 0 || (store.pickup_enabled && !!store.pickup_address),
+      href: `/stores/${id}/delivery`,
+    },
     { label: 'Add at least one product', done: (productCount ?? 0) > 0, href: `/stores/${id}/products/new` },
     { label: 'Set up your homepage hero', done: !!heroSection, href: `/stores/${id}/customize` },
     { label: 'Publish your store', done: store.is_published },
   ]
+
+  const storeUrl = storefrontUrl(store.slug)
 
   return (
     <div className="max-w-5xl">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
         <h1 className="text-2xl font-display font-semibold">{store.name}</h1>
         <div className="flex flex-wrap items-center gap-2">
-          <a
-            href={`${STOREFRONT_URL}/${store.slug}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm rounded-md px-3 py-1.5 font-medium bg-sand-100 text-ink/70 hover:bg-sand-200 transition-colors"
-          >
-            View store 
-          </a>
+          {storeUrl && (
+            <a
+              href={storeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm rounded-md px-3 py-1.5 font-medium bg-sand-100 text-ink/70 hover:bg-sand-200 transition-colors"
+            >
+              View store ↗
+            </a>
+          )}
           <Link
             href={`/stores/${store.id}/products/new`}
             className="text-sm rounded-md px-3 py-1.5 font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
@@ -133,7 +225,9 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
       </div>
       <div className="flex flex-wrap items-center gap-2 mb-6">
         <span className="text-xs font-mono text-ink/60 bg-sand-100 rounded-full px-2.5 py-1">/{store.slug}</span>
-        <span className="text-xs font-medium text-ink/60 bg-sand-100 rounded-full px-2.5 py-1 capitalize">{store.industry}</span>
+        {store.industry && (
+          <span className="text-xs font-medium text-ink/60 bg-sand-100 rounded-full px-2.5 py-1 capitalize">{store.industry}</span>
+        )}
         {store.is_published && (
           <span className="flex items-center gap-1.5 text-xs font-medium text-palm-600">
             <span className="w-1.5 h-1.5 rounded-full bg-palm-600" /> Live
@@ -142,6 +236,10 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
       </div>
 
       <OnboardingProgress storeId={store.id} items={checklistItems} />
+
+      <NeedsAttention items={attention} />
+
+      {storeUrl && <ShareStoreCard url={storeUrl} storeName={store.name} isPublished={store.is_published} />}
 
       <div className="mb-8">
         <Card className="p-5 mb-3 border-0 bg-paper">

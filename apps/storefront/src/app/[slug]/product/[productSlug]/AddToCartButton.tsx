@@ -1,10 +1,10 @@
 'use client'
 
-
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useCart } from '../../../../lib/cart-store'
-import { IconShoppingBag } from '@tabler/icons-react'
+import { IconMinus, IconPlus, IconShoppingBag } from '@tabler/icons-react'
+import { useCart, MAX_ITEM_QUANTITY } from '../../../../lib/cart-store'
+import { BrandIcon } from '../../../../components/BrandIcon'
 
 export function AddToCartButton({
   slug,
@@ -12,56 +12,107 @@ export function AddToCartButton({
   name,
   price,
   image,
-  inStock,
+  stock,
   accent,
+  storeName,
+  whatsappNumber,
 }: {
   slug: string
   productId: string
   name: string
   price: number
   image: string | null
-  inStock: boolean
+  stock: number
   accent: string
+  storeName: string
+  /** Digits only, international format (e.g. 2348012345678), or null if the store has none. */
+  whatsappNumber: string | null
 }) {
   const { addItem } = useCart(slug)
   const [added, setAdded] = useState(false)
+  const [quantity, setQuantity] = useState(1)
   const router = useRouter()
+  const maxQuantity = Math.max(1, Math.min(stock, MAX_ITEM_QUANTITY))
+  const item = { productId, name, price, image }
 
   function handleAdd() {
-    addItem({ productId, name, price, image })
+    addItem(item, quantity)
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }
 
   function handleBuyNow() {
-    addItem({ productId, name, price, image })
+    addItem(item, quantity)
     router.push(`/${slug}/checkout`)
   }
 
-  if (!inStock) {
+  if (stock <= 0) {
     return (
-      <button disabled className="w-full rounded-lg px-4 py-3.5 text-sm font-medium bg-[#f5f5f5] text-[#a3a3a3] cursor-not-allowed">
-        Out of stock
+      <button disabled className="w-full rounded-lg px-4 py-3.5 text-sm font-medium bg-[#f5f5f5] text-[#737373] cursor-not-allowed">
+        Sold out
       </button>
     )
   }
 
+  const whatsappHref = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
+        `Hi ${storeName} 👋\nI'd like to order:\n\n*${name}* — ₦${price.toLocaleString()}\nQuantity: ${quantity}`
+      )}`
+    : null
+
   return (
     <div className="space-y-2.5">
+      <div className="flex items-center gap-3 mb-1">
+        <span className="text-sm text-[#525252]" id="qty-label">Quantity</span>
+        <div className="flex items-center border border-[#e5e5e5] rounded-lg" role="group" aria-labelledby="qty-label">
+          <button
+            type="button"
+            onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+            disabled={quantity <= 1}
+            aria-label="Decrease quantity"
+            className="p-2.5 disabled:opacity-30"
+          >
+            <IconMinus className="w-4 h-4" stroke={1.75} />
+          </button>
+          <span className="w-8 text-center font-mono text-sm" aria-live="polite">{quantity}</span>
+          <button
+            type="button"
+            onClick={() => setQuantity((q) => Math.min(maxQuantity, q + 1))}
+            disabled={quantity >= maxQuantity}
+            aria-label="Increase quantity"
+            className="p-2.5 disabled:opacity-30"
+          >
+            <IconPlus className="w-4 h-4" stroke={1.75} />
+          </button>
+        </div>
+      </div>
+
       <button
         onClick={handleBuyNow}
         className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
         style={{ backgroundColor: accent }}
       >
-        Buy Now
+        Buy now
       </button>
       <button
         onClick={handleAdd}
         className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3.5 text-sm font-medium border border-[#e5e5e5] hover:bg-[#fafafa] transition-colors"
       >
-        <IconShoppingBag className="w-4 h-4"   stroke={1.75} />
-        {added ? 'Added ✓' : 'Add to Cart'}
+        <IconShoppingBag className="w-4 h-4" stroke={1.75} />
+        <span aria-live="polite">{added ? 'Added to cart ✓' : 'Add to cart'}</span>
       </button>
+
+      {whatsappHref && (
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3 text-sm text-[#525252] hover:text-[#171717] transition-colors"
+        >
+          <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+          Or order via WhatsApp
+        </a>
+      )}
     </div>
   )
 }

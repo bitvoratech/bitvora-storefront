@@ -209,6 +209,8 @@ export function CustomizeWorkspace({
                   type="button"
                   onClick={() => setColor(preset.value)}
                   title={preset.name}
+                  aria-label={preset.name}
+                  aria-pressed={color === preset.value}
                   className={`w-9 h-9 rounded-full border-2 transition-all ${
                     color === preset.value ? 'border-ink scale-110' : 'border-transparent hover:scale-105'
                   }`}
@@ -372,8 +374,8 @@ export function CustomizeWorkspace({
               <div key={s.type} className="flex items-center justify-between border border-sand-200 rounded-lg px-3 py-2.5">
                 <span className="text-sm">{s.label}</span>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => handleReorder(s.type, 'up')} disabled={i === 0} className="text-xs text-ink/40 disabled:opacity-30 px-1.5">↑</button>
-                  <button onClick={() => handleReorder(s.type, 'down')} disabled={i === sections.length - 1} className="text-xs text-ink/40 disabled:opacity-30 px-1.5">↓</button>
+                  <button onClick={() => handleReorder(s.type, 'up')} disabled={i === 0} aria-label={`Move ${s.type.replace('_', ' ')} up`} className="text-xs text-ink/40 disabled:opacity-30 px-1.5">↑</button>
+                  <button onClick={() => handleReorder(s.type, 'down')} disabled={i === sections.length - 1} aria-label={`Move ${s.type.replace('_', ' ')} down`} className="text-xs text-ink/40 disabled:opacity-30 px-1.5">↓</button>
                   <button
                     onClick={() => handleToggleVisibility(s.type, !s.is_visible)}
                     className={`w-9 h-5 rounded-full relative transition-colors ${s.is_visible ? 'bg-indigo-600' : 'bg-sand-200'}`}

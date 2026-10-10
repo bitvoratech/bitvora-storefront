@@ -50,6 +50,7 @@ export default async function DashboardPage() {
       industry: store.industry,
       is_published: store.is_published,
       ordersThisWeek: storeOrders.length,
+      pendingOrders: orderRows.filter((o) => o.store_id === store.id && o.status === 'pending').length,
       revenueThisWeek: storeOrders.reduce((sum, o) => sum + Number(o.total), 0),
     }
   })

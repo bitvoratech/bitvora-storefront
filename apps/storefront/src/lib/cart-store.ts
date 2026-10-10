@@ -16,7 +16,7 @@ export const MAX_ITEM_QUANTITY = 999
 // localStorage key), and an order can only contain one store's products.
 type CartState = {
   carts: Record<string, CartItem[]>
-  addItem: (slug: string, item: Omit<CartItem, 'quantity'>) => void
+  addItem: (slug: string, item: Omit<CartItem, 'quantity'>, quantity?: number) => void
   removeItem: (slug: string, productId: string) => void
   updateQuantity: (slug: string, productId: string, quantity: number) => void
   clear: (slug: string) => void
@@ -26,17 +26,17 @@ export const useCartStore = create<CartState>()(
   persist(
     (set) => ({
       carts: {},
-      addItem: (slug, item) =>
+      addItem: (slug, item, quantity = 1) =>
         set((state) => {
           const items = state.carts[slug] ?? []
           const existing = items.find((i) => i.productId === item.productId)
           const next = existing
             ? items.map((i) =>
                 i.productId === item.productId
-                  ? { ...i, quantity: Math.min(i.quantity + 1, MAX_ITEM_QUANTITY) }
+                  ? { ...i, quantity: Math.min(i.quantity + quantity, MAX_ITEM_QUANTITY) }
                   : i
               )
-            : [...items, { ...item, quantity: 1 }]
+            : [...items, { ...item, quantity: Math.min(quantity, MAX_ITEM_QUANTITY) }]
           return { carts: { ...state.carts, [slug]: next } }
         }),
       removeItem: (slug, productId) =>
@@ -86,7 +86,7 @@ export function useCart(slug: string) {
   return {
     items,
     total: items.reduce((sum, i) => sum + i.price * i.quantity, 0),
-    addItem: (item: Omit<CartItem, 'quantity'>) => addItem(slug, item),
+    addItem: (item: Omit<CartItem, 'quantity'>, quantity?: number) => addItem(slug, item, quantity),
     removeItem: (productId: string) => removeItem(slug, productId),
     updateQuantity: (productId: string, quantity: number) => updateQuantity(slug, productId, quantity),
     clear: () => clear(slug),

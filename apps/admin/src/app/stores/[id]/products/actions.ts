@@ -17,7 +17,7 @@ function slugify(name: string) {
 const MAX_IMAGES = 8
 
 type ParsedProduct =
-  | { ok: true; name: string; description: string | null; price: number; stockQuantity: number; category: string | null; images: string[] }
+  | { ok: true; name: string; description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number; category: string | null; images: string[] }
   | { ok: false; error: string }
 
 // Server actions are public endpoints: never trust the form, even though the
@@ -26,6 +26,8 @@ function parseProductForm(formData: FormData): ParsedProduct {
   const name = ((formData.get('name') as string) || '').trim()
   const description = ((formData.get('description') as string) || '').trim() || null
   const price = Number(formData.get('price'))
+  const compareRaw = ((formData.get('compare_at_price') as string) || '').trim()
+  const compareAtPrice = compareRaw ? Number(compareRaw) : null
   const stockRaw = Number(formData.get('stock_quantity') || 0)
   const category = ((formData.get('category') as string) || '').trim() || null
 
@@ -34,6 +36,9 @@ function parseProductForm(formData: FormData): ParsedProduct {
   }
   if (!Number.isFinite(price) || price <= 0 || price > 100_000_000) {
     return { ok: false, error: 'Valid price is required.' }
+  }
+  if (compareAtPrice !== null && (!Number.isFinite(compareAtPrice) || compareAtPrice <= price)) {
+    return { ok: false, error: '"Was" price must be higher than the current price, or left blank.' }
   }
   if (!Number.isInteger(stockRaw) || stockRaw < 0 || stockRaw > 1_000_000) {
     return { ok: false, error: 'Stock must be a whole number of 0 or more.' }
@@ -59,7 +64,16 @@ function parseProductForm(formData: FormData): ParsedProduct {
     return { ok: false, error: 'Invalid images.' }
   }
 
-  return { ok: true, name, description, price: Math.round(price * 100) / 100, stockQuantity: stockRaw, category, images }
+  return {
+    ok: true,
+    name,
+    description,
+    price: Math.round(price * 100) / 100,
+    compareAtPrice: compareAtPrice === null ? null : Math.round(compareAtPrice * 100) / 100,
+    stockQuantity: stockRaw,
+    category,
+    images,
+  }
 }
 
 export async function createProduct(storeId: string, prevState: { error?: string } | undefined, formData: FormData) {
@@ -67,7 +81,7 @@ export async function createProduct(storeId: string, prevState: { error?: string
 
   const parsed = parseProductForm(formData)
   if (!parsed.ok) return { error: parsed.error }
-  const { name, description, price, stockQuantity, category, images } = parsed
+  const { name, description, price, compareAtPrice, stockQuantity, category, images } = parsed
 
   const baseSlug = slugify(name).replace(/^-+|-+$/g, '').slice(0, 80) || 'product'
   let slug = baseSlug
@@ -94,6 +108,7 @@ export async function createProduct(storeId: string, prevState: { error?: string
     slug,
     description,
     price,
+    compare_at_price: compareAtPrice,
     stock_quantity: stockQuantity,
     category,
     images,
@@ -112,7 +127,7 @@ export async function updateProduct(productId: string, storeId: string, prevStat
 
   const parsed = parseProductForm(formData)
   if (!parsed.ok) return { error: parsed.error }
-  const { name, description, price, stockQuantity, category, images } = parsed
+  const { name, description, price, compareAtPrice, stockQuantity, category, images } = parsed
   const isActive = formData.get('is_active') === 'on'
 
   const { error } = await supabase
@@ -121,6 +136,7 @@ export async function updateProduct(productId: string, storeId: string, prevStat
       name,
       description,
       price,
+      compare_at_price: compareAtPrice,
       stock_quantity: stockQuantity,
       category,
       is_active: isActive,

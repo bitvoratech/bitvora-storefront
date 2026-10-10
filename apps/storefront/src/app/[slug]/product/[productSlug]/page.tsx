@@ -1,10 +1,74 @@
-import { createClient } from '../../../../lib/supabase/server';
+import type { Metadata } from 'next'
+import { cache } from 'react'
 import { notFound } from 'next/navigation'
-import { PackageBox, ArrowLeft } from 'switch-icons'
-
+import { ArrowLeft } from 'switch-icons'
 import Link from 'next/link'
+import { createClient } from '../../../../lib/supabase/server'
+import { getPublishedStore, whatsappLink } from '../../../../lib/store'
+import { PriceTag } from '../../../../components/PriceTag'
 import { AddToCartButton } from './AddToCartButton'
-import { BrandIcon } from '../../../../components/BrandIcon';
+import { ProductGallery } from './ProductGallery'
+import { ShareButton } from '../../../../components/ShareButton'
+import { StatusShareButton } from '../../../../components/StatusShareButton'
+import { RestockForm } from './RestockForm'
+import { cldJpeg } from '../../../../lib/cloudinary-image'
+import { VerifiedBadge } from '../../../../components/VerifiedBadge'
+
+const LOW_STOCK_THRESHOLD = 5
+// Below this, "1 sold this week" reads as weak rather than reassuring.
+const MIN_SALES_TO_SHOW = 2
+
+type Product = {
+  id: string
+  name: string
+  description: string | null
+  price: number
+  compare_at_price: number | null
+  images: string[] | null
+  stock_quantity: number | null
+}
+
+const getProduct = cache(async (storeId: string, productSlug: string) => {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('products')
+    .select('id, name, description, price, compare_at_price, images, stock_quantity')
+    .eq('store_id', storeId)
+    .eq('slug', productSlug)
+    .eq('is_active', true)
+    .maybeSingle()
+  return data as Product | null
+})
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string; productSlug: string }>
+}): Promise<Metadata> {
+  const { slug, productSlug } = await params
+  const store = await getPublishedStore(slug)
+  if (!store) return {}
+  const product = await getProduct(store.id, productSlug)
+  if (!product) return { title: 'Product not found' }
+
+  const price = `₦${Number(product.price).toLocaleString()}`
+  const description = product.description
+    ? `${price} — ${product.description.slice(0, 150)}`
+    : `${price} at ${store.name}. Order online in minutes.`
+  // Small JPEG on purpose: WhatsApp skips link previews with heavy images.
+  const image = cldJpeg(product.images?.[0], 1200, 630)
+
+  return {
+    title: product.name,
+    description,
+    openGraph: {
+      title: `${product.name} · ${price}`,
+      description,
+      ...(image ? { images: [{ url: image, width: 1200, height: 630, alt: product.name }] } : {}),
+    },
+    twitter: { card: image ? 'summary_large_image' : 'summary' },
+  }
+}
 
 export default async function ProductPage({
   params,
@@ -12,102 +76,97 @@ export default async function ProductPage({
   params: Promise<{ slug: string; productSlug: string }>
 }) {
   const { slug, productSlug } = await params
-  const supabase = await createClient()
 
-  const { data: store } = await supabase
-    .from('stores')
-    .select('id, name, palette')
-    .eq('slug', slug)
-    .eq('is_published', true)
-    .single()
-
+  const store = await getPublishedStore(slug)
   if (!store) notFound()
 
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('store_id', store.id)
-    .eq('slug', productSlug)
-    .eq('is_active', true)
-    .single()
-
+  const product = await getProduct(store.id, productSlug)
   if (!product) notFound()
 
   const accent = store.palette?.primary || '#171717'
+  const stock = product.stock_quantity ?? 0
 
-  const whatsappMessage = encodeURIComponent(
-    `Hi ${store.name} 👋\nI'd like to order:\n\n*${product.name}* — ₦${Number(product.price).toLocaleString()}\n\nQuantity: 1`
+  // Real units sold in the last 7 days (cancelled orders excluded).
+  const supabase = await createClient()
+  const { data: sales } = await supabase.rpc('recent_product_sales', { p_store_id: store.id, p_days: 7 })
+  const soldThisWeek = Number(
+    (sales as { product_id: string; units: number }[] | null)?.find((r) => r.product_id === product.id)?.units ?? 0
   )
+  const waLink = whatsappLink(store.social_links)
+  const whatsappNumber = waLink ? waLink.replace('https://wa.me/', '') : null
 
   return (
     <div>
-      <Link href={`/${slug}`} className="flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717] mb-6">
-        <ArrowLeft className="w-4 h-4" />
-        Back to store
-      </Link>
+      <div className="flex items-center justify-between gap-3 mb-6">
+        <Link href={`/${slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717]">
+          <ArrowLeft className="w-4 h-4" />
+          Back to store
+        </Link>
+        <div className="flex items-center gap-2">
+          <StatusShareButton
+            slug={slug}
+            productSlug={productSlug}
+            text={`${product.name} — ₦${Number(product.price).toLocaleString()} at ${store.name}`}
+          />
+          <ShareButton
+            title={product.name}
+            text={`${product.name} — ₦${Number(product.price).toLocaleString()} at ${store.name}`}
+          />
+        </div>
+      </div>
 
       <div className="grid gap-6 sm:grid-cols-2 sm:gap-10">
+        <ProductGallery images={product.images ?? []} name={product.name} />
+
         <div>
-          <div className="aspect-square rounded-xl overflow-hidden bg-[#fafafa]">
-            {product.images?.[0] ? (
-              <img src={product.images[0]} alt={product.name} className="w-full h-full object-cover" />
+          <h1 className="text-2xl sm:text-3xl font-semibold mb-2 leading-tight">{product.name}</h1>
+          <PriceTag price={product.price} compareAt={product.compare_at_price} size="lg" className="mb-4" />
+
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            {stock <= 0 ? (
+              <span className="inline-flex items-center gap-1.5 text-sm text-red-700 bg-red-50 rounded-full px-3 py-1">
+                Sold out
+              </span>
+            ) : stock <= LOW_STOCK_THRESHOLD ? (
+              <span className="inline-flex items-center gap-1.5 text-sm text-amber-800 bg-amber-50 rounded-full px-3 py-1">
+                Only {stock} left
+              </span>
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <PackageBox className="w-10 h-10 text-[#d4d4d4]" />
-              </div>
-            )}
-          </div>
-          {product.images?.length > 1 && (
-            <div className="grid grid-cols-4 gap-2 mt-2">
-              {product.images.slice(1).map((img: string) => (
-                <div key={img} className="aspect-square rounded-lg overflow-hidden bg-[#fafafa]">
-                  <img src={img} alt="" className="w-full h-full object-cover" />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div>
-          <h1 className="text-2xl font-semibold mb-1">{product.name}</h1>
-          <p className="text-xl font-mono text-[#404040] mb-3 sm:mb-4">
-            ₦{Number(product.price).toLocaleString()}
-          </p>
-          {product.description && (
-            <p className="text-[#525252] mb-4 sm:mb-6 whitespace-pre-line leading-relaxed">{product.description}</p>
-          )}
-
-          <div className="mb-4 sm:mb-6">
-            {product.stock_quantity > 0 ? (
               <span className="inline-flex items-center gap-1.5 text-sm text-green-700 bg-green-50 rounded-full px-3 py-1">
                 In stock
               </span>
-            ) : (
-              <span className="inline-flex items-center gap-1.5 text-sm text-red-700 bg-red-50 rounded-full px-3 py-1">
-                Out of stock
+            )}
+            {soldThisWeek >= MIN_SALES_TO_SHOW && (
+              <span className="inline-flex items-center gap-1.5 text-sm text-orange-800 bg-orange-50 rounded-full px-3 py-1">
+                🔥 {soldThisWeek} sold this week
               </span>
             )}
           </div>
+
+          {product.description && (
+            <p className="text-[#525252] mb-6 whitespace-pre-line leading-relaxed">{product.description}</p>
+          )}
 
           <AddToCartButton
             slug={slug}
             productId={product.id}
             name={product.name}
-            price={product.price}
+            price={Number(product.price)}
             image={product.images?.[0] ?? null}
-            inStock={product.stock_quantity > 0}
+            stock={stock}
             accent={accent}
+            storeName={store.name}
+            whatsappNumber={whatsappNumber}
           />
 
-          <a
-              href={`https://wa.me/?text=${whatsappMessage}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3 text-sm text-[#737373] mt-3 hover:text-[#171717] transition-colors"
-            >
-              <BrandIcon icon="Whatsapp" className="w-4 h-4" />
-              Or order via WhatsApp instead
-            </a>
+          {stock <= 0 && <RestockForm slug={slug} productId={product.id} storeName={store.name} accent={accent} />}
+
+          {store.is_verified && (
+            <div className="mt-6 rounded-lg bg-[#fafafa] px-3 py-2.5 text-xs text-[#525252]">
+              <VerifiedBadge variant="inline" />
+              <span> — {store.name}&apos;s identity was checked by Bitvora before they could sell here.</span>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -1,10 +1,11 @@
+// CSS variables come from lib/fonts.ts (next/font), set on <html>.
 export const DISPLAY_FONTS: Record<string, string> = {
-  editorial: 'Fraunces',
-  classic: 'Playfair Display',
-  modern: 'Sora',
-  playful: 'Bricolage Grotesque',
-  minimal: 'Inter',
-  warm: 'Lora',
+  editorial: 'var(--font-fraunces), serif',
+  classic: 'var(--font-playfair), serif',
+  modern: 'var(--font-sora), sans-serif',
+  playful: 'var(--font-bricolage), sans-serif',
+  minimal: 'var(--font-inter), sans-serif',
+  warm: 'var(--font-lora), serif',
 }
 
 export const SCALE_CLASSES: Record<string, { hero: string; section: string; tile: string; cta: string }> = {

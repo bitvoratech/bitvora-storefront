@@ -18,7 +18,7 @@ export function OnboardingChecklist({ items }: { items: ChecklistItem[] }) {
             <div className="flex items-center gap-2.5">
               <div
                 className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                  item.done ? 'bg-palm-600' : 'bg-white border border-sand-200'
+                  item.done ? 'bg-palm-600' : 'bg-white dark:bg-sand-100 border border-sand-200'
                 }`}
               >
                 {item.done && <Check className="w-3 h-3 text-white" />}

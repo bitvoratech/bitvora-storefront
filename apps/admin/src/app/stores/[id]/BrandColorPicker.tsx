@@ -45,6 +45,8 @@ export function BrandColorPicker({ storeId, initialColor }: { storeId: string; i
             type="button"
             onClick={() => handleSelect(preset.value)}
             title={preset.name}
+            aria-label={preset.name}
+            aria-pressed={color === preset.value}
             className={`w-9 h-9 rounded-full border-2 transition-all ${
               color === preset.value ? 'border-ink scale-110' : 'border-transparent hover:scale-105'
             }`}

@@ -13,12 +13,14 @@ type Order = {
   total: number
   status: string
   created_at: string
+  payment_method?: string
+  payment_proof_url?: string | null
 }
 
 const STATUSES = ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled']
 
-export function OrdersTable({ storeId, orders }: { storeId: string; orders: Order[] }) {
-  const [statusFilter, setStatusFilter] = useState('all')
+export function OrdersTable({ storeId, orders, initialStatus = 'all' }: { storeId: string; orders: Order[]; initialStatus?: string }) {
+  const [statusFilter, setStatusFilter] = useState(initialStatus)
 
   const counts = useMemo(() => {
     const c: Record<string, number> = { all: orders.length }
@@ -77,6 +79,14 @@ export function OrdersTable({ storeId, orders }: { storeId: string; orders: Orde
             >
               <div className="min-w-0">
                 <p className="font-medium text-sm truncate">{order.customer_name}</p>
+                <p className="text-[11px] font-mono text-ink/40">
+                  #{order.id.slice(0, 8).toUpperCase()}
+                  {order.status === 'pending' && order.payment_method === 'bank_transfer' && (
+                    <span className={`ml-2 font-sans font-medium ${order.payment_proof_url ? 'text-pepper-600' : 'text-ink/40'}`}>
+                      {order.payment_proof_url ? '· Proof to verify' : '· Awaiting payment'}
+                    </span>
+                  )}
+                </p>
                 <p className="text-xs text-ink/50 font-mono sm:hidden">{order.customer_phone}</p>
               </div>
               <p className="text-sm text-ink/60 font-mono hidden sm:block">{order.customer_phone}</p>

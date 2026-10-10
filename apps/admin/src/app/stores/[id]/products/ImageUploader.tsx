@@ -57,7 +57,9 @@ export function ImageUploader({ initialImages = [] }: { initialImages?: string[]
               <button
                 type="button"
                 onClick={() => removeImage(url)}
-                className="absolute -top-1.5 -right-1.5 bg-pepper-600 text-white rounded-full w-5 h-5 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Remove image"
+                // Always visible on touch screens, which have no hover.
+                className="absolute -top-1.5 -right-1.5 bg-pepper-600 text-white rounded-full w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               >
                 <Close className="w-3 h-3" />
               </button>

@@ -20,7 +20,7 @@ export function OnboardingProgress({
   return (
     <Link
       href={nextStep?.href || `/stores/${storeId}/customize`}
-      className="flex items-center gap-4 rounded-[var(--radius-card)] border border-sand-200 bg-white p-3.5 mb-6 hover:border-indigo-600/40 transition-colors"
+      className="flex items-center gap-4 rounded-[var(--radius-card)] border border-sand-200 bg-white dark:bg-sand-100 p-3.5 mb-6 hover:border-indigo-600/40 transition-colors"
     >
       <div className="relative w-8 h-8 shrink-0">
         <svg width="32" height="32" className="-rotate-90">

@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Home, Plus, Grid, PackageBox, Storefront, Receipt, User, Users } from 'switch-icons'
-import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout } from '@tabler/icons-react'
+import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
@@ -193,6 +193,7 @@ export function Sidebar({
         { href: `/stores/${storeId}`, icon: Grid, label: 'Overview' },
         { href: `/stores/${storeId}/products`, icon: PackageBox, label: 'Products' },
         { href: `/stores/${storeId}/orders`, icon: Receipt, label: 'Orders' },
+        { href: `/stores/${storeId}/delivery`, icon: IconTruckDelivery, label: 'Delivery' },
         { href: `/stores/${storeId}/customize`, icon: IconPalette, label: 'Customize' },
       ]
     : []
@@ -227,6 +228,8 @@ export function Sidebar({
         {/* Collapse toggle — floats on the edge */}
         <button
           onClick={() => setCollapsed((v) => !v)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          aria-expanded={!collapsed}
           className="hidden lg:flex absolute -right-3 top-8 z-50 w-6 h-6 rounded-full bg-white dark:bg-sand-100 shadow-md items-center justify-center text-indigo-900 dark:text-ink hover:bg-sand-100 dark:hover:bg-sand-200 transition-colors"
         >
           <IconChevronRight className={`w-3.5 h-3.5 transition-transform ${collapsed ? '' : 'rotate-180'}`} stroke={2} />
@@ -278,6 +281,7 @@ export function Sidebar({
         <div className="relative p-3 border-t border-white/10 space-y-0.5">
           <ThemeToggle collapsed={collapsed} />
           <button
+            aria-label={collapsed ? 'Help' : undefined}
             className={`group relative w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-indigo-100/70 hover:bg-white/5 hover:text-white transition-colors ${
               collapsed ? 'justify-center' : ''
             }`}
@@ -292,6 +296,7 @@ export function Sidebar({
           </button>
           <button
             onClick={handleLogout}
+            aria-label={collapsed ? 'Log out' : undefined}
             className={`group relative w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-pepper-600/90 hover:bg-pepper-600/10 hover:text-pepper-600 transition-colors ${
               collapsed ? 'justify-center' : ''
             }`}

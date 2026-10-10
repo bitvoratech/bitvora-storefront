@@ -12,7 +12,7 @@ export async function TopBar() {
   const initial = merchant?.full_name?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || '?'
 
   return (
-    <div className="hidden lg:flex items-center justify-end gap-3 border-b border-sand-200 bg-white px-8 py-3">
+    <div className="hidden lg:flex items-center justify-end gap-3 border-b border-sand-200 bg-white dark:bg-sand-100 px-8 py-3">
       <Link
         href="/profile"
         className="flex items-center gap-2 text-sm text-ink/70 hover:text-ink transition-colors"

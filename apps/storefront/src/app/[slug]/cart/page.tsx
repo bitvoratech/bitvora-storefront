@@ -1,14 +1,23 @@
 'use client'
 
-import { use } from 'react'
+import { use, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { PackageBox, ArrowLeft } from 'switch-icons'
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useCart } from '../../../lib/cart-store'
+import { cldImage } from '../../../lib/cloudinary-image'
 
 export default function CartPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const { items, updateQuantity, removeItem, total } = useCart(slug)
+  // The cart lives in localStorage: render nothing on the server so the first
+  // client render doesn't mismatch (empty server cart vs. stored items).
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+  if (!mounted) return <div className="min-h-[40vh]" aria-busy="true" />
 
   return (
     <div>
@@ -34,7 +43,8 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
         <div key={item.productId} className="flex gap-4 border-b border-[#e5e5e5] pb-5">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-[#fafafa] shrink-0">
             {item.image ? (
-              <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={cldImage(item.image, 200)} alt={item.name} loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
                 <PackageBox className="w-6 h-6 text-[#d4d4d4]" />
@@ -48,15 +58,15 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
             </div>
             <div className="flex items-center justify-between sm:justify-end gap-4">
               <div className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg px-3 py-2">
-                <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} className="p-0.5">
+                <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} aria-label={`Decrease quantity of ${item.name}`} className="p-0.5">
                   <IconMinus className="w-3.5 h-3.5" stroke={1.75} />
                 </button>
-                <span className="text-sm font-mono w-4 text-center">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} className="p-0.5">
+                <span className="text-sm font-mono min-w-4 text-center" aria-live="polite">{item.quantity}</span>
+                <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} aria-label={`Increase quantity of ${item.name}`} className="p-0.5">
                   <IconPlus className="w-3.5 h-3.5" stroke={1.75} />
                 </button>
               </div>
-              <button onClick={() => removeItem(item.productId)} className="text-[#a3a3a3] hover:text-red-600 p-1">
+              <button onClick={() => removeItem(item.productId)} aria-label={`Remove ${item.name} from cart`} className="text-[#737373] hover:text-red-600 p-1">
                 <IconTrash className="w-4 h-4" stroke={1.75} />
               </button>
             </div>
@@ -71,7 +81,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
                 <span className="text-[#737373]">Subtotal</span>
                 <span className="font-mono">₦{total.toLocaleString()}</span>
               </div>
-              <p className="text-xs text-[#a3a3a3] mb-4">Delivery calculated at checkout</p>
+              <p className="text-xs text-[#737373] mb-4">Delivery calculated at checkout</p>
               <Link
                 href={`/${slug}/checkout`}
                 className="flex items-center justify-center w-full rounded-lg px-4 py-3 text-sm font-medium bg-[#171717] text-white hover:opacity-90 transition-opacity"

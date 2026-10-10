@@ -3,54 +3,104 @@
 import { use, useEffect, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { createOrder } from './actions'
-import { ArrowLeft, AlertTriangle,Upload, Check } from 'switch-icons'
+import { ArrowLeft, AlertTriangle, Upload, Check } from 'switch-icons'
 import Link from 'next/link'
-import { DELIVERY_ZONES } from '../../../lib/delivery-zones'
 import { useCart } from '../../../lib/cart-store'
 import { uploadToCloudinary } from '../../../lib/cloudinary-upload'
+import { CopyButton } from '../../../components/CopyButton'
+import { VerifiedBadge } from '../../../components/VerifiedBadge'
 
+type DeliveryMethod = 'pickup' | 'delivery'
+type PaymentMethod = 'bank_transfer' | 'pay_on_delivery'
+
+// Shape returned by /api/store-id — the merchant's own checkout settings.
+type CheckoutStore = {
+  id: string
+  bank_name: string | null
+  account_number: string | null
+  account_name: string | null
+  pickup_enabled: boolean
+  pickup_address: string | null
+  delivery_note: string | null
+  free_delivery_min: number | null
+  pay_on_delivery_enabled: boolean
+  is_verified: boolean
+  delivery_zones: { area: string; fee: number }[]
+}
+
+const inputClass =
+  'w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]'
+
+function OptionButton({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      onClick={onClick}
+      className={`rounded-lg border px-3 py-3 text-sm text-left ${
+        selected ? 'border-[#171717] bg-[#fafafa] font-medium' : 'border-[#e5e5e5]'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
 
 export default function CheckoutPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
   const router = useRouter()
   const { items, total, clear } = useCart(slug)
 
-
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
     () => false,
   )
-  const [storeId, setStoreId] = useState<string | null>(null)
-  const [bankDetails, setBankDetails] = useState<{ bank_name: string; account_number: string; account_name: string } | null>(null)
+  const [store, setStore] = useState<CheckoutStore | null>(null)
   const [proofUrl, setProofUrl] = useState('')
   const [uploadingProof, setUploadingProof] = useState(false)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
   const [email, setEmail] = useState('')
-  const [deliveryMethod, setDeliveryMethod] = useState<'pickup' | 'delivery'>('delivery')
-  const [area, setArea] = useState(DELIVERY_ZONES[0].area)
-  const [paymentMethod, setPaymentMethod] = useState<'bank_transfer' | 'pay_on_delivery'>('bank_transfer')
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery')
+  const [area, setArea] = useState('')
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank_transfer')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch(`/api/store-id?slug=${encodeURIComponent(slug)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
-      .then((d) => {
-        setStoreId(d.id)
-        setBankDetails({ bank_name: d.bank_name, account_number: d.account_number, account_name: d.account_name })
+      .then((d: CheckoutStore) => {
+        setStore(d)
+        // Default to whatever this store actually offers.
+        setDeliveryMethod(d.delivery_zones.length > 0 ? 'delivery' : 'pickup')
+        setArea(d.delivery_zones[0]?.area ?? '')
+        setPaymentMethod(d.account_number ? 'bank_transfer' : 'pay_on_delivery')
       })
       .catch(() => setError('This store is not taking orders right now. Please try again later.'))
   }, [slug])
 
-  const deliveryFee = deliveryMethod === 'delivery'
-    ? DELIVERY_ZONES.find((z) => z.area === area)?.fee ?? 0
-    : 0
+  const zones = store?.delivery_zones ?? []
+  const offersDelivery = zones.length > 0
+  const offersPickup = !!store?.pickup_enabled
+  const offersBankTransfer = !!store?.account_number
+  const offersPayOnDelivery = !!store?.pay_on_delivery_enabled
+  const canCheckout = !!store && (offersDelivery || offersPickup) && (offersBankTransfer || offersPayOnDelivery)
 
+  const zoneFee = zones.find((z) => z.area === area)?.fee ?? 0
+  const freeDeliveryApplies =
+    deliveryMethod === 'delivery' && store?.free_delivery_min != null && total >= store.free_delivery_min
+  // Display only — the server recomputes the fee from the store's zones.
+  const deliveryFee = deliveryMethod === 'delivery' && !freeDeliveryApplies ? zoneFee : 0
   const grandTotal = total + deliveryFee
+  const amountToFreeDelivery =
+    deliveryMethod === 'delivery' && store?.free_delivery_min != null && !freeDeliveryApplies
+      ? store.free_delivery_min - total
+      : 0
 
-    async function handleProofUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleProofUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploadingProof(true)
@@ -64,11 +114,15 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
     }
   }
 
-      async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!storeId) return
+    if (!store || !canCheckout) return
     if (paymentMethod === 'bank_transfer' && !proofUrl) {
       setError('Please upload proof of payment before placing your order.')
+      return
+    }
+    if (deliveryMethod === 'delivery' && !area) {
+      setError('Choose a delivery area.')
       return
     }
     setLoading(true)
@@ -77,7 +131,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
     let result: Awaited<ReturnType<typeof createOrder>>
     try {
       result = await createOrder({
-        storeId,
+        storeId: store.id,
         storeSlug: slug,
         customerName: name,
         customerPhone: phone,
@@ -119,7 +173,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
 
   return (
     <div>
-      <Link href={`/${slug}/cart`} className="flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717] mb-6">
+      <Link href={`/${slug}/cart`} className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717] mb-6">
         <ArrowLeft className="w-4 h-4" />
         Back to cart
       </Link>
@@ -129,89 +183,116 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
       <div className="grid gap-8 sm:grid-cols-3">
         <form onSubmit={handleSubmit} className="sm:col-span-2 space-y-5">
           {error && (
-            <div className="flex items-start gap-2 bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">
+            <div role="alert" className="flex items-start gap-2 bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">
               <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               {error}
             </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Full name</label>
-            <input required value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Phone number</label>
-            <input required value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Email (optional)</label>
-            <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]" />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-2">Delivery method</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['delivery', 'pickup'] as const).map((method) => (
-                <button
-                  key={method}
-                  type="button"
-                  onClick={() => setDeliveryMethod(method)}
-                  className={`rounded-lg border px-3 py-3 text-sm capitalize ${
-                    deliveryMethod === method ? 'border-[#171717] bg-[#fafafa]' : 'border-[#e5e5e5]'
-                  }`}
-                >
-                  {method}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {deliveryMethod === 'delivery' && (
-            <div>
-              <label className="block text-sm font-medium mb-1.5">Delivery area</label>
-              <select value={area} onChange={(e) => setArea(e.target.value)} className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]">
-                {DELIVERY_ZONES.map((z) => (
-                  <option key={z.area} value={z.area}>{z.area} — ₦{z.fee.toLocaleString()}</option>
-                ))}
-              </select>
+          {store && !canCheckout && (
+            <div role="alert" className="flex items-start gap-2 bg-amber-50 text-amber-900 text-sm rounded-lg px-3 py-2">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              This store hasn&apos;t finished setting up checkout yet. Please contact the seller to order.
             </div>
           )}
 
           <div>
-            <label className="block text-sm font-medium mb-2">Payment method</label>
-            <div className="grid grid-cols-2 gap-2">
-              {([
-                { value: 'bank_transfer', label: 'Bank Transfer' },
-                { value: 'pay_on_delivery', label: 'Pay on Delivery' },
-              ] as const).map((pm) => (
-                <button
-                  key={pm.value}
-                  type="button"
-                  onClick={() => setPaymentMethod(pm.value)}
-                  className={`rounded-lg border px-3 py-3 text-sm ${
-                    paymentMethod === pm.value ? 'border-[#171717] bg-[#fafafa]' : 'border-[#e5e5e5]'
-                  }`}
-                >
-                  {pm.label}
-                </button>
-              ))}
-            </div>
+            <label htmlFor="checkout-name" className="block text-sm font-medium mb-1.5">Full name</label>
+            <input id="checkout-name" required autoComplete="name" maxLength={100} value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="checkout-phone" className="block text-sm font-medium mb-1.5">Phone number</label>
+            <input id="checkout-phone" required type="tel" inputMode="tel" autoComplete="tel" placeholder="080..." maxLength={20} value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+          </div>
+          <div>
+            <label htmlFor="checkout-email" className="block text-sm font-medium mb-1.5">Email <span className="font-normal text-[#737373]">(optional)</span></label>
+            <input id="checkout-email" type="email" autoComplete="email" maxLength={200} value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
           </div>
 
-                    {paymentMethod === 'bank_transfer' && (
-            <div className="rounded-lg border border-[#e5e5e5] p-4 space-y-3">
-              {bankDetails?.bank_name ? (
-                <>
-                  <p className="text-sm font-medium">Send payment to:</p>
-                  <div className="text-sm space-y-1 font-mono">
-                    <p>{bankDetails.bank_name}</p>
-                    <p>{bankDetails.account_number}</p>
-                    <p className="font-sans text-[#737373]">{bankDetails.account_name}</p>
-                  </div>
-                </>
-              ) : (
-                <p className="text-sm text-red-600">This store hasn&apos;t set up bank details yet.</p>
+          {(offersDelivery || offersPickup) && (
+            <div>
+              <p id="delivery-method-label" className="block text-sm font-medium mb-2">How do you want to get your order?</p>
+              <div className={`grid gap-2 ${offersDelivery && offersPickup ? 'grid-cols-2' : 'grid-cols-1'}`} role="radiogroup" aria-labelledby="delivery-method-label">
+                {offersDelivery && (
+                  <OptionButton selected={deliveryMethod === 'delivery'} onClick={() => setDeliveryMethod('delivery')}>
+                    Delivery
+                  </OptionButton>
+                )}
+                {offersPickup && (
+                  <OptionButton selected={deliveryMethod === 'pickup'} onClick={() => setDeliveryMethod('pickup')}>
+                    Pickup <span className="text-[#737373] font-normal">· free</span>
+                  </OptionButton>
+                )}
+              </div>
+            </div>
+          )}
+
+          {deliveryMethod === 'delivery' && offersDelivery && (
+            <div>
+              <label htmlFor="checkout-area" className="block text-sm font-medium mb-1.5">Delivery area</label>
+              <select id="checkout-area" value={area} onChange={(e) => setArea(e.target.value)} className={inputClass}>
+                {zones.map((z) => (
+                  <option key={z.area} value={z.area}>
+                    {z.area} — {z.fee === 0 ? 'Free' : `₦${z.fee.toLocaleString()}`}
+                  </option>
+                ))}
+              </select>
+              {freeDeliveryApplies && (
+                <p className="text-xs text-green-700 mt-1.5">Free delivery applied to this order.</p>
               )}
+              {amountToFreeDelivery > 0 && (
+                <p className="text-xs text-[#525252] mt-1.5">
+                  Add ₦{amountToFreeDelivery.toLocaleString()} more to get free delivery.
+                </p>
+              )}
+              {store?.delivery_note && (
+                <p className="text-xs text-[#525252] mt-1.5 whitespace-pre-line">{store.delivery_note}</p>
+              )}
+            </div>
+          )}
+
+          {deliveryMethod === 'pickup' && offersPickup && store?.pickup_address && (
+            <div className="rounded-lg bg-[#fafafa] px-3 py-2.5 text-sm">
+              <p className="font-medium mb-0.5">Pickup from</p>
+              <p className="text-[#525252] whitespace-pre-line">{store.pickup_address}</p>
+            </div>
+          )}
+
+          {(offersBankTransfer || offersPayOnDelivery) && (
+            <div>
+              <p id="payment-method-label" className="block text-sm font-medium mb-2">Payment method</p>
+              <div className={`grid gap-2 ${offersBankTransfer && offersPayOnDelivery ? 'grid-cols-2' : 'grid-cols-1'}`} role="radiogroup" aria-labelledby="payment-method-label">
+                {offersBankTransfer && (
+                  <OptionButton selected={paymentMethod === 'bank_transfer'} onClick={() => setPaymentMethod('bank_transfer')}>
+                    Bank transfer
+                  </OptionButton>
+                )}
+                {offersPayOnDelivery && (
+                  <OptionButton selected={paymentMethod === 'pay_on_delivery'} onClick={() => setPaymentMethod('pay_on_delivery')}>
+                    {deliveryMethod === 'pickup' ? 'Pay at pickup' : 'Pay on delivery'}
+                  </OptionButton>
+                )}
+              </div>
+            </div>
+          )}
+
+          {paymentMethod === 'bank_transfer' && offersBankTransfer && store && (
+            <div className="rounded-lg border border-[#e5e5e5] p-4 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-sm font-medium">Send payment to:</p>
+                {store.is_verified && <VerifiedBadge variant="inline" />}
+              </div>
+              <div className="text-sm space-y-1">
+                <p>{store.bank_name}</p>
+                <div className="flex items-center gap-2">
+                  <p className="font-mono text-base tracking-wide">{store.account_number}</p>
+                  <CopyButton value={store.account_number ?? ''} label="Copy account number" />
+                </div>
+                <p className="text-[#737373]">{store.account_name}</p>
+                <p className="pt-1 text-[#525252]">
+                  Amount: <span className="font-mono font-medium text-[#171717]">₦{grandTotal.toLocaleString()}</span>
+                </p>
+              </div>
 
               <div className="pt-2">
                 {proofUrl ? (
@@ -222,7 +303,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
                 ) : (
                   <label className="flex items-center justify-center gap-2 border border-dashed border-[#e5e5e5] rounded-lg px-3 py-3 text-sm text-[#737373] cursor-pointer hover:border-[#171717] hover:text-[#171717] transition-colors">
                     <Upload className="w-4 h-4" />
-                    {uploadingProof ? 'Uploading...' : 'Upload proof of payment (required)'}
+                    {uploadingProof ? 'Uploading…' : 'Upload a screenshot of your transfer (required)'}
                     <input type="file" accept="image/*" onChange={handleProofUpload} disabled={uploadingProof} className="hidden" />
                   </label>
                 )}
@@ -232,24 +313,24 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
 
           <button
             type="submit"
-            disabled={loading || !storeId || (paymentMethod === 'bank_transfer' && !proofUrl)}
+            disabled={loading || !canCheckout || (paymentMethod === 'bank_transfer' && !proofUrl)}
             className="w-full rounded-lg px-4 py-3.5 text-sm font-medium bg-[#171717] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
           >
-            {loading ? 'Placing order...' : 'Place order'}
+            {loading ? 'Placing order…' : `Place order · ₦${grandTotal.toLocaleString()}`}
           </button>
         </form>
 
         <div>
           <div className="border border-[#e5e5e5] rounded-xl p-5 space-y-2">
             {items.map((item) => (
-              <div key={item.productId} className="flex justify-between text-sm">
+              <div key={item.productId} className="flex justify-between gap-3 text-sm">
                 <span className="text-[#525252]">{item.name} × {item.quantity}</span>
-                <span className="font-mono">₦{(item.price * item.quantity).toLocaleString()}</span>
+                <span className="font-mono shrink-0">₦{(item.price * item.quantity).toLocaleString()}</span>
               </div>
             ))}
             <div className="border-t border-[#e5e5e5] pt-2 mt-2 flex justify-between text-sm">
-              <span className="text-[#737373]">Delivery</span>
-              <span className="font-mono">₦{deliveryFee.toLocaleString()}</span>
+              <span className="text-[#737373]">{deliveryMethod === 'pickup' ? 'Pickup' : 'Delivery'}</span>
+              <span className="font-mono">{deliveryFee === 0 ? 'Free' : `₦${deliveryFee.toLocaleString()}`}</span>
             </div>
             <div className="flex justify-between font-medium pt-1">
               <span>Total</span>

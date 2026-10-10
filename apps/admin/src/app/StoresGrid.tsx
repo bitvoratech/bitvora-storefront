@@ -14,6 +14,7 @@ type Store = {
   is_published: boolean
   ordersThisWeek: number
   revenueThisWeek: number
+  pendingOrders: number
 }
 
 export function StoresGrid({ stores }: { stores: Store[] }) {
@@ -33,9 +34,10 @@ export function StoresGrid({ stores }: { stores: Store[] }) {
           <input
             type="text"
             placeholder="Search stores…"
+            aria-label="Search stores"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white focus:outline-none focus:border-indigo-600"
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 focus:outline-none focus:border-indigo-600"
           />
         </div>
       )}
@@ -60,8 +62,21 @@ export function StoresGrid({ stores }: { stores: Store[] }) {
                     {store.is_published ? 'Published' : 'Draft'}
                   </span>
                 </div>
-                <p className="text-sm text-ink/50 mt-2 capitalize">{store.industry}</p>
+                {store.industry && <p className="text-sm text-ink/50 mt-2 capitalize">{store.industry}</p>}
               </Link>
+
+              {store.pendingOrders > 0 && (
+                <Link
+                  href={`/stores/${store.id}/orders?status=pending`}
+                  className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-marigold-50 px-3 py-2 text-xs font-medium text-ink/80 hover:opacity-90 transition-opacity"
+                >
+                  <span>
+                    <span className="font-mono">{store.pendingOrders}</span>{' '}
+                    {store.pendingOrders === 1 ? 'order needs' : 'orders need'} your attention
+                  </span>
+                  <span aria-hidden="true">→</span>
+                </Link>
+              )}
 
               <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-sand-200">
                 <div>
