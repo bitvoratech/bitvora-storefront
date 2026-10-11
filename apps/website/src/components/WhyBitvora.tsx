@@ -9,7 +9,7 @@ import { fadeUp, slideInLeft, slideInRight, staggerContainer, viewport } from '.
 const PILLARS = [
   {
     icon: IconPalette,
-    image: '/feature/brand.png',
+    image: '/feature/brand.webp',
     tag: 'Real branding',
     title: 'Your store looks like your business, not a rented template.',
     body: 'Most store builders in Nigeria give every merchant the same layout with a different logo pasted on top. We built Bitvora Storefront the other way around: pick your accent color, your font pairing, your hero image, your homepage sections — and the platform disappears behind your brand. Customers see your business. They never see ours.',
@@ -17,14 +17,14 @@ const PILLARS = [
   {
     icon: null,
     brandIcon: 'Whatsapp',
-    image: '/feature/whatsapp.png',
+    image: '/feature/whatsapp.webp',
     tag: 'Sell where you already sell',
     title: 'WhatsApp isn\'t an afterthought — it\'s the default.',
     body: 'Nigerian commerce runs on WhatsApp, and pretending otherwise is why so many "modern" storefronts feel disconnected from how sellers actually operate. Every product on Bitvora Storefront has a built-in "Order via WhatsApp" button that auto-fills the product name, price, and quantity into a message — so customers can order the exact same way they already do, just faster.',
   },
   {
     icon: IconBolt,
-    image: '/feature/demo.jpg',
+    image: '/feature/demo.webp',
     tag: 'Built for real conditions',
     title: 'Fast on a budget phone, on a slow connection, in real Lagos traffic.',
     body: 'A lot of storefront builders are engineered for demo videos on fast wifi and flagship phones — not the reality of most Nigerian shoppers. We built Bitvora Storefront on modern, statically-rendered web architecture specifically so pages load quickly even on mid-range Android devices and inconsistent mobile data. Speed isn\'t a nice-to-have here, it\'s survival.',
@@ -34,7 +34,7 @@ const PILLARS = [
     image: '/feature/ai.svg',
     tag: 'No games',
     title: 'Straightforward pricing, real delivery pricing, no invented numbers.',
-    body: 'We won\'t show you fake trust badges, invented customer counts, or "4.9 star" ratings with no reviews behind them. What you see is what\'s real: transparent checkout with bank transfer and pay-on-delivery, area-based delivery pricing built for Lagos logistics, and a product that tells you honestly what it can and can\'t do yet.',
+    body: 'We won\'t show you fake trust badges, invented customer counts, or "4.9 star" ratings with no reviews behind them. What you see is what\'s real: transparent checkout with bank transfer and pay-on-delivery, delivery areas and fees you set yourself, wherever you sell, and a product that tells you honestly what it can and can\'t do yet.',
   },
 ]
 
@@ -47,8 +47,8 @@ const COMPARISON = [
 
 export function WhyBitvora() {
   return (
-    <section className="bg-paper-dim py-24 md:py-32">
-      <div className="mx-auto max-w-[1240px] px-8">
+    <section className="bg-paper-dim py-16 sm:py-24 md:py-32">
+      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <motion.div
           variants={staggerContainer(0.08)}
           initial="hidden"

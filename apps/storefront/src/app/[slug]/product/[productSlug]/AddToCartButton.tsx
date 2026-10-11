@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { IconMinus, IconPlus, IconShoppingBag } from '@tabler/icons-react'
 import { useCart, MAX_ITEM_QUANTITY } from '../../../../lib/cart-store'
@@ -33,6 +33,18 @@ export function AddToCartButton({
   const [quantity, setQuantity] = useState(1)
   const router = useRouter()
   const maxQuantity = Math.max(1, Math.min(stock, MAX_ITEM_QUANTITY))
+
+  // Phones: once the main buttons scroll out of view, a sticky bottom bar
+  // keeps price + Buy now within thumb reach.
+  const actionsRef = useRef<HTMLDivElement>(null)
+  const [showStickyBar, setShowStickyBar] = useState(false)
+  useEffect(() => {
+    const el = actionsRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(([entry]) => setShowStickyBar(!entry.isIntersecting), { threshold: 0 })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
   const item = { productId, name, price, image }
 
   function handleAdd() {
@@ -61,7 +73,26 @@ export function AddToCartButton({
     : null
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5" ref={actionsRef}>
+      <div
+        className={`sm:hidden fixed inset-x-0 bottom-0 z-20 border-t border-[#e5e5e5] bg-white/95 backdrop-blur px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-3 transition-transform duration-200 ${
+          showStickyBar ? 'translate-y-0' : 'translate-y-full'
+        }`}
+        aria-hidden={!showStickyBar}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-xs text-[#737373] truncate">{name}</p>
+          <p className="font-mono font-semibold">₦{price.toLocaleString()}</p>
+        </div>
+        <button
+          onClick={handleBuyNow}
+          tabIndex={showStickyBar ? 0 : -1}
+          className="shrink-0 rounded-lg px-6 py-3 text-sm font-medium text-white"
+          style={{ backgroundColor: accent }}
+        >
+          Buy now
+        </button>
+      </div>
       <div className="flex items-center gap-3 mb-1">
         <span className="text-sm text-[#525252]" id="qty-label">Quantity</span>
         <div className="flex items-center border border-[#e5e5e5] rounded-lg" role="group" aria-labelledby="qty-label">

@@ -76,8 +76,14 @@ export default async function StorePage({
     .eq('store_id', store.id)
     .eq('is_active', true)
   const totalProducts = allProducts?.length ?? 0
-  const categories = [...new Set((allProducts ?? []).map((p) => p.category?.trim()).filter(Boolean) as string[])]
-    .sort((a, b) => a.localeCompare(b))
+  // Case-insensitive: "Jewelry" and "jewelry" are one chip (chips render
+  // capitalised, so two would look identical but each show half the items).
+  const categoryByKey = new Map<string, string>()
+  for (const p of allProducts ?? []) {
+    const c = p.category?.trim()
+    if (c && !categoryByKey.has(c.toLowerCase())) categoryByKey.set(c.toLowerCase(), c)
+  }
+  const categories = [...categoryByKey.values()].sort((a, b) => a.localeCompare(b))
 
   let productQuery = supabase
     .from('products')
@@ -90,7 +96,9 @@ export default async function StorePage({
   for (const word of query.split(' ').filter(Boolean).slice(0, 5)) {
     productQuery = productQuery.or(`name.ilike.%${word}%,description.ilike.%${word}%,category.ilike.%${word}%`)
   }
-  if (category) productQuery = productQuery.eq('category', category)
+  // ilike with no wildcards = case-insensitive equality; escape LIKE's own
+  // wildcards so a category containing % or _ matches literally.
+  if (category) productQuery = productQuery.ilike('category', category.replace(/[\\%_]/g, (ch) => `\\${ch}`))
 
   productQuery =
     sort === 'price_asc'
@@ -120,7 +128,7 @@ export default async function StorePage({
   let showingSimilar = false
   if (query && products.length === 0) {
     const { data: similar } = await supabase.rpc('similar_products', { p_store_id: store.id, p_query: query, p_limit: 12 })
-    const matches = ((similar as typeof products | null) ?? []).filter((p) => !category || p.category === category)
+    const matches = ((similar as typeof products | null) ?? []).filter((p) => !category || p.category?.trim().toLowerCase() === category.toLowerCase())
     if (matches.length > 0) {
       products = matches
       showingSimilar = true
@@ -176,9 +184,15 @@ function renderSection(section: { type: string; config: unknown }) {
     const tiles = ((section.config as { tiles?: { heading: string; image_url: string; cta_text: string }[] })?.tiles || []).filter((t) => t.heading)
     if (tiles.length === 0) return null
     return (
-      <div key="banner_grid" className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-16">
+      // Phones: a swipeable row of shorter tiles, so shoppers reach products
+      // without scrolling past three full-height blocks. Larger screens: grid.
+      <div
+        key="banner_grid"
+        className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-12 sm:mb-16 flex sm:grid sm:grid-cols-3 gap-3 sm:gap-4 overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden"
+        style={{ scrollbarWidth: 'none' }}
+      >
         {tiles.map((tile, i) => (
-          <div key={i} className="relative h-[280px] rounded-2xl overflow-hidden">
+          <div key={i} className="relative shrink-0 w-[78%] sm:w-auto snap-start h-[200px] sm:h-[280px] rounded-2xl overflow-hidden">
             {tile.image_url ? (
               <img src={cldImage(tile.image_url, 800)} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover" />
             ) : (
@@ -289,7 +303,9 @@ return (
       <div className="text-center py-16 max-w-sm mx-auto">
         <IconSearchOff className="w-8 h-8 text-[#a3a3a3] mx-auto mb-3" stroke={1.5} />
         <p className="font-medium mb-1">Nothing matches {query ? `“${query}”` : 'that filter'}</p>
-        <p className="text-sm text-[#737373] mb-5">Try a shorter word, check the spelling, or browse everything.</p>
+        <p className="text-sm text-[#737373] mb-5">
+          {query ? 'Try a shorter word, check the spelling, or browse everything.' : 'Nothing here right now — browse everything instead.'}
+        </p>
         <div className="flex flex-col gap-2 items-center">
           <Link
             href={`/${slug}`}

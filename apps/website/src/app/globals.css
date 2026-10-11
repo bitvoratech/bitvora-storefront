@@ -1,3 +1,10 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap');
 @import "tailwindcss";
 @import "../../../../packages/config/tailwind-tokens.css";
+
+/* Fonts are self-hosted via next/font (see app/layout.tsx); point the shared
+   tokens at those instead of the Google Fonts family names. */
+@theme inline {
+  --font-display: var(--font-space-grotesk), "Space Grotesk", sans-serif;
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), "IBM Plex Mono", monospace;
+}

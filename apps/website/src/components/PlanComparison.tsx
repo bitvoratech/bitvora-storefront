@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { motion } from "motion/react";
 import { IconCheck, IconMinus } from "@tabler/icons-react";
 import { fadeUp, viewport } from "../lib/motion";
@@ -27,6 +28,11 @@ function CellValue({ value }: { value: Cell }) {
 }
 
 export function PlanComparison() {
+  // Phones show one plan column at a time (picked below) instead of a table
+  // that silently scrolls sideways. Starts on the featured plan.
+  const [mobilePlan, setMobilePlan] = useState(Math.max(0, PLANS.findIndex((p) => p.featured)));
+  const col = (i: number) => (i === mobilePlan ? "" : "hidden sm:table-cell");
+
   return (
     <motion.div
       variants={fadeUp}
@@ -40,19 +46,38 @@ export function PlanComparison() {
         <p className="mt-2 text-[14.5px] text-ink-soft">Exactly what you get, and where each limit sits.</p>
       </div>
 
-      {/* Scrolls sideways on small screens rather than cramming three columns */}
+      <div
+        className="sm:hidden mb-3 grid grid-cols-3 gap-1 rounded-xl bg-sand-100 p-1"
+        role="group"
+        aria-label="Choose a plan to compare"
+      >
+        {PLANS.map((p, i) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => setMobilePlan(i)}
+            aria-pressed={i === mobilePlan}
+            className={`rounded-lg py-2 text-[14px] font-semibold transition-colors ${
+              i === mobilePlan ? "bg-white text-indigo-600 shadow-sm" : "text-ink-soft"
+            }`}
+          >
+            {p.name}
+          </button>
+        ))}
+      </div>
+
       <div className="overflow-x-auto rounded-2xl border border-sand-300">
-        <table className="w-full min-w-[640px] border-collapse text-left">
+        <table className="w-full sm:min-w-[640px] border-collapse text-left">
           <thead>
             <tr className="border-b border-sand-300 bg-sand-100">
               <th scope="col" className="w-[40%] px-4 py-4 text-[13px] font-semibold text-ink-soft sm:px-5">
                 <span className="sr-only">Feature</span>
               </th>
-              {PLANS.map((p) => (
+              {PLANS.map((p, i) => (
                 <th
                   key={p.id}
                   scope="col"
-                  className={`px-3 py-4 text-center font-display text-base font-bold ${
+                  className={`${col(i)} px-3 py-4 text-center font-display text-base font-bold ${
                     p.featured ? "bg-indigo-50 text-indigo-600" : ""
                   }`}
                 >
@@ -80,7 +105,7 @@ export function PlanComparison() {
                   {row.values.map((v, i) => (
                     <td
                       key={PLANS[i].id}
-                      className={`px-3 py-3 text-center ${PLANS[i].featured ? "bg-indigo-50/50" : ""}`}
+                      className={`${col(i)} px-3 py-3 text-center ${PLANS[i].featured ? "bg-indigo-50/50" : ""}`}
                     >
                       <CellValue value={v} />
                     </td>

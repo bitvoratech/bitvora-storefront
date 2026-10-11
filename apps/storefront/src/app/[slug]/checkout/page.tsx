@@ -29,7 +29,7 @@ type CheckoutStore = {
 }
 
 const inputClass =
-  'w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]'
+  'w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]'
 
 function OptionButton({ selected, onClick, children }: { selected: boolean; onClick: () => void; children: React.ReactNode }) {
   return (

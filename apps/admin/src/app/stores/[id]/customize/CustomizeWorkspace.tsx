@@ -361,7 +361,7 @@ export function CustomizeWorkspace({
                 onChange={(e) => setAbout({ ...about, body: e.target.value })}
                 rows={5}
                 placeholder="Tell customers about your brand..."
-                className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2.5 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
               />
             </div>
           </div>

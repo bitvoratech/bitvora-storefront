@@ -51,7 +51,7 @@ export function ShareStoreCard({ url, storeName, isPublished }: { url: string; s
           value={displayUrl}
           aria-label="Store link"
           onFocus={(e) => e.currentTarget.select()}
-          className="flex-1 min-w-0 rounded-lg border border-sand-200 bg-sand-100 px-3 py-2 text-sm font-mono text-ink/80 outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+          className="flex-1 min-w-0 rounded-lg border border-sand-200 bg-sand-100 px-3 py-2 text-base sm:text-sm font-mono text-ink/80 outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
         />
         <div className="flex gap-2">
           <button

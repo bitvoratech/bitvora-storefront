@@ -71,8 +71,8 @@ export function Steps() {
   const lineScale = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
-    <section id="how-it-works" className="bg-paper-dim py-24">
-      <div className="mx-auto max-w-[1240px] px-8">
+    <section id="how-it-works" className="bg-paper-dim py-16 sm:py-24">
+      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <motion.div
           variants={staggerContainer(0.08)}
           initial="hidden"

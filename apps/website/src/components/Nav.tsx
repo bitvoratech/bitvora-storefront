@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { IconMenu2, IconX } from '@tabler/icons-react'
+import { ADMIN_URL } from '../lib/plans'
 
 const LINKS = [
   { href: '/pricing', label: 'Pricing' },
@@ -44,7 +45,7 @@ export function Nav() {
 
         <div className="flex items-center gap-2">
           <a
-            href="https://bitvora-admin.vercel.app/signup"
+            href={`${ADMIN_URL}/signup`}
             className="shrink-0 rounded-lg bg-indigo-600 hidden md:inline-block text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             Get started
@@ -75,7 +76,7 @@ export function Nav() {
           ))}
 
           <a
-            href="https://bitvora-admin.vercel.app/signup"
+            href={`${ADMIN_URL}/signup`}
             className="shrink-0 rounded-lg bg-indigo-600 text-center text-white text-sm font-medium px-3  py-2 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             Get started

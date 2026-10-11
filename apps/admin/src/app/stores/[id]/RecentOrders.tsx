@@ -55,7 +55,17 @@ export function RecentOrders({ storeId, orders }: { storeId: string; orders: Ord
                   className="cursor-pointer hover:bg-sand-100/60 transition-colors"
                   onClick={() => router.push(`/stores/${storeId}/orders/${order.id}`)}
                 >
-                  <TableCell className="font-medium">{order.customer_name}</TableCell>
+                  <TableCell className="font-medium max-w-[9rem] sm:max-w-none">
+                    {/* Real link (not just the row onClick) so it works by keyboard;
+                        truncates so long names can't push the table sideways on phones. */}
+                    <Link
+                      href={`/stores/${storeId}/orders/${order.id}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="block truncate hover:text-indigo-600"
+                    >
+                      {order.customer_name}
+                    </Link>
+                  </TableCell>
                   <TableCell className="text-center font-mono">
                     ₦{Number(order.total).toLocaleString()}
                   </TableCell>

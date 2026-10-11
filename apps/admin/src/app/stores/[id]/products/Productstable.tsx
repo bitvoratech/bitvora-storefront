@@ -75,7 +75,7 @@ export function ProductsTable({
             aria-label="Search products"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3 py-2 text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 focus:outline-none focus:border-indigo-600"
+            className="w-full pl-9 pr-3 py-2 text-base sm:text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 focus:outline-none focus:border-indigo-600"
           />
         </div>
         {categories.length > 1 && (
@@ -83,7 +83,7 @@ export function ProductsTable({
             value={category}
             onChange={(e) => setCategory(e.target.value)}
             aria-label="Filter by category"
-            className="text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2 capitalize focus:outline-none focus:border-indigo-600"
+            className="text-base sm:text-sm rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2 capitalize focus:outline-none focus:border-indigo-600"
           >
             {categories.map((c) => (
               <option key={c} value={c}>{c === 'all' ? 'All categories' : c}</option>

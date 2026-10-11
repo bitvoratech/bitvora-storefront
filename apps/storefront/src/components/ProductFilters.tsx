@@ -45,7 +45,7 @@ export function ProductFilters({
           aria-label="Filter by category"
         >
           {chips.map((c) => {
-            const selected = c === activeCategory
+            const selected = c.toLowerCase() === activeCategory.toLowerCase()
             return (
               <button
                 key={c || 'all'}
@@ -69,7 +69,7 @@ export function ProductFilters({
           id="product-sort"
           value={sort}
           onChange={(e) => update('sort', e.target.value === 'newest' ? '' : e.target.value)}
-          className="rounded-lg border border-[#e5e5e5] bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
+          className="rounded-lg border border-[#e5e5e5] bg-white px-3 py-2 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
         >
           {SORTS.map((s) => (
             <option key={s.value} value={s.value}>{s.label}</option>

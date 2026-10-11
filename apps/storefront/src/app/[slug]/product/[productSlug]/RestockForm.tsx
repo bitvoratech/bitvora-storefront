@@ -50,7 +50,7 @@ export function RestockForm({ slug, productId, storeName, accent }: { slug: stri
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name (optional)"
-            className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
+            className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
           />
         </div>
         <div>
@@ -65,7 +65,7 @@ export function RestockForm({ slug, productId, storeName, accent }: { slug: stri
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="WhatsApp number"
-            className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
+            className="w-full rounded-lg border border-[#e5e5e5] px-3 py-2.5 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#171717]"
           />
         </div>
       </div>

@@ -53,7 +53,7 @@ export function StoreSearch({ slug, storeName }: { slug: string; storeName: stri
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={`Search ${storeName}`}
-        className="w-full rounded-full border border-[#cfcfcf] bg-white pl-9 pr-24 py-2.5 text-sm text-[#171717] placeholder:text-[#737373] shadow-sm outline-none hover:border-[#a3a3a3] focus-visible:border-[#171717] focus-visible:ring-2 focus-visible:ring-[#171717]/20 [&::-webkit-search-cancel-button]:hidden"
+        className="w-full rounded-full border border-[#cfcfcf] bg-white pl-9 pr-24 py-2.5 text-base sm:text-sm text-[#171717] placeholder:text-[#737373] shadow-sm outline-none hover:border-[#a3a3a3] focus-visible:border-[#171717] focus-visible:ring-2 focus-visible:ring-[#171717]/20 [&::-webkit-search-cancel-button]:hidden"
       />
       {value && (
         <button

@@ -169,6 +169,8 @@ export default async function ProductPage({
           )}
         </div>
       </div>
+      {/* Room for the sticky mobile buy bar so it never covers the footer. */}
+      <div className="h-20 sm:hidden" aria-hidden="true" />
     </div>
   )
 }

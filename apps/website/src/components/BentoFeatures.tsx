@@ -19,8 +19,8 @@ const ORDERS = [
 
 export function BentoFeatures() {
   return (
-    <section id="features" className="py-24">
-      <div className="mx-auto max-w-[1240px] px-8">
+    <section id="features" className="py-16 sm:py-24">
+      <div className="mx-auto max-w-[1240px] px-5 sm:px-8">
         <motion.div
           variants={staggerContainer(0.08)}
           initial="hidden"
@@ -104,7 +104,7 @@ export function BentoFeatures() {
             iconBg="rgba(62,110,82,0.12)"
             iconColor="#3E6E52"
             title="Nigeria-first checkout"
-            body="Bank transfer, pay on delivery, and area-based pricing for Lagos out of the box."
+            body="Bank transfer, pay on delivery, and delivery fees you set for every area you serve."
             className="col-span-2 md:col-span-3"
           />
           <Tile

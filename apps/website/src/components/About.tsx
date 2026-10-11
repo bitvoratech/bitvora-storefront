@@ -6,13 +6,13 @@ import { IconArrowRight } from "@tabler/icons-react";
 
 export function About() {
   return (
-    <section id="about" className="py-24">
+    <section id="about" className="py-16 sm:py-24">
       <motion.div
         variants={staggerContainer(0.12)}
         initial="hidden"
         whileInView="show"
         viewport={viewport}
-        className="mx-auto max-w-[1240px] px-8 grid md:grid-cols-2 gap-12 items-center"
+        className="mx-auto max-w-[1240px] px-5 sm:px-8 grid md:grid-cols-2 gap-12 items-center"
       >
         <motion.div variants={slideInLeft}>
           <span className="mb-3 block text-[12.5px] font-bold uppercase tracking-widest text-pepper-600">

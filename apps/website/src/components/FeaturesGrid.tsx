@@ -14,7 +14,7 @@ const FEATURES = [
   {
     icon: Waybill,
     title: 'Nigeria-first checkout',
-    description: 'Bank transfer, pay on delivery, and area-based delivery pricing for Lagos out of the box.',
+    description: 'Bank transfer, pay on delivery, and delivery fees you set for every area you serve.',
   },
   {
     icon: AiSpark,
@@ -35,7 +35,7 @@ const FEATURES = [
 
 export function FeaturesGrid() {
   return (
-    <section id="features" className="max-w-6xl mx-auto px-6 py-20">
+    <section id="features" className="max-w-6xl mx-auto px-6 py-14 sm:py-20">
       <div className="text-center mb-14 max-w-xl mx-auto">
         <h2 className="font-display font-semibold text-3xl sm:text-4xl mb-3">
           Everything your store needs

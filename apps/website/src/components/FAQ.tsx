@@ -19,8 +19,8 @@ export function FAQ({ items = FAQS }: { items?: FaqItem[] }) {
   const [open, setOpen] = useState<number | null>(0)
 
   return (
-    <section id="faq" className="py-24">
-      <div className="mx-auto max-w-[760px] px-8">
+    <section id="faq" className="py-16 sm:py-24">
+      <div className="mx-auto max-w-[760px] px-5 sm:px-8">
         <motion.div
           variants={staggerContainer(0.08)}
           initial="hidden"

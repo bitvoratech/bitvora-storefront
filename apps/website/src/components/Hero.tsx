@@ -6,6 +6,7 @@ import { motion } from "motion/react";
 import { AdireStrip } from "./AdireStrip";
 import { fadeUp, staggerContainer, EASE } from "../lib/motion";
 import { hexToRgba, getContrastText } from "../lib/color";
+import { ADMIN_URL, PLANS } from "../lib/plans";
 
 const SWATCHES = [
   { name: "pepper", hex: "#A73A3F" },
@@ -41,11 +42,13 @@ export function Hero() {
         transition={COLOR_TRANSITION}
       />
 
-      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-10 px-8 py-20 md:grid-cols-[1.05fr_0.95fr] md:py-28">
-        {/* Copy — staggers in on mount, one beat after another */}
+      <div className="relative mx-auto grid max-w-[1240px] grid-cols-1 items-center gap-10 px-5 sm:px-8 py-14 sm:py-20 md:grid-cols-[1.05fr_0.95fr] md:py-28">
+        {/* Copy — rendered visible from the server (initial={false}): this is
+            the page's main content, so it shouldn't wait on JavaScript to
+            fade in, especially on mobile data. */}
         <motion.div
           variants={staggerContainer(0.12)}
-          initial="hidden"
+          initial={false}
           animate="show"
         >
           <motion.span
@@ -76,31 +79,33 @@ export function Hero() {
             className="mb-8 max-w-[460px] text-[17px] leading-relaxed text-paper/70"
           >
             Build a fast, beautiful online store made for how Nigerians
-            actually sell — WhatsApp orders, Naira pricing, Lagos delivery,
+            actually sell — WhatsApp orders, Naira pricing, your own delivery fees,
             no code required.
           </motion.p>
 
           <motion.div
             variants={fadeUp}
-            className="mb-10 flex flex-wrap items-center gap-3.5"
+            className="mb-10 flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-3.5"
           >
             <motion.div
               animate={{ backgroundColor: accent }}
               whileHover={{ boxShadow: `0 6px 18px ${hexToRgba(accent, 0.35)}` }}
               transition={COLOR_TRANSITION}
-              style={{ color: accentText }}
+              // Base colour in plain CSS so the button is visible before JS
+              // loads; motion animates it from here when the swatch changes.
+              style={{ color: accentText, backgroundColor: accent }}
               className="rounded-lg"
             >
               <Link
-                href="/signup"
-                className="block rounded-lg px-5 py-3 text-[14.5px] font-semibold transition hover:-translate-y-px"
+                href={`${ADMIN_URL}/signup`}
+                className="block rounded-lg px-5 py-3.5 sm:py-3 text-center text-[15px] sm:text-[14.5px] font-semibold transition hover:-translate-y-px"
               >
-                Start building free
+                Start your store
               </Link>
             </motion.div>
             <Link
               href="#how-it-works"
-              className="rounded-lg border border-paper/30 px-5 py-3 text-[14.5px] font-semibold transition hover:-translate-y-px"
+              className="rounded-lg border border-paper/30 px-5 py-3.5 sm:py-3 text-center text-[15px] sm:text-[14.5px] font-semibold transition hover:-translate-y-px"
             >
               See how it works
             </Link>
@@ -108,11 +113,13 @@ export function Hero() {
 
           <motion.div
             variants={fadeUp}
-            className="flex flex-wrap gap-5 sm:gap-7 max-w-[480px] border-t border-paper/15 pt-6"
+            className="grid grid-cols-3 gap-4 sm:gap-7 max-w-[480px] border-t border-paper/15 pt-6"
           >
-            <Stat value="0" label="stores launched" />
-            <Stat value="0" label="in orders processed" />
-            <Stat value="0 / 5" label="merchant rating" />
+            {/* Concrete promises rather than vanity counters — no zeros on launch day. */}
+            {/* Every plan is paid (see pricing FAQ) — don't imply a free tier. */}
+            <Stat value={`₦${PLANS[0].monthly.toLocaleString()}`} label="a month to start" />
+            <Stat value="Minutes" label="to launch your store" />
+            <Stat value="Verified" label="sellers, NIN/CAC checked" />
           </motion.div>
         </motion.div>
 
@@ -207,6 +214,7 @@ export function Hero() {
                 </span>
                 <motion.span
                   className="relative h-[19px] w-[34px] rounded-full"
+                  style={{ backgroundColor: published ? accent : "#5B5346" }}
                   animate={{ backgroundColor: published ? accent : "#5B5346" }}
                   transition={COLOR_TRANSITION}
                 >
