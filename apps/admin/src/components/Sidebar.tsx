@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Home, Plus, Grid, PackageBox, Storefront, Receipt, User, Users } from 'switch-icons'
-import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield } from '@tabler/icons-react'
+import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
@@ -281,6 +281,9 @@ export function Sidebar({
               <SimpleLink item={{ href: '/owner', icon: Home, label: 'Dashboard' }} active={isActive('/owner')} collapsed={collapsed} onClick={onClose} />
               <SimpleLink item={{ href: '/owner/verifications', icon: IconShieldCheck, label: 'Verifications' }} active={isActive('/owner/verifications')} collapsed={collapsed} onClick={onClose} />
               <SimpleLink item={{ href: '/owner/merchants', icon: Users, label: 'Merchants' }} active={pathname.startsWith('/owner/merchants')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/owner/stores', icon: Storefront, label: 'Stores' }} active={isActive('/owner/stores')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/owner/orders', icon: Receipt, label: 'Orders' }} active={isActive('/owner/orders')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/owner/revenue', icon: IconChartBar, label: 'Revenue' }} active={isActive('/owner/revenue')} collapsed={collapsed} onClick={onClose} />
               {staffRole === 'owner' && (
                 <SimpleLink item={{ href: '/owner/admins', icon: IconUserShield, label: 'Admins' }} active={isActive('/owner/admins')} collapsed={collapsed} onClick={onClose} />
               )}

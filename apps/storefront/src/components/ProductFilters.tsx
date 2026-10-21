@@ -55,7 +55,7 @@ export function ProductFilters({
                 className={`shrink-0 rounded-full border px-3.5 py-1.5 text-sm capitalize transition-colors ${
                   selected ? 'text-white border-transparent' : 'border-[#e5e5e5] text-[#525252] hover:border-[#a3a3a3]'
                 }`}
-                style={selected ? { backgroundColor: accent } : undefined}
+                style={selected ? { backgroundColor: accent, color: 'var(--accent-fg)' } : undefined}
               >
                 {c || 'All'}
               </button>

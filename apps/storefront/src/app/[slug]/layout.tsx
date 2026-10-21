@@ -1,3 +1,4 @@
+import { readableTextOn } from '../../lib/color'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
@@ -50,7 +51,7 @@ export default async function StoreLayout({
   const hasSocial = social.whatsapp || social.instagram || social.facebook || social.tiktok
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white text-[#171717]" style={{ '--accent': accent } as React.CSSProperties}>
+    <div className="min-h-screen overflow-x-hidden bg-white text-[#171717]" style={{ '--accent': accent, '--accent-fg': readableTextOn(accent) } as React.CSSProperties}>
       <header className="border-b border-[#e5e5e5] bg-white/95 backdrop-blur sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <a href={`/${slug}`} className="flex items-center gap-2 font-semibold text-lg min-w-0" aria-label={`${store.name} home`}>

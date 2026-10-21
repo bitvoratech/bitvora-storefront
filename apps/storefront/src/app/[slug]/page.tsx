@@ -150,7 +150,7 @@ function renderSection(section: { type: string; config: unknown }) {
                 : `Welcome to ${currentStore.name}.`)}
             </p>
           )}
-          <a href="#products" className="inline-block w-fit rounded-full px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: accent }}>
+          <a href="#products" className="inline-block w-fit rounded-full px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}>
             {h.cta_text || 'Shop now'}
           </a>
         </div>
@@ -217,7 +217,7 @@ function renderSection(section: { type: string; config: unknown }) {
           <h2 className={`${scale.cta} text-white capitalize leading-snug mb-6 max-w-4xl font-bold`} style={{ fontFamily: displayFont }}>
             {c.heading}
           </h2>
-          <a href="#products" className="inline-block rounded-full px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: accent }}>
+          <a href="#products" className="inline-block rounded-full px-6 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90" style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}>
             {c.cta_text || 'Shop now'}
           </a>
         </div>
@@ -288,7 +288,7 @@ return (
           <Link
             href={`/${slug}`}
             className="rounded-full px-5 py-2.5 text-sm font-medium text-white hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: accent }}
+            style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
           >
             Browse all products
           </Link>

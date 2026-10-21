@@ -36,7 +36,7 @@ export function ProductCard({
   const router = useRouter()
   const [added, setAdded] = useState(false)
   const inStock = product.stock_quantity > 0
-  const cartItem = { productId: product.id, name: product.name, price: Number(product.price), image: product.images?.[0] ?? null }
+  const cartItem = { productId: product.id, name: product.name, price: Number(product.price), image: product.images?.[0] ?? null, maxQuantity: product.stock_quantity }
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
@@ -67,7 +67,7 @@ export function ProductCard({
           ) : badge ? (
             <span
               className="absolute top-2 left-2 text-[10px] uppercase tracking-wide font-semibold text-white rounded-full px-2 py-1 z-10"
-              style={{ backgroundColor: accent }}
+              style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
             >
               {badge}
             </span>
@@ -104,7 +104,7 @@ export function ProductCard({
           onClick={handleBuyNow}
           disabled={!inStock}
           className="rounded-full text-white text-xs font-medium py-2 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ backgroundColor: accent }}
+          style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
         >
           Buy now
         </button>

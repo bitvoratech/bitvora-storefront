@@ -99,7 +99,7 @@ export default async function OwnerOverviewPage() {
 
   const { data: recentStores } = await admin
     .from('stores')
-    .select('id, name, slug, industry, is_published, created_at, merchants!inner(is_owner)')
+    .select('id, name, slug, industry, is_published, created_at, merchant_id, merchants!inner(is_owner)')
     .order('created_at', { ascending: false })
     .limit(6)
 
@@ -167,7 +167,7 @@ export default async function OwnerOverviewPage() {
           {(recentStores ?? []).map((store, i) => {
             const isInternal = (store.merchants as unknown as { is_owner: boolean }).is_owner
             return (
-              <div key={store.id} className={`flex items-center justify-between gap-3 px-4 py-3 ${i !== (recentStores?.length ?? 0) - 1 ? 'border-b border-sand-200' : ''}`}>
+              <Link key={store.id} href={`/owner/merchants/${store.merchant_id}`} className={`flex items-center justify-between gap-3 px-4 py-3 hover:bg-sand-100/60 transition-colors ${i !== (recentStores?.length ?? 0) - 1 ? 'border-b border-sand-200' : ''}`}>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium truncate">{store.name}</p>
@@ -178,7 +178,7 @@ export default async function OwnerOverviewPage() {
                 <span className={`shrink-0 text-[11px] font-medium rounded-full px-2 py-0.5 ${store.is_published ? 'bg-palm-50 text-palm-600' : 'bg-sand-100 text-ink/50'}`}>
                   {store.is_published ? 'Live' : 'Draft'}
                 </span>
-              </div>
+              </Link>
             )
           })}
         </Card>

@@ -4,7 +4,7 @@ import { use, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { PackageBox, ArrowLeft } from 'switch-icons'
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
-import { useCart } from '../../../lib/cart-store'
+import { lineLimit, useCart } from '../../../lib/cart-store'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 
 export default function CartPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -57,16 +57,27 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
               <p className="text-sm text-[#737373] font-mono mt-0.5">₦{item.price.toLocaleString()}</p>
             </div>
             <div className="flex items-center justify-between sm:justify-end gap-4">
-              <div className="flex items-center gap-3 border border-[#e5e5e5] rounded-lg px-3 py-2">
-                <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} aria-label={`Decrease quantity of ${item.name}`} className="p-0.5">
-                  <IconMinus className="w-3.5 h-3.5" stroke={1.75} />
-                </button>
-                <span className="text-sm font-mono min-w-4 text-center" aria-live="polite">{item.quantity}</span>
-                <button onClick={() => updateQuantity(item.productId, item.quantity + 1)} aria-label={`Increase quantity of ${item.name}`} className="p-0.5">
-                  <IconPlus className="w-3.5 h-3.5" stroke={1.75} />
-                </button>
+              <div>
+                {/* 40px buttons: the old 20px ones were hard to hit on a phone. */}
+                <div className="flex items-center border border-[#e5e5e5] rounded-lg">
+                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} aria-label={`Decrease quantity of ${item.name}`} className="w-10 h-10 flex items-center justify-center">
+                    <IconMinus className="w-4 h-4" stroke={1.75} />
+                  </button>
+                  <span className="text-sm font-mono min-w-6 text-center" aria-live="polite">{item.quantity}</span>
+                  <button
+                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                    disabled={item.quantity >= lineLimit(item)}
+                    aria-label={`Increase quantity of ${item.name}`}
+                    className="w-10 h-10 flex items-center justify-center disabled:opacity-30"
+                  >
+                    <IconPlus className="w-4 h-4" stroke={1.75} />
+                  </button>
+                </div>
+                {item.maxQuantity != null && item.quantity >= item.maxQuantity && (
+                  <p className="text-[11px] text-[#737373] mt-1 text-center">Only {item.maxQuantity} in stock</p>
+                )}
               </div>
-              <button onClick={() => removeItem(item.productId)} aria-label={`Remove ${item.name} from cart`} className="text-[#737373] hover:text-red-600 p-1">
+              <button onClick={() => removeItem(item.productId)} aria-label={`Remove ${item.name} from cart`} className="text-[#737373] hover:text-red-600 w-10 h-10 flex items-center justify-center">
                 <IconTrash className="w-4 h-4" stroke={1.75} />
               </button>
             </div>
@@ -84,7 +95,8 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
               <p className="text-xs text-[#737373] mb-4">Delivery calculated at checkout</p>
               <Link
                 href={`/${slug}/checkout`}
-                className="flex items-center justify-center w-full rounded-lg px-4 py-3 text-sm font-medium bg-[#171717] text-white hover:opacity-90 transition-opacity"
+                className="flex items-center justify-center w-full rounded-lg px-4 py-3 text-sm font-medium hover:opacity-90 transition-opacity"
+                style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-fg)' }}
               >
                 Checkout
               </Link>

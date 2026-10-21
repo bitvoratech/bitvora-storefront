@@ -68,7 +68,7 @@ export function StoreSearch({ slug, storeName }: { slug: string; storeName: stri
       <button
         type="submit"
         className="absolute right-1 rounded-full px-3.5 py-1.5 text-xs font-medium text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: 'var(--accent)' }}
+        style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-fg)' }}
       >
         Search
       </button>
