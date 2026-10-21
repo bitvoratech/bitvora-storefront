@@ -12,6 +12,14 @@ import { createClient } from '../../lib/supabase/client'
 
 type Stage = 'phone' | 'otp' | 'details' | 'review'
 
+const STEPS = ['Phone', 'Business details', 'Review']
+
+// Saved numbers are 2348012345678; merchants know them as 0801 234 5678.
+function displayPhone(phone: string) {
+  const m = phone.match(/^234(\d{3})(\d{3})(\d{4})$/)
+  return m ? `0${m[1]} ${m[2]} ${m[3]}` : phone
+}
+
 function ErrorBox({ message }: { message?: string | null }) {
   if (!message) return null
   return (
@@ -50,6 +58,7 @@ export function VerifyWizard({
     : status === 'pending' && nin && cacNumber ? 'review' : 'details'
   const [stage, setStage] = useState<Stage>(initialStage)
   const [phone, setPhone] = useState(initialPhone ?? '')
+  const [editingPhone, setEditingPhone] = useState(!initialPhone)
   const router = useRouter()
 
   const [otpRequestState, otpRequestAction, otpRequestPending] = useActionState(requestPhoneOtp, undefined)
@@ -77,22 +86,40 @@ export function VerifyWizard({
   const stepNumber = stage === 'phone' || stage === 'otp' ? 1 : stage === 'details' ? 2 : 3
 
   return (
-    <div className="max-w-md mx-auto mt-10">
-      <div className="flex items-center gap-2 mb-8">
-        <div className={`h-1.5 flex-1 rounded-full ${stepNumber >= 1 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
-        <div className={`h-1.5 flex-1 rounded-full ${stepNumber >= 2 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
-        <div className={`h-1.5 flex-1 rounded-full ${stepNumber >= 3 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
-      </div>
+    <div>
+      <ol className="grid grid-cols-3 gap-2 mb-8" aria-label="Verification steps">
+        {STEPS.map((label, i) => (
+          <li key={label} aria-current={stepNumber === i + 1 ? 'step' : undefined}>
+            <div className={`h-1.5 rounded-full ${stepNumber >= i + 1 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
+            <p className={`text-xs mt-1.5 ${stepNumber === i + 1 ? 'text-ink font-medium' : 'text-ink/40'}`}>
+              <span className="sr-only">Step {i + 1}: </span>{label}
+            </p>
+          </li>
+        ))}
+      </ol>
 
       {stage === 'phone' && (
         <form action={otpRequestAction}>
           <h1 className="text-2xl font-display font-semibold mb-1">Verify your phone</h1>
           <p className="text-ink/50 text-sm mb-6">
-            We&apos;ll text a 6-digit code to this number.
+            We&apos;ll text a 6-digit code to {editingPhone ? 'your number' : 'the number you signed up with'}.
           </p>
           <ErrorBox message={otpRequestState?.error} />
-          <Label htmlFor="phone">Phone number</Label>
-          <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="080..." required value={phone} onChange={(e) => setPhone(e.target.value)} className="px-2 py-3" />
+          {editingPhone ? (
+            <>
+              <Label htmlFor="phone">Phone number</Label>
+              <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="080..." required value={phone} onChange={(e) => setPhone(e.target.value)} className="px-2 py-3" />
+            </>
+          ) : (
+            // The number came from signup: confirm it rather than retype it.
+            <div className="flex items-center justify-between gap-3 rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-3">
+              <input type="hidden" name="phone" value={phone} />
+              <span className="font-mono text-sm">{displayPhone(phone)}</span>
+              <button type="button" onClick={() => setEditingPhone(true)} className="text-sm text-indigo-600 font-medium">
+                Change
+              </button>
+            </div>
+          )}
           <Button type="submit" disabled={otpRequestPending} className="w-full mt-6">
             {otpRequestPending ? 'Sending code...' : 'Send code'}
           </Button>
@@ -103,7 +130,7 @@ export function VerifyWizard({
         <form action={otpConfirmAction}>
           <h1 className="text-2xl font-display font-semibold mb-1">Enter the code</h1>
           <p className="text-ink/50 text-sm mb-6">
-            We sent a 6-digit code by SMS{sentTo ? ` to ${sentTo}` : ''}. It expires in 10 minutes.
+            We sent a 6-digit code by SMS{sentTo ? ` to ${displayPhone(sentTo)}` : ''}. It expires in 10 minutes.
           </p>
           <ErrorBox message={otpConfirmState?.error} />
           <Label htmlFor="code">Verification code</Label>

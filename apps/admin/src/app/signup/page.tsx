@@ -8,6 +8,8 @@ import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
 import { AlertTriangle, Check } from 'switch-icons'
 import { signUp } from './actions'
+import { PasswordInput } from '../../components/PasswordInput'
+import { MIN_PASSWORD_LENGTH } from '../../lib/password'
 
 export default function SignupPage() {
   const [state, action, pending] = useActionState(signUp, undefined)
@@ -74,7 +76,8 @@ export default function SignupPage() {
         </div>
         <div>
           <Label htmlFor="password">Password</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" required minLength={6} className="px-2 py-3" />
+          <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={MIN_PASSWORD_LENGTH} className="px-2 py-3" />
+          <p className="text-xs text-ink/40 mt-1">At least {MIN_PASSWORD_LENGTH} characters.</p>
         </div>
         {/* Was `bg-ink` — see LoginPage for why that breaks in dark mode. */}
         <Button type="submit" disabled={pending} variant="primary" className="w-full">
