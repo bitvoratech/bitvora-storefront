@@ -5,7 +5,7 @@ import { ArrowLeft } from 'switch-icons'
 import { IconPhone, IconBrandWhatsapp } from '@tabler/icons-react'
 import { StatusBadge } from '../StatusBadge'
 import { createClient } from '../../../../../lib/supabase/server'
-import { cldImage } from '../../../../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { StatusSelector } from './StatusSelector'
 
 /** International digits for wa.me / tel: links; accepts 080…, +234…, 234…. */

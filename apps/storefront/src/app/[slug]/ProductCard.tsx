@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { PackageBox } from 'switch-icons'
 import { useCart } from '../../lib/cart-store'
-import { cldImage } from '../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { PriceTag } from '../../components/PriceTag'
 
 type Product = {

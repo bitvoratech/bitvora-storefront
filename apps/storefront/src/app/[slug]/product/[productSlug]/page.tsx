@@ -11,7 +11,7 @@ import { ProductGallery } from './ProductGallery'
 import { ShareButton } from '../../../../components/ShareButton'
 import { StatusShareButton } from '../../../../components/StatusShareButton'
 import { RestockForm } from './RestockForm'
-import { cldJpeg } from '../../../../lib/cloudinary-image'
+import { cldJpeg } from '@bitvora/lib/cloudinary-image'
 import { VerifiedBadge } from '../../../../components/VerifiedBadge'
 
 const LOW_STOCK_THRESHOLD = 5

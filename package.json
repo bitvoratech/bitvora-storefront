@@ -2,9 +2,11 @@
   "name": "bitvora-storefront",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm --filter admin --filter storefront --filter website --filter @bitvora/ui --filter @bitvora/lib exec tsc --noEmit -p .",
+    "build": "pnpm -r --if-present build"
   },
   "keywords": [],
   "author": "",
@@ -20,6 +22,8 @@
   "devDependencies": {
     "@types/node": "^20.19.43",
     "supabase": "^2.115.0",
-    "typescript": "^5.9.3"
-  }
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.5"
+  },
+  "private": true
 }

@@ -1,8 +1,7 @@
 {
   "extends": "../config/tsconfig.base.json",
   "compilerOptions": {
-    "jsx": "react-jsx",
-    "ignoreDeprecations": "6.0"
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"]
 }

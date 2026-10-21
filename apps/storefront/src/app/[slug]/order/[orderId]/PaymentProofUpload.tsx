@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { savePaymentProof } from './actions'
 import { Check } from 'switch-icons'
 import { IconUpload } from '@tabler/icons-react'
-import { uploadToCloudinary } from '../../../../lib/cloudinary-upload'
+import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 
 export function PaymentProofUpload({
   orderId,

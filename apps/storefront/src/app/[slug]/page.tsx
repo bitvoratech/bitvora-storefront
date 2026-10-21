@@ -8,9 +8,10 @@ import { IconSearchOff } from '@tabler/icons-react'
 import { ProductCard } from './ProductCard'
 import { DISPLAY_FONTS, SCALE_CLASSES } from '../../lib/font-pairings'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
-import { cldImage } from '../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
 import { BrandIcon } from '../../components/BrandIcon'
+import { splitSections } from '../../lib/sections'
 
 type SearchParams = { q?: string; category?: string; sort?: string }
 
@@ -46,28 +47,6 @@ export default async function StorePage({
   .eq('store_id', store.id)
   .eq('is_visible', true)
   .order('position')
-
-  const heroSection = allSections?.find((s) => s.type === 'hero')
-  const bannerGridSection = allSections?.find((s) => s.type === 'banner_grid')
-  const ctaSection = allSections?.find((s) => s.type === 'cta_banner')
-  const aboutSection = allSections?.find((s) => s.type === 'about')
-
-  const hero = heroSection?.config as {
-    heading?: string
-    subheading?: string
-    image_url?: string
-    cta_text?: string
-  } | undefined
-
-  const bannerGrid = (bannerGridSection?.config as { tiles?: { heading: string; image_url: string; cta_text: string }[] })?.tiles?.filter((t) => t.heading) || []
-
-  const ctaBanner = ctaSection?.config as {
-    heading?: string
-    image_url?: string
-    cta_text?: string
-  } | undefined
-
-  const about = aboutSection?.config as { heading?: string; body?: string } | undefined
 
   // All categories in the store (also tells us if the store has any products).
   const { data: allProducts } = await supabase
@@ -143,8 +122,7 @@ export default async function StorePage({
   const typography = store.typography || { pairing: 'editorial', scale: 'standard' }
   const displayFont = DISPLAY_FONTS[typography.pairing ?? 'editorial'] || DISPLAY_FONTS.editorial
   const scale = SCALE_CLASSES[typography.scale ?? 'standard'] || SCALE_CLASSES.standard
-  const beforeProducts = (allSections || []).filter((s) => s.position < 5 && (s.type === 'hero' || s.type === 'banner_grid'))
-  const afterProducts = (allSections || []).filter((s) => s.position >= 5)
+  const { beforeProducts, afterProducts } = splitSections(allSections)
 
   // Two columns on phones (the shopping norm); density only widens larger screens.
   const gridCols = store.grid_density === 2 ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'

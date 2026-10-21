@@ -1,7 +1,8 @@
 'use client'
+/* eslint-disable @next/next/no-img-element -- small previews of merchant-uploaded Cloudinary images; next/image has no remote patterns configured in the admin */
 
 import { useState } from 'react'
-import { uploadToCloudinary } from '../../../lib/cloudinary-upload'
+import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 import { Upload } from 'switch-icons'
 
 export function HeroImageUploader({

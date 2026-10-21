@@ -1,4 +1,3 @@
-// c:\Users\kelvi\Desktop\bitvora-storefront\apps\storefront\next.config.ts
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {

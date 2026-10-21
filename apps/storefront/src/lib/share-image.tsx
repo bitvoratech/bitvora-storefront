@@ -3,7 +3,7 @@ import { ImageResponse } from 'next/og'
 import { cache } from 'react'
 import { createClient } from './supabase/server'
 import { getPublishedStore, type PublicStore } from './store'
-import { cldJpeg } from './cloudinary-image'
+import { cldJpeg } from '@bitvora/lib/cloudinary-image'
 
 export type ShareProduct = {
   id: string

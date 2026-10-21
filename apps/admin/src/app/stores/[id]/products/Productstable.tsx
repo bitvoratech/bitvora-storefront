@@ -6,7 +6,7 @@ import { Card } from '@bitvora/ui/src/Card'
 import { Edit, PackageBox } from 'switch-icons'
 import { IconBell, IconPhotoDown } from '@tabler/icons-react'
 import { DeleteProductButton } from './DeleteProductButton'
-import { cldImage } from '../../../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { IconSearch } from '@tabler/icons-react'
 
 type Product = {

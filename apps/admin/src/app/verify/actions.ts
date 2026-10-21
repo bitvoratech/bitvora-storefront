@@ -6,7 +6,7 @@ import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { normalizeNigerianPhone, sendSms } from '../../lib/termii'
 import { verifyCac, verifyNin } from '../../lib/identity-verification'
-import { rateLimit } from '../../lib/rate-limit' 
+import { rateLimit } from '@bitvora/lib/rate-limit' 
 
 const OTP_TTL_MINUTES = 10
 const MAX_OTP_ATTEMPTS = 5

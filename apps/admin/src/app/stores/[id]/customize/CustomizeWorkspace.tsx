@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element -- small previews of merchant-uploaded Cloudinary images; next/image has no remote patterns configured in the admin */
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Storefront } from 'switch-icons'
@@ -139,7 +140,23 @@ export function CustomizeWorkspace({
   }
 
   async function handleReorder(sectionType: string, direction: 'up' | 'down') {
-    await reorderSection(storeId, sectionType, direction)
+    const prev = sections
+    const idx = prev.findIndex((s) => s.type === sectionType)
+    const swapIdx = direction === 'up' ? idx - 1 : idx + 1
+    if (idx === -1 || swapIdx < 0 || swapIdx >= prev.length) return
+
+    // Swap list order and positions locally so the list moves straight away.
+    const next = [...prev]
+    next[idx] = { ...prev[swapIdx], position: prev[idx].position }
+    next[swapIdx] = { ...prev[idx], position: prev[swapIdx].position }
+    setSections(next)
+    setSaveError(null)
+
+    const result = await reorderSection(storeId, sectionType, direction)
+    if (result?.error) {
+      setSections(prev)
+      setSaveError(result.error)
+    }
   }
 
   function updateTile(i: number, patch: Partial<Tile>) {

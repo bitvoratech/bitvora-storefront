@@ -12,10 +12,21 @@ export async function updateOrderStatus(orderId: string, storeId: string, status
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.from('orders').update({ status }).eq('id', orderId)
+  // RLS silently filters out orders this merchant can't update (other stores,
+  // suspended account), so check a row actually changed instead of assuming it.
+  const { data, error } = await supabase
+    .from('orders')
+    .update({ status })
+    .eq('id', orderId)
+    .eq('store_id', storeId)
+    .select('id')
 
   if (error) {
-    return { error: error.message }
+    console.error('updateOrderStatus failed', error)
+    return { error: 'Could not update the order status. Try again.' }
+  }
+  if (!data?.length) {
+    return { error: 'This order could not be updated.' }
   }
 
   revalidatePath(`/stores/${storeId}/orders`)

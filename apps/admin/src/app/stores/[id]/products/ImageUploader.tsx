@@ -1,10 +1,11 @@
 'use client'
+/* eslint-disable @next/next/no-img-element -- small previews of merchant-uploaded Cloudinary images; next/image has no remote patterns configured in the admin */
 
 import { useState } from 'react'
 
 import { Label } from '@bitvora/ui/src/Label'
 import { Upload, Close } from 'switch-icons'
-import { uploadToCloudinary } from '../../../../lib/cloudinary-upload'
+import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 
 export function ImageUploader({ initialImages = [] }: { initialImages?: string[] }) {
   const [images, setImages] = useState<string[]>(initialImages)
