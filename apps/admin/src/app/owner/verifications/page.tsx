@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
 import { createAdminClient } from '../../../lib/supabase/admin'
-import { requireOwnerPage } from '../../../lib/auth/require-owner'
+import { requireStaffPage } from '../../../lib/auth/require-owner'
 import { ReviewButtons } from './ReviewButtons'
 
 type Row = {
@@ -33,7 +33,7 @@ function Detail({ label, value, mono = false }: { label: string; value: string |
 }
 
 export default async function OwnerVerificationsPage() {
-  await requireOwnerPage()
+  await requireStaffPage()
   const admin = createAdminClient()
 
   const [{ data: pending }, { data: reviewed }] = await Promise.all([

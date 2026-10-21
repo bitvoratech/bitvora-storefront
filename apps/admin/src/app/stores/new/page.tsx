@@ -10,9 +10,12 @@ export default async function NewStorePage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('verification_status')
+    .select('verification_status, is_owner, is_admin')
     .eq('user_id', user.id)
     .single()
+
+  // Owner and admin accounts run the platform, not stores.
+  if (merchant?.is_owner || merchant?.is_admin) redirect('/owner')
 
   // Phone OTP and the owner's manual NIN/CAC review both live on /verify.
   if (merchant?.verification_status !== 'verified') redirect('/verify')

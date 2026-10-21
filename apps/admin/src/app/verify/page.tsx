@@ -12,9 +12,12 @@ export default async function VerifyPage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, phone, phone_verified_at, verification_status, nin, cac_number, business_name, verification_note')
+    .select('id, phone, phone_verified_at, verification_status, nin, cac_number, business_name, verification_note, is_owner, is_admin')
     .eq('user_id', user.id)
     .single()
+
+  // Verification is for merchants who want a store; staff don't get one.
+  if (merchant?.is_owner || merchant?.is_admin) redirect('/owner')
 
   if (merchant?.verification_status === 'verified') {
     redirect('/stores/new')

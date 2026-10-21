@@ -8,10 +8,10 @@ import { ReviewButtons } from '../../verifications/ReviewButtons'
 import { Sparkline } from '../../SparkLine'
 import { computeTrend } from '../../../../lib/computeTrend'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { requireOwnerPage } from '../../../../lib/auth/require-owner'
+import { requireStaffPage } from '../../../../lib/auth/require-owner'
 
 export default async function MerchantDetailPage({ params }: { params: Promise<{ merchantId: string }> }) {
-  await requireOwnerPage()
+  await requireStaffPage()
   const { merchantId } = await params
   const admin = createAdminClient()
 

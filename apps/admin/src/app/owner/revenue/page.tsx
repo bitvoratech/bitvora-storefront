@@ -1,10 +1,10 @@
 import { Card } from '@bitvora/ui/src/Card'
 import { createAdminClient } from '../../../lib/supabase/admin'
 import { RevenueBarChart } from './RevenueBarChart'
-import { requireOwnerPage } from '../../../lib/auth/require-owner'
+import { requireStaffPage } from '../../../lib/auth/require-owner'
 
 export default async function OwnerRevenuePage() {
-  await requireOwnerPage()
+  await requireStaffPage()
   const admin = createAdminClient()
   const { data: orders } = await admin.from('orders').select('total, status, created_at')
 

@@ -30,7 +30,7 @@ export async function createStore(prevState: { error?: string } | undefined, for
 
   const { data: merchant, error: merchantError } = await supabase
     .from('merchants')
-    .select('id, verification_status, is_suspended')
+    .select('id, verification_status, is_suspended, is_owner, is_admin')
     .eq('user_id', user.id)
     .single()
 
@@ -40,6 +40,9 @@ export async function createStore(prevState: { error?: string } | undefined, for
 
   // Server actions are public POST endpoints — the page hiding the form for
   // unverified merchants is not enough on its own. (RLS enforces this too.)
+  if (merchant.is_owner || merchant.is_admin) {
+    return { error: 'Owner and admin accounts can’t create stores.' }
+  }
   if (merchant.is_suspended) {
     return { error: 'Your account is suspended.' }
   }

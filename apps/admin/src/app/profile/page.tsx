@@ -2,6 +2,7 @@ import { createClient } from '../../lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ProfileForm } from './ProfileForm'
 import { AvatarUploader } from './AvatarUploader'
+import { PasswordForm } from './PasswordForm'
 import { Card } from '@bitvora/ui/src/Card'
 import { PackageBox, Receipt, Calendar } from 'switch-icons'
 
@@ -84,6 +85,11 @@ export default async function ProfilePage() {
           initialPhone={merchant?.phone || ''}
           initialBusinessName={merchant?.business_name || ''}
         />
+      </Card>
+
+      <Card className="mt-4">
+        <p className="text-sm font-medium mb-4">Password</p>
+        <PasswordForm />
       </Card>
     </div>
   )
