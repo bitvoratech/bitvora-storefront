@@ -1,5 +1,6 @@
 'use server'
 
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
@@ -55,10 +56,15 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   if (!cac) return fail('Enter a valid CAC number, e.g. RC123456 or BN1234567.')
 
   const supabase = await createClient()
+  const origin = (await headers()).get('origin')
   const { data, error } = await supabase.auth.signUp({
     email: values.email,
     password,
-    options: { data: { full_name: values.fullName } },
+    options: {
+      data: { full_name: values.fullName },
+      // Confirming the email signs the merchant in and opens phone verification.
+      ...(origin ? { emailRedirectTo: `${origin}/auth/confirm?next=/verify` } : {}),
+    },
   })
 
   if (error) return fail(error.message)
