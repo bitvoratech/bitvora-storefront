@@ -14,29 +14,43 @@ type Stage = 'phone' | 'otp' | 'identity' | 'done'
 export function VerifyWizard({
   initialPhone,
   phoneVerified = false,
+  hasPendingCode = false,
 }: {
   initialPhone: string | null
   phoneVerified?: boolean
+  hasPendingCode?: boolean
 }) {
   // A merchant whose phone is already verified (e.g. a failed identity check
-  // earlier) resumes at the identity step instead of redoing the OTP.
-  const [stage, setStage] = useState<Stage>(phoneVerified ? 'identity' : initialPhone ? 'otp' : 'phone')
+  // earlier) resumes at the identity step instead of redoing the OTP. The code
+  // step is only shown when a code was actually sent and is still valid;
+  // having a phone number on file (e.g. from the profile) isn't enough.
+  const [stage, setStage] = useState<Stage>(phoneVerified ? 'identity' : hasPendingCode ? 'otp' : 'phone')
   const [idType, setIdType] = useState<'nin' | 'cac'>('nin')
+  const [phone, setPhone] = useState(initialPhone ?? '')
   const router = useRouter()
 
   const [otpRequestState, otpRequestAction, otpRequestPending] = useActionState(requestPhoneOtp, undefined)
   const [otpConfirmState, otpConfirmAction, otpConfirmPending] = useActionState(confirmPhoneOtp, undefined)
   const [identityState, identityAction, identityPending] = useActionState(submitIdentityVerification, undefined)
 
-  if (otpRequestState?.sent && stage === 'phone') {
-    setStage('otp')
+  // Advance once per new action result. Checking the result on every render
+  // instead would bounce "Use a different number" straight back to the code
+  // step, because the last request's `sent: true` sticks around.
+  const [seen, setSeen] = useState({ otpRequestState, otpConfirmState, identityState })
+  if (otpRequestState !== seen.otpRequestState) {
+    setSeen((s) => ({ ...s, otpRequestState }))
+    if (otpRequestState?.sent) setStage('otp')
   }
-  if (otpConfirmState?.verified && stage === 'otp') {
-    setStage('identity')
+  if (otpConfirmState !== seen.otpConfirmState) {
+    setSeen((s) => ({ ...s, otpConfirmState }))
+    if (otpConfirmState?.verified) setStage('identity')
   }
-  if (identityState?.result === 'verified' && stage === 'identity') {
-    setStage('done')
+  if (identityState !== seen.identityState) {
+    setSeen((s) => ({ ...s, identityState }))
+    if (identityState?.result === 'verified') setStage('done')
   }
+
+  const sentTo = otpRequestState?.phone ?? (phone || null)
 
   const stepNumber = stage === 'phone' ? 1 : stage === 'otp' ? 1 : stage === 'identity' ? 2 : 3
 
@@ -61,7 +75,7 @@ export function VerifyWizard({
             </div>
           )}
           <Label htmlFor="phone">Phone number</Label>
-          <Input id="phone" name="phone" type="tel" placeholder="080..." required className="px-2 py-3" />
+          <Input id="phone" name="phone" type="tel" inputMode="tel" autoComplete="tel" placeholder="080..." required value={phone} onChange={(e) => setPhone(e.target.value)} className="px-2 py-3" />
           <Button type="submit" disabled={otpRequestPending} className="w-full mt-6">
             {otpRequestPending ? 'Sending code...' : 'Send code'}
           </Button>
@@ -72,7 +86,7 @@ export function VerifyWizard({
         <form action={otpConfirmAction}>
           <h1 className="text-2xl font-display font-semibold mb-1">Enter the code</h1>
           <p className="text-ink/50 text-sm mb-6">
-            We sent a 6-digit code by SMS. It expires in 10 minutes.
+            We sent a 6-digit code by SMS{sentTo ? ` to ${sentTo}` : ''}. It expires in 10 minutes.
           </p>
           {otpConfirmState?.error && (
             <div className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
@@ -81,7 +95,7 @@ export function VerifyWizard({
             </div>
           )}
           <Label htmlFor="code">Verification code</Label>
-          <Input id="code" name="code" type="text" inputMode="numeric" maxLength={6} required className="px-2 py-3 tracking-widest" />
+          <Input id="code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required className="px-2 py-3 tracking-widest" />
           <Button type="submit" disabled={otpConfirmPending} className="w-full mt-6">
             {otpConfirmPending ? 'Checking...' : 'Confirm code'}
           </Button>
@@ -90,7 +104,7 @@ export function VerifyWizard({
             className="text-sm text-indigo-600 font-medium mt-4 block mx-auto"
             onClick={() => setStage('phone')}
           >
-            Use a different number
+            Didn&apos;t get it? Resend or use a different number
           </button>
         </form>
       )}

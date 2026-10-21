@@ -39,9 +39,11 @@ export async function rateLimit(
 ) {
   try {
     const { success, reset } = await getLimiter(name, limit, window).limit(identifier)
-    return { ok: success, retryAfter: Math.max(1, Math.ceil((reset - Date.now()) / 1000)) }
+    return { ok: success, unavailable: false, retryAfter: Math.max(1, Math.ceil((reset - Date.now()) / 1000)) }
   } catch (err) {
-    console.error('rate limit check failed', err)
-    return { ok: failOpen, retryAfter: 60 }
+    // Usually missing/wrong UPSTASH_REDIS_REST_URL or _TOKEN. `unavailable`
+    // lets callers say so instead of telling the user they hit a limit.
+    console.error(`rate limit check failed (${name})`, err)
+    return { ok: failOpen, unavailable: true, retryAfter: 60 }
   }
 }

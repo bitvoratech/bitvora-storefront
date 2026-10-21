@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { normalizeNigerianPhone, sendSms } from '../../lib/termii'
-import { verifyCac, verifyNin } from '../../lib/identity-verification'
+import { verifyNin } from '../../lib/identity-verification'
 import { rateLimit } from '@bitvora/lib/rate-limit' 
 
 const OTP_TTL_MINUTES = 10
@@ -40,7 +40,7 @@ async function getMerchant() {
   return { supabase, admin: createAdminClient(), merchant }
 }
 
-export async function requestPhoneOtp(prevState: { error?: string; sent?: boolean } | undefined, formData: FormData) {
+export async function requestPhoneOtp(prevState: { error?: string; sent?: boolean; phone?: string } | undefined, formData: FormData) {
   const { admin, merchant } = await getMerchant()
 
   const rawPhone = formData.get('phone') as string
@@ -53,6 +53,9 @@ export async function requestPhoneOtp(prevState: { error?: string; sent?: boolea
 
   const byMerchant = await rateLimit('otp-send', merchant.id, 3, '10 m', { failOpen: false })
   const byPhone = await rateLimit('otp-phone', phone, 3, '1 h', { failOpen: false })
+  if (byMerchant.unavailable || byPhone.unavailable) {
+    return { error: 'Verification is temporarily unavailable. Try again in a few minutes.' }
+  }
   if (!byMerchant.ok || !byPhone.ok) {
     return { error: `Too many code requests. Try again in ${Math.max(byMerchant.retryAfter, byPhone.retryAfter)}s.` }
   }
@@ -84,11 +87,14 @@ export async function requestPhoneOtp(prevState: { error?: string; sent?: boolea
 
   try {
     await sendSms(phone, `Your Bitvora Storefront verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`)
-  } catch {
+  } catch (err) {
+    // Don't leave a code the merchant never received as the "pending" one.
+    await admin.from('merchant_otps').update({ consumed_at: new Date().toISOString() }).eq('merchant_id', merchant.id).is('consumed_at', null)
+    console.error('OTP SMS failed', err)
     return { error: 'Could not send SMS right now. Try again in a moment.' }
   }
 
-  return { sent: true }
+  return { sent: true, phone }
 }
 
 export async function confirmPhoneOtp(prevState: { error?: string; verified?: boolean } | undefined, formData: FormData) {
@@ -99,6 +105,7 @@ export async function confirmPhoneOtp(prevState: { error?: string; verified?: bo
   if (!/^\d{6}$/.test(code)) return { error: 'The code is 6 digits.' }
 
   const rl = await rateLimit('otp-confirm', merchant.id, 10, '10 m', { failOpen: false })
+  if (rl.unavailable) return { error: 'Verification is temporarily unavailable. Try again in a few minutes.' }
   if (!rl.ok) return { error: `Too many attempts. Try again in ${rl.retryAfter}s.` }
 
   const { data: otpRow } = await admin
@@ -154,6 +161,7 @@ export async function submitIdentityVerification(
   if (!merchant.phone_verified_at) return { error: 'Verify your phone number first.' }
 
   const rl = await rateLimit('identity', merchant.id, 5, '1 h', { failOpen: false })
+  if (rl.unavailable) return { error: 'Verification is temporarily unavailable. Try again in a few minutes.' }
   if (!rl.ok) return { error: 'Too many verification attempts. Try again later.' }
 
   const type = formData.get('type') as 'nin' | 'cac'
@@ -174,14 +182,40 @@ export async function submitIdentityVerification(
   if (type === 'nin' && !/^\d{11}$/.test(reference)) {
     return { error: 'NIN must be 11 digits.' }
   }
-  if (type === 'cac' && !/^(RC|BN)?\d{1,10}$/.test(reference)) {
-    return { error: 'Enter a valid RC or BN number, e.g. RC123456.' }
+  if (type === 'cac' && !/^(RC|BN|IT)?\d{1,10}$/.test(reference)) {
+    return { error: 'Enter a valid RC, BN or IT number, e.g. RC123456.' }
   }
   if (type === 'nin' && (!firstName || !lastName)) {
     return { error: 'Enter your first and last name as they appear on your NIN.' }
   }
-  if (type === 'cac' && !companyName) {
+  if (type === 'cac' && (companyName.length < 2 || companyName.length > 200)) {
     return { error: 'Enter your registered company name.' }
+  }
+
+  // CAC details are entered manually and accepted as given: there's no
+  // registry lookup. They're kept in the audit log as provider 'manual' and
+  // flagged on the owner console's merchant page for a manual check.
+  if (type === 'cac') {
+    const { error: logError } = await admin.from('merchant_verifications').insert({
+      merchant_id: merchant.id,
+      type,
+      reference,
+      provider: 'manual',
+      status: 'verified',
+      provider_response: { company_name: companyName },
+    })
+    if (logError) return { error: 'Could not save your details. Try again.' }
+
+    const { error: updateError } = await admin.from('merchants').update({
+      verification_status: 'verified',
+      verification_type: type,
+      verification_reference: reference,
+      verified_at: new Date().toISOString(),
+      business_name: companyName,
+    }).eq('id', merchant.id)
+    if (updateError) return { error: 'Could not save your details. Try again.' }
+
+    return { result: 'verified' as const }
   }
 
   await admin.from('merchants').update({
@@ -191,9 +225,7 @@ export async function submitIdentityVerification(
   }).eq('id', merchant.id)
 
   try {
-    const result = type === 'nin'
-      ? await verifyNin(reference, firstName, lastName)
-      : await verifyCac(reference, companyName)
+    const result = await verifyNin(reference, firstName, lastName)
 
     await admin.from('merchant_verifications').insert({
       merchant_id: merchant.id,

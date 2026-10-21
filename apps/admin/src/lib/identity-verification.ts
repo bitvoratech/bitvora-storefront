@@ -1,6 +1,7 @@
 // Server-only. Never import this from a client component.
 // Requires QOREID_CLIENT_ID and QOREID_SECRET_KEY in the environment.
-// QoreID handles both NIN and CAC lookups against official Nigerian registries.
+// QoreID checks NINs against the National Identity Database. CAC numbers are
+// entered manually and not checked (see submitIdentityVerification).
 
 const QOREID_BASE_URL = 'https://api.qoreid.com'
 
@@ -85,40 +86,5 @@ export async function verifyNin(nin: string, firstName: string, lastName: string
     status,
     providerResponse: data,
     matchedName: data?.nin_data ? `${data.nin_data.firstname ?? ''} ${data.nin_data.lastname ?? ''}`.trim() : undefined,
-  }
-}
-
-/**
- * Verifies a registered business against CAC records via QoreID.
- */
-export async function verifyCac(rcNumber: string, companyName: string): Promise<IdentityVerificationResult> {
-  assertServerSide()
-
-  const token = await getAccessToken()
-
-  const res = await fetch(`${QOREID_BASE_URL}/v1/ng/identities/cac-basic/${encodeURIComponent(rcNumber)}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({
-      companyName,
-    }),
-  })
-
-  if (res.status >= 500 || res.status === 401 || res.status === 429) {
-    throw new Error(`QoreID request failed with ${res.status}`)
-  }
-  const data = await res.json().catch(() => null)
-
-  const status = data?.status?.state === 'complete' && data?.summary?.cac_check?.status === 'EXACT_MATCH'
-    ? 'verified'
-    : 'failed'
-
-  return {
-    status,
-    providerResponse: data,
-    matchedName: data?.company_data?.companyName,
   }
 }
