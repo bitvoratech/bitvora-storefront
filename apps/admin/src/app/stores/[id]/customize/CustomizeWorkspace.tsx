@@ -1,4 +1,5 @@
 'use client'
+/* eslint-disable @next/next/no-img-element -- small previews of merchant-uploaded Cloudinary images; next/image has no remote patterns configured in the admin */
 
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Storefront } from 'switch-icons'

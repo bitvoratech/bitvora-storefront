@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element -- small previews of merchant-uploaded Cloudinary images; next/image has no remote patterns configured in the admin */
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'

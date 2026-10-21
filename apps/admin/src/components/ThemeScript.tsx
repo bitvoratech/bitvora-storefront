@@ -18,5 +18,8 @@ const script = `
 `
 
 export function ThemeScript() {
+  // App Router root layouts are the documented place for beforeInteractive; the
+  // lint rule predates the App Router and only knows about pages/_document.
+  // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
   return <Script id="theme-script" strategy="beforeInteractive">{script}</Script>
 }
