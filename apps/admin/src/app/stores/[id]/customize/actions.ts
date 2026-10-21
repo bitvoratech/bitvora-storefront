@@ -114,8 +114,8 @@ export async function toggleSectionVisibility(storeId: string, sectionType: stri
 
 export async function reorderSection(storeId: string, sectionType: string, direction: 'up' | 'down') {
   const supabase = await createClient()
-  const { data: sections } = await supabase.from('sections').select('id, type, position').eq('store_id', storeId).order('position')
-  if (!sections) return
+  const { data: sections } = await supabase.from('sections').select('id, store_id, type, position').eq('store_id', storeId).order('position')
+  if (!sections) return { error: 'Could not load sections.' }
 
   const idx = sections.findIndex((s) => s.type === sectionType)
   const swapIdx = direction === 'up' ? idx - 1 : idx + 1
@@ -123,9 +123,18 @@ export async function reorderSection(storeId: string, sectionType: string, direc
 
   const a = sections[idx]
   const b = sections[swapIdx]
-  await supabase.from('sections').update({ position: b.position }).eq('id', a.id)
-  await supabase.from('sections').update({ position: a.position }).eq('id', b.id)
+  // One upsert = one statement, so the swap can't half-apply and leave two
+  // sections on the same position.
+  const { error } = await supabase.from('sections').upsert(
+    [
+      { id: a.id, store_id: a.store_id, type: a.type, position: b.position },
+      { id: b.id, store_id: b.store_id, type: b.type, position: a.position },
+    ],
+    { onConflict: 'id' }
+  )
+  if (error) return { error: 'Could not reorder sections. Try again.' }
   revalidatePath(`/stores/${storeId}`)
+  revalidatePath(`/stores/${storeId}/customize`)
 }
 
 export async function saveBankDetails(storeId: string, bankName: string, accountNumber: string, accountName: string) {
