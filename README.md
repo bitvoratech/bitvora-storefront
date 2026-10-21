@@ -31,7 +31,7 @@ cp apps/storefront/.env.example apps/storefront/.env.local
 cp apps/website/.env.example apps/website/.env.local
 ```
 
-Services used: Supabase (database and auth), Cloudinary (images), Upstash Redis (rate limiting), Termii (OTP SMS) and QoreID (identity checks). Rate limits on sensitive actions like OTPs fail closed, so those features won't work locally without Upstash.
+Services used: Supabase (database and auth), Cloudinary (images), Upstash Redis (rate limiting), and Termii (OTP SMS). Merchants give their NIN and CAC number at signup and a platform owner checks them by hand under **Owner console → Verifications**. Rate limits on sensitive actions like OTPs fail closed, so those features won't work locally without Upstash.
 
 Apply the database migrations with the Supabase CLI:
 

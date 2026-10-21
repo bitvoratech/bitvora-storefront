@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
 import { ArrowLeft } from 'switch-icons'
 import { SuspendButton } from './SuspendButton'
+import { ReviewButtons } from '../../verifications/ReviewButtons'
 import { Sparkline } from '../../SparkLine'
 import { computeTrend } from '../../../../lib/computeTrend'
 import { createAdminClient } from '@/lib/supabase/admin'
@@ -16,7 +17,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
 
   const { data: merchant } = await admin
     .from('merchants')
-    .select('id, full_name, business_name, phone, avatar_url, is_suspended, created_at, verification_status, verification_type, verification_reference')
+    .select('id, full_name, business_name, phone, avatar_url, is_suspended, created_at, verification_status, phone_verified_at, nin, cac_number, verification_note')
     .eq('id', merchantId)
     .single()
 
@@ -61,13 +62,14 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
 
   const initial = merchant.full_name?.[0]?.toUpperCase() || '?'
   const memberSince = new Date(merchant.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-  // CAC numbers are typed in by the merchant and not checked against the
-  // registry, so the owner console flags them for a manual look.
-  const idLabel = merchant.verification_type === 'cac'
-    ? `CAC ${merchant.verification_reference ?? ''} (not checked)`
-    : merchant.verification_type === 'nin'
-      ? `NIN (${merchant.verification_status})`
-      : merchant.verification_status
+  const statusLabel: Record<string, string> = {
+    unverified: 'Not submitted',
+    pending: 'Waiting for review',
+    verified: 'Approved',
+    failed: 'Rejected',
+  }
+  const canReview = !!merchant.phone_verified_at && !!merchant.nin && !!merchant.cac_number
+    && (merchant.verification_status === 'pending' || merchant.verification_status === 'failed')
 
   return (
     <div>
@@ -90,10 +92,17 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
             <p className="text-sm text-ink/50 mb-4">{merchant.business_name || '—'}</p>
             <div className="w-full space-y-2 text-left text-sm border-t border-sand-200 pt-4">
               <div className="flex justify-between"><span className="text-ink/50">Phone</span><span className="font-mono">{merchant.phone || '—'}</span></div>
-              <div className="flex justify-between gap-3"><span className="text-ink/50">ID</span><span className="font-mono text-right">{idLabel}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-ink/50">Phone OTP</span><span>{merchant.phone_verified_at ? 'Verified' : 'Not yet'}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-ink/50">NIN</span><span className="font-mono text-right break-all">{merchant.nin || '—'}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-ink/50">CAC</span><span className="font-mono text-right break-all">{merchant.cac_number || '—'}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-ink/50">Identity</span><span className="text-right">{statusLabel[merchant.verification_status] ?? merchant.verification_status}</span></div>
+              {merchant.verification_status === 'failed' && merchant.verification_note && (
+                <p className="text-xs text-pepper-600">{merchant.verification_note}</p>
+              )}
               <div className="flex justify-between"><span className="text-ink/50">Stores</span><span className="font-mono">{stores?.length ?? 0}</span></div>
               <div className="flex justify-between"><span className="text-ink/50">Since</span><span>{memberSince}</span></div>
             </div>
+            {canReview && <ReviewButtons merchantId={merchant.id} />}
             <SuspendButton merchantId={merchant.id} isSuspended={merchant.is_suspended} />
           </div>
         </Card>
