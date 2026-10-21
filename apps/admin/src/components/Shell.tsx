@@ -10,14 +10,14 @@ export function Shell({
   children,
   userEmail,
   topBar,
-  isOwner,
+  staffRole,
   merchantName,
   avatarUrl,
 }: {
   children: React.ReactNode
   userEmail: string | null
   topBar?: React.ReactNode
-  isOwner?: boolean
+  staffRole?: 'owner' | 'admin' | null
   merchantName?: string | null
   avatarUrl?: string | null
 }) {
@@ -35,7 +35,7 @@ export function Shell({
         userEmail={userEmail}
         merchantName={merchantName}
         avatarUrl={avatarUrl}
-        isOwner={isOwner}
+        staffRole={staffRole}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

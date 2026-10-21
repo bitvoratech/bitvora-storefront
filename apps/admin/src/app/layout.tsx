@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { data: { user } } = await supabase.auth.getUser();
 
     const { data: merchant } = user
-    ? await supabase.from('merchants').select('is_owner, is_suspended, full_name, avatar_url').eq('user_id', user.id).single()
+    ? await supabase.from('merchants').select('is_owner, is_admin, is_suspended, full_name, avatar_url').eq('user_id', user.id).single()
     : { data: null };
 
   return (
@@ -35,7 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="antialiased bg-paper text-ink">
         <Shell
         userEmail={user?.email ?? null}
-        isOwner={!!merchant?.is_owner}
+        staffRole={merchant?.is_owner ? 'owner' : merchant?.is_admin ? 'admin' : null}
         merchantName={merchant?.full_name}
         avatarUrl={merchant?.avatar_url}
           >

@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Home, Plus, Grid, PackageBox, Storefront, Receipt, User, Users } from 'switch-icons'
-import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery } from '@tabler/icons-react'
+import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
@@ -149,14 +149,14 @@ export function Sidebar({
   userEmail,
   merchantName,
   avatarUrl,
-  isOwner,
+  staffRole,
   open,
   onClose,
 }: {
   userEmail: string | null
   merchantName?: string | null
   avatarUrl?: string | null
-  isOwner?: boolean
+  staffRole?: 'owner' | 'admin' | null
   open: boolean
   onClose: () => void
 }) {
@@ -261,8 +261,22 @@ export function Sidebar({
           <p className={`px-3 pt-1 pb-1 text-[10.5px] uppercase tracking-wider text-indigo-300/50 font-semibold ${collapsed ? 'lg:hidden' : ''}`}>
             Main
           </p>
-          <SimpleLink item={{ href: '/', icon: Home, label: 'Dashboard' }} active={isActive('/')} collapsed={collapsed} onClick={onClose} />
-          <SimpleLink item={{ href: '/stores/new', icon: Plus, label: 'New store' }} active={isActive('/stores/new')} collapsed={collapsed} onClick={onClose} />
+          {staffRole ? (
+            <>
+              {/* The owner and admins run the platform; they don't have stores. */}
+              <SimpleLink item={{ href: '/owner', icon: Home, label: 'Dashboard' }} active={isActive('/owner')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/owner/verifications', icon: IconShieldCheck, label: 'Verifications' }} active={isActive('/owner/verifications')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/owner/merchants', icon: Users, label: 'Merchants' }} active={pathname.startsWith('/owner/merchants')} collapsed={collapsed} onClick={onClose} />
+              {staffRole === 'owner' && (
+                <SimpleLink item={{ href: '/owner/admins', icon: IconUserShield, label: 'Admins' }} active={isActive('/owner/admins')} collapsed={collapsed} onClick={onClose} />
+              )}
+            </>
+          ) : (
+            <>
+              <SimpleLink item={{ href: '/', icon: Home, label: 'Dashboard' }} active={isActive('/')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/stores/new', icon: Plus, label: 'New store' }} active={isActive('/stores/new')} collapsed={collapsed} onClick={onClose} />
+            </>
+          )}
 
           {storeId && (
             <div className="pt-2">
@@ -273,9 +287,6 @@ export function Sidebar({
           <p className={`px-3 pt-4 pb-1 text-[10.5px] uppercase tracking-wider text-indigo-300/50 font-semibold ${collapsed ? 'lg:hidden' : ''}`}>
             Settings
           </p>
-          {isOwner && (
-            <SimpleLink item={{ href: '/owner', icon: Users, label: 'Platform' }} active={pathname.startsWith('/owner')} collapsed={collapsed} onClick={onClose} />
-          )}
           <SimpleLink item={{ href: '/profile', icon: User, label: 'Profile' }} active={isActive('/profile')} collapsed={collapsed} onClick={onClose} />
         </nav>
 

@@ -15,9 +15,12 @@ export default async function DashboardPage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, full_name')
+    .select('id, full_name, is_owner, is_admin')
     .eq('user_id', user.id)
     .single()
+
+  // The owner and admins don't run stores; their home is the console.
+  if (merchant?.is_owner || merchant?.is_admin) redirect('/owner')
 
   const { data: stores } = await supabase
     .from('stores')

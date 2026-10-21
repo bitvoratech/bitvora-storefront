@@ -1,9 +1,10 @@
+import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
 import { KpiCard } from '@bitvora/ui/src/KpiCard'
 import { createAdminClient } from '../../lib/supabase/admin';
 import { computeTrend } from '../../lib/computeTrend'
 import { Sparkline } from './SparkLine';
-import { requireOwnerPage } from '../../lib/auth/require-owner'
+import { requireStaffPage } from '../../lib/auth/require-owner'
 
 
 function rangeCount(rows: { created_at: string }[], start: Date, end: Date) {
@@ -14,12 +15,20 @@ function rangeCount(rows: { created_at: string }[], start: Date, end: Date) {
 }
 
 export default async function OwnerOverviewPage() {
-  await requireOwnerPage()
+  const { role } = await requireStaffPage()
   const admin = createAdminClient()
 
-  const { data: merchants } = await admin.from('merchants').select('id, created_at')
-  const { data: stores } = await admin.from('stores').select('id, is_published, created_at, merchants!inner(is_owner)')
+  // Owner and admin accounts aren't merchants, so leave them out of the counts.
+  const { data: merchants } = await admin
+    .from('merchants')
+    .select('id, created_at, is_suspended, verification_status, phone_verified_at, nin, cac_number')
+    .eq('is_owner', false)
+    .eq('is_admin', false)
+  const { data: stores } = await admin.from('stores').select('id, is_published, created_at')
   const { data: allOrders } = await admin.from('orders').select('id, total, status, created_at')
+  const { count: adminCount } = role === 'owner'
+    ? await admin.from('merchants').select('id', { count: 'exact', head: true }).eq('is_admin', true)
+    : { count: null }
 
   const merchantRows = merchants ?? []
   const storeRows = stores ?? []
@@ -29,6 +38,17 @@ export default async function OwnerOverviewPage() {
   const totalGMV = activeOrders.reduce((sum, o) => sum + Number(o.total), 0)
   const pendingCount = orders.filter((o) => o.status === 'pending').length
   const publishedCount = storeRows.filter((s) => s.is_published).length
+  // Same filter as the Verifications queue.
+  const awaitingReview = merchantRows.filter(
+    (m) => m.verification_status === 'pending' && m.phone_verified_at && m.nin && m.cac_number
+  ).length
+  const suspendedCount = merchantRows.filter((m) => m.is_suspended).length
+
+  const attention = [
+    { href: '/owner/verifications', label: 'Verifications to review', value: awaitingReview, urgent: awaitingReview > 0 },
+    { href: '/owner/merchants', label: 'Suspended merchants', value: suspendedCount, urgent: false },
+    ...(role === 'owner' ? [{ href: '/owner/admins', label: 'Admins', value: adminCount ?? 0, urgent: false }] : []),
+  ]
 
   const now = new Date()
   const startOfToday = new Date(now)
@@ -85,6 +105,17 @@ export default async function OwnerOverviewPage() {
 
   return (
     <div>
+      <div className={`grid grid-cols-1 gap-3 mb-8 ${attention.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+        {attention.map((item) => (
+          <Link key={item.href} href={item.href} className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
+            <Card className={`p-4 h-full transition-colors hover:bg-sand-100/60 ${item.urgent ? 'ring-1 ring-marigold-500' : ''}`}>
+              <p className="text-xs text-ink/50 font-medium mb-1.5">{item.label}</p>
+              <p className="font-display text-xl sm:text-2xl font-semibold">{item.value.toLocaleString()}</p>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
       <div className="mb-8">
         <Card className="p-5 mb-3">
           <div className="flex flex-wrap items-start justify-between gap-1 mb-1">
