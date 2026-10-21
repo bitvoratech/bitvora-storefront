@@ -28,7 +28,7 @@ const PRICING_FAQS: FaqItem[] = [
   },
   {
     q: "What payment methods can my customers use?",
-    a: "Bank transfer and pay-on-delivery are supported today, with card payments coming soon.",
+    a: "Customers pay by bank transfer or pay-on-delivery, straight to the merchant.",
   },
 ];
 
