@@ -3,7 +3,7 @@
 /* eslint-disable @next/next/no-img-element -- Cloudinary-resized images via cldImage() */
 import { useState } from 'react'
 import { PackageBox } from 'switch-icons'
-import { cldImage } from '../../../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
   const [active, setActive] = useState(0)

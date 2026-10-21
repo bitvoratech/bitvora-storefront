@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { loadShareData, renderStatusImage } from '../../../../../lib/share-image'
-import { getClientIp, rateLimit } from '../../../../../lib/rate-limit'
+import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
 // 1080×1920 product image for WhatsApp Status / Instagram Stories.
 // Used by the storefront "Share to Status" button and the merchant's

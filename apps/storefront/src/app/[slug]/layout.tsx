@@ -5,7 +5,7 @@ import { Storefront } from 'switch-icons'
 import { CartIcon } from '../../components/CartIcon'
 import { BrandIcon } from '../../components/BrandIcon'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
-import { cldImage, cldJpeg } from '../../lib/cloudinary-image'
+import { cldImage, cldJpeg } from '@bitvora/lib/cloudinary-image'
 import { StoreSearch } from '../../components/StoreSearch'
 import { VerifiedBadge } from '../../components/VerifiedBadge'
 

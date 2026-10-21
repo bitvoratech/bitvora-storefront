@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { PackageBox, ArrowLeft } from 'switch-icons'
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
 import { useCart } from '../../../lib/cart-store'
-import { cldImage } from '../../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 
 export default function CartPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)

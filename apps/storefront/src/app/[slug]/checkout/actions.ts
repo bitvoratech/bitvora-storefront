@@ -1,7 +1,7 @@
 'use server'
 
 import { createAdminClient } from '../../../lib/supabase/admin'
-import { getClientIp, rateLimit } from '../../../lib/rate-limit'
+import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 import { isPaymentProofUrl } from '../../../lib/cloudinary-url'
 
 type CheckoutInput = {

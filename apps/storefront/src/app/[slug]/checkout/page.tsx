@@ -6,7 +6,7 @@ import { createOrder } from './actions'
 import { ArrowLeft, AlertTriangle, Upload, Check } from 'switch-icons'
 import Link from 'next/link'
 import { useCart } from '../../../lib/cart-store'
-import { uploadToCloudinary } from '../../../lib/cloudinary-upload'
+import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 import { CopyButton } from '../../../components/CopyButton'
 import { VerifiedBadge } from '../../../components/VerifiedBadge'
 

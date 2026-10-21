@@ -8,7 +8,7 @@ import { IconSearchOff } from '@tabler/icons-react'
 import { ProductCard } from './ProductCard'
 import { DISPLAY_FONTS, SCALE_CLASSES } from '../../lib/font-pairings'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
-import { cldImage } from '../../lib/cloudinary-image'
+import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
 import { BrandIcon } from '../../components/BrandIcon'
 

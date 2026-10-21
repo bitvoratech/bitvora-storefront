@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '../../../lib/supabase/server'
-import { rateLimit } from '../../../lib/rate-limit'
+import { rateLimit } from '@bitvora/lib/rate-limit'
 import { getPublishedStore } from '../../../lib/store'
 
 // Everything the checkout page needs about a store: where to send payment and

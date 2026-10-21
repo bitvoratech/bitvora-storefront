@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { v2 as cloudinary } from 'cloudinary'
-import { getClientIp, rateLimit } from '../../../lib/rate-limit'
+import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 import { PAYMENT_PROOF_FOLDER } from '../../../lib/cloudinary-url'
 
 const ALLOWED_FORMATS = 'jpg,jpeg,png,webp,avif,heic'
