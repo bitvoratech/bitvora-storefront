@@ -23,7 +23,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bitvora Storefront — Storefronts that look like your brand",
+  title: "Bitvora Stores — Storefronts that look like your brand",
   description: "Build a beautiful, branded online store for your business in minutes. No template look, no code required.",
 };
 

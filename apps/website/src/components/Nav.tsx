@@ -20,7 +20,7 @@ export function Nav() {
           <Link href="/" className="flex items-center gap-2 min-w-0 shrink">
           <Image
             src="/brand/icon-light-bg.svg"
-            alt="Bitvora Storefront"
+            alt="Bitvora Stores"
             width={120}
             height={30}
             className="h-6 sm:h-7 w-auto shrink-0"

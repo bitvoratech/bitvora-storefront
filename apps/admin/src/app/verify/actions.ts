@@ -86,7 +86,7 @@ export async function requestPhoneOtp(prevState: { error?: string; sent?: boolea
   await admin.from('merchants').update({ phone }).eq('id', merchant.id)
 
   try {
-    await sendSms(phone, `Your Bitvora Storefront verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`)
+    await sendSms(phone, `Your Bitvora Stores verification code is ${code}. It expires in ${OTP_TTL_MINUTES} minutes.`)
   } catch (err) {
     // Don't leave a code the merchant never received as the "pending" one.
     await admin.from('merchant_otps').update({ consumed_at: new Date().toISOString() }).eq('merchant_id', merchant.id).is('consumed_at', null)

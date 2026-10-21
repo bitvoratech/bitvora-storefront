@@ -7,7 +7,7 @@ export default function Home() {
     <main className="min-h-screen flex items-center justify-center bg-white px-6 text-center text-[#171717]">
       <div className="max-w-sm">
         <Storefront className="w-8 h-8 mx-auto mb-4 text-[#a3a3a3]" />
-        <h1 className="text-xl font-semibold mb-2">Bitvora Storefront</h1>
+        <h1 className="text-xl font-semibold mb-2">Bitvora Stores</h1>
         <p className="text-sm text-[#737373]">
           Looking for a store? Use the link the seller shared with you.
         </p>

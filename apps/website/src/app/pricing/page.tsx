@@ -5,8 +5,8 @@ import { PremiumFooter } from "@/components/PremiumFooter";
 import { Pricing } from "@/components/Pricing";
 
 export const metadata: Metadata = {
-  title: "Pricing — Bitvora Storefront",
-  description: "Simple Naira pricing for Bitvora Storefront. Compare plans, store and product limits, and customization features.",
+  title: "Pricing — Bitvora Stores",
+  description: "Simple Naira pricing for Bitvora Stores. Compare plans, store and product limits, and customization features.",
 };
 
 const PRICING_FAQS: FaqItem[] = [

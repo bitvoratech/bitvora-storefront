@@ -61,7 +61,7 @@ export function Footer() {
         className="h-7 w-auto"
       />
       <span className="flex items-center gap-1.5">
-         Bitvora Storefront — a Bitvoratech product
+         Bitvora Stores — a Bitvoratech product
       </span>
       </div>
       <span>© 2026 Bitvoratech. All rights reserved.</span>

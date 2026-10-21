@@ -15,7 +15,7 @@ const spaceGroteskHeading = Space_Grotesk({subsets:['latin'],variable:'--font-he
 const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: "Bitvora Storefront",
+  title: "Bitvora Stores",
   description: "Storefronts that look like your brand.",
 };
 

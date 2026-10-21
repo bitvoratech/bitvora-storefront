@@ -8,7 +8,7 @@ export default async function OwnerLayout({ children }: { children: React.ReactN
   return (
     <div className="max-w-7xl mx-0 lg:mx-auto">
       <h1 className="text-xl sm:text-2xl font-display font-semibold mb-1">{role === 'owner' ? 'Owner console' : 'Admin console'}</h1>
-      <p className="text-ink/50 text-sm mb-6">Bitvora Storefront — all merchants and stores.</p>
+      <p className="text-ink/50 text-sm mb-6">Bitvora Stores — all merchants and stores.</p>
 
       {children}
     </div>

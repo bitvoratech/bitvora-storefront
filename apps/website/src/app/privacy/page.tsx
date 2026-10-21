@@ -6,7 +6,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="mb-3 font-display text-xl font-semibold">1. What we collect</h2>
         <p className="text-[14.5px] leading-relaxed text-ink-soft mb-3">
-          When you use Bitvora Storefront, we collect:
+          When you use Bitvora Stores, we collect:
         </p>
         <ul className="list-disc pl-5 space-y-1.5 text-[14.5px] leading-relaxed text-ink-soft">
           <li>Account information: name, email, phone number, business name</li>
@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="mb-3 font-display text-xl font-semibold">4. Third-party services</h2>
         <p className="text-[14.5px] leading-relaxed text-ink-soft mb-3">
-          We use third-party services to operate Bitvora Storefront, including:
+          We use third-party services to operate Bitvora Stores, including:
         </p>
         <ul className="list-disc pl-5 space-y-1.5 text-[14.5px] leading-relaxed text-ink-soft">
           <li>Supabase (database and authentication)</li>

@@ -42,7 +42,7 @@ export function PremiumFooter() {
               Get pro <span className="text-marigold-500">support.</span>
             </h2>
             <p className="mb-7 max-w-[460px] text-[15px] leading-relaxed text-paper/65">
-              We&apos;re here to help. If you need assistance switching from your current setup, have questions about whether Bitvora Storefront fits your business, or want help getting started, talk to a member of our team.
+              We&apos;re here to help. If you need assistance switching from your current setup, have questions about whether Bitvora Stores fits your business, or want help getting started, talk to a member of our team.
             </p>
             <Link
               href={`${ADMIN_URL}/signup`}
@@ -107,7 +107,7 @@ export function PremiumFooter() {
           className="border-t border-paper/10 pt-8"
         >
           <p className="mb-6 max-w-[820px] text-[13px] leading-relaxed text-paper/50">
-            Bitvora Storefront is a Bitvoratech product built to empower Nigerian businesses with storefronts that look like their brand — WhatsApp ordering, Naira pricing, and delivery on your own terms, all in one place.
+            Bitvora Stores is a Bitvoratech product built to empower Nigerian businesses with storefronts that look like their brand — WhatsApp ordering, Naira pricing, and delivery on your own terms, all in one place.
           </p>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-[13px] text-paper/50">
             <span>© {new Date().getFullYear()} Bitvoratech. All rights reserved.</span>
