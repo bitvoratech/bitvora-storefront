@@ -10,6 +10,9 @@ import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLog
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
+import { SIDEBAR_COOKIE } from '../lib/sidebar'
+
+const HELP_URL = `https://wa.me/2349038679199?text=${encodeURIComponent('Hi Bitvora, I need help with my store.')}`
 
 type NavItem = { href: string; icon: React.ComponentType<{ className?: string }>; label: string }
 
@@ -151,6 +154,7 @@ export function Sidebar({
   avatarUrl,
   staffRole,
   canCreateStore = false,
+  initialCollapsed = false,
   open,
   onClose,
 }: {
@@ -159,6 +163,7 @@ export function Sidebar({
   avatarUrl?: string | null
   staffRole?: 'owner' | 'admin' | null
   canCreateStore?: boolean
+  initialCollapsed?: boolean
   open: boolean
   onClose: () => void
 }) {
@@ -166,7 +171,14 @@ export function Sidebar({
   const router = useRouter()
   const storeMatch = pathname.match(/^\/stores\/([^/]+)/)
   const storeId = storeMatch && storeMatch[1] !== 'new' ? storeMatch[1] : null
-  const [collapsed, setCollapsed] = useState(false)
+  // Read from a cookie on the server, so a collapsed sidebar doesn't flash open on load.
+  const [collapsed, setCollapsed] = useState(initialCollapsed)
+
+  function toggleCollapsed() {
+    const next = !collapsed
+    setCollapsed(next)
+    document.cookie = `${SIDEBAR_COOKIE}=${next ? '1' : '0'}; path=/; max-age=31536000; samesite=lax`
+  }
   const [storeName, setStoreName] = useState<{ id: string; name: string } | null>(null)
 
   // The sidebar only knows the store id (from the URL), so look up its name.
@@ -196,7 +208,7 @@ export function Sidebar({
         { href: `/stores/${storeId}`, icon: Grid, label: 'Overview' },
         { href: `/stores/${storeId}/products`, icon: PackageBox, label: 'Products' },
         { href: `/stores/${storeId}/orders`, icon: Receipt, label: 'Orders' },
-        { href: `/stores/${storeId}/delivery`, icon: IconTruckDelivery, label: 'Delivery' },
+        { href: `/stores/${storeId}/delivery`, icon: IconTruckDelivery, label: 'Delivery & payments' },
         { href: `/stores/${storeId}/customize`, icon: IconPalette, label: 'Customize' },
       ]
     : []
@@ -230,7 +242,7 @@ export function Sidebar({
 
         {/* Collapse toggle — floats on the edge */}
         <button
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={toggleCollapsed}
           aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           aria-expanded={!collapsed}
           className="hidden lg:flex absolute -right-3 top-8 z-50 w-6 h-6 rounded-full bg-white dark:bg-sand-100 shadow-md items-center justify-center text-indigo-900 dark:text-ink hover:bg-sand-100 dark:hover:bg-sand-200 transition-colors"
@@ -297,8 +309,12 @@ export function Sidebar({
 
         <div className="relative p-3 border-t border-white/10 space-y-0.5">
           <ThemeToggle collapsed={collapsed} />
-          <button
-            aria-label={collapsed ? 'Help' : undefined}
+          {/* Support runs on WhatsApp, same number as the marketing site. */}
+          <a
+            href={HELP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={collapsed ? 'Help on WhatsApp' : undefined}
             className={`group relative w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-indigo-100/70 hover:bg-white/5 hover:text-white transition-colors ${
               collapsed ? 'justify-center' : ''
             }`}
@@ -310,7 +326,7 @@ export function Sidebar({
                 Help
               </span>
             )}
-          </button>
+          </a>
           <button
             onClick={handleLogout}
             aria-label={collapsed ? 'Log out' : undefined}

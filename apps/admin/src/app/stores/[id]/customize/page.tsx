@@ -66,11 +66,6 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
         initialAbout={{ heading: aboutConfig.heading || '', body: aboutConfig.body || '' }}
         initialSocial={store.social_links || {}}
         sectionsMeta={sectionsMeta}
-        initialBankDetails={{
-      bank_name: store.bank_name || '',
-      account_number: store.account_number || '',
-      account_name: store.account_name || '',
-    }}
       />
     </div>
   )

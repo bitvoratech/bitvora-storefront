@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '../../../../lib/supabase/server'
 import { DeliverySettingsForm } from './DeliverySettingsForm'
+import { BankDetailsCard } from './BankDetailsCard'
 
 export default async function DeliveryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -8,7 +9,7 @@ export default async function DeliveryPage({ params }: { params: Promise<{ id: s
 
   const { data: store, error } = await supabase
     .from('stores')
-    .select('id, name, pickup_enabled, pickup_address, delivery_note, free_delivery_min, pay_on_delivery_enabled, bank_name, account_number')
+    .select('id, name, pickup_enabled, pickup_address, delivery_note, free_delivery_min, pay_on_delivery_enabled, bank_name, account_number, account_name')
     .eq('id', id)
     .single()
 
@@ -19,7 +20,7 @@ export default async function DeliveryPage({ params }: { params: Promise<{ id: s
     console.error('Delivery settings query failed', error)
     return (
       <div className="max-w-3xl">
-        <h1 className="text-xl sm:text-2xl font-display font-semibold mb-1">Delivery & checkout</h1>
+        <h1 className="text-xl sm:text-2xl font-display font-semibold mb-1">Delivery & payments</h1>
         <div role="alert" className="mt-4 rounded-lg bg-marigold-50 text-ink/80 text-sm px-4 py-3">
           Delivery settings aren&apos;t available yet — the database hasn&apos;t been updated for this feature.
           Please try again shortly.
@@ -37,7 +38,7 @@ export default async function DeliveryPage({ params }: { params: Promise<{ id: s
 
   return (
     <div className="max-w-3xl">
-      <h1 className="text-xl sm:text-2xl font-display font-semibold mb-1">Delivery & checkout</h1>
+      <h1 className="text-xl sm:text-2xl font-display font-semibold mb-1">Delivery & payments</h1>
       <p className="text-ink/50 text-sm mb-6">
         Where you deliver, what it costs, and how customers can pay at {store.name}.
       </p>
@@ -54,6 +55,13 @@ export default async function DeliveryPage({ params }: { params: Promise<{ id: s
           zones: (zones ?? []).map((z) => ({ area: z.area, fee: String(Number(z.fee)) })),
         }}
       />
+
+      <div className="mt-6">
+        <BankDetailsCard
+          storeId={store.id}
+          initial={{ bank_name: store.bank_name ?? '', account_number: store.account_number ?? '', account_name: store.account_name ?? '' }}
+        />
+      </div>
     </div>
   )
 }

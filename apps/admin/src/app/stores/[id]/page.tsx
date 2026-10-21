@@ -10,6 +10,7 @@ import { RevenueChart } from './RevenueChart'
 import { computeTrend } from '../../../lib/computeTrend'
 import { storefrontUrl } from '../../../lib/storefront-url'
 import { ShareStoreCard } from './ShareStoreCard'
+import { PublishToggle } from './PublishToggle'
 import { NeedsAttention, type AttentionItem } from './NeedsAttention'
 
 export default async function StoreDashboardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -186,7 +187,7 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
   })
 
   const checklistItems = [
-    { label: 'Add your bank account', done: !!store.bank_name && !!store.account_number, href: `/stores/${id}/customize` },
+    { label: 'Add your bank account', done: !!store.bank_name && !!store.account_number, href: `/stores/${id}/delivery#bank` },
     { label: 'Set your brand color', done: !!store.palette?.primary, href: `/stores/${id}/customize` },
     {
       label: 'Set up delivery or pickup',
@@ -195,7 +196,7 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
     },
     { label: 'Add at least one product', done: (productCount ?? 0) > 0, href: `/stores/${id}/products/new` },
     { label: 'Set up your homepage hero', done: !!heroSection, href: `/stores/${id}/customize` },
-    { label: 'Publish your store', done: store.is_published },
+    { label: 'Publish your store', done: store.is_published, href: `/stores/${id}#publish` },
   ]
 
   const storeUrl = storefrontUrl(store.slug)
@@ -215,6 +216,9 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
               View store ↗
             </a>
           )}
+          <span id="publish" className="scroll-mt-6">
+            <PublishToggle storeId={store.id} isPublished={store.is_published} />
+          </span>
           <Link
             href={`/stores/${store.id}/products/new`}
             className="text-sm rounded-md px-3 py-1.5 font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"

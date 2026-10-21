@@ -7,6 +7,7 @@ import { Input } from '@bitvora/ui/src/Input'
 import { Select } from '@bitvora/ui/src/Select'
 import { Label } from '@bitvora/ui/src/Label'
 import { AlertTriangle } from 'switch-icons'
+import { BankFields } from '../../../components/BankFields'
 
 const INDUSTRIES = [
   { value: 'fashion', label: 'Fashion & Clothing' },
@@ -19,19 +20,19 @@ const INDUSTRIES = [
 ]
 
 export function StoreForm() {
-  const [state, formAction] = useActionState(createStore, undefined)
+  const [state, formAction, pending] = useActionState(createStore, undefined)
 
   return (
     <form action={formAction} className="space-y-4">
       {state?.error && (
-        <div className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
+        <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {state.error}
         </div>
       )}
       <div>
         <Label htmlFor="name">Store name</Label>
-        <Input id="name" name="name" type="text" placeholder="e.g. Jochenna Thrift" required minLength={2} />
+        <Input id="name" name="name" type="text" placeholder="e.g. Jochenna Thrift" required minLength={2} maxLength={80} />
       </div>
       <div>
         <Label htmlFor="industry">Industry</Label>
@@ -41,26 +42,18 @@ export function StoreForm() {
             <option key={ind.value} value={ind.value}>{ind.label}</option>
           ))}
         </Select>
-          <div className="pt-2 border-t border-sand-200">
-          <p className="text-sm font-medium mb-3">Bank account for payments</p>
-          <p className="text-xs text-ink/50 mb-3">
-            Customers paying by bank transfer will send money here. This is required to create a store.
-          </p>
-        </div>
-        <div>
-          <Label htmlFor="bank_name">Bank name</Label>
-          <Input id="bank_name" name="bank_name" type="text" placeholder="e.g. GTBank" required />
-        </div>
-        <div>
-          <Label htmlFor="account_number">Account number</Label>
-          <Input id="account_number" name="account_number" type="text" placeholder="0123456789" required />
-        </div>
-        <div>
-          <Label htmlFor="account_name">Account name</Label>
-          <Input id="account_name" name="account_name" type="text" placeholder="e.g. Ada Okonkwo" required />
-        </div>
       </div>
-      <Button type="submit" className="w-full">Create store</Button>
+      <div className="pt-4 border-t border-sand-200">
+        <p className="text-sm font-medium mb-1">Bank account for payments</p>
+        <p className="text-xs text-ink/50 mb-3">
+          Customers paying by bank transfer send money here. You can change it later under Delivery &amp; payments.
+        </p>
+        <BankFields />
+      </div>
+      {/* Disabled while creating, so a slow connection can't make two stores. */}
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? 'Creating store...' : 'Create store'}
+      </Button>
     </form>
   )
 }

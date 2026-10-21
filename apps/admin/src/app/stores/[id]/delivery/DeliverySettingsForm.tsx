@@ -264,7 +264,7 @@ export function DeliverySettingsForm({
         />
         <p className="text-xs text-ink/50 mt-3 sm:pl-8">
           Bank transfer is {hasBankDetails ? 'on — customers see your account at checkout' : 'off until you add your bank details'}.{' '}
-          <Link href={`/stores/${storeId}/customize`} className="text-indigo-600 hover:underline">
+          <Link href={`/stores/${storeId}/delivery#bank`} className="text-indigo-600 hover:underline">
             {hasBankDetails ? 'Edit bank details' : 'Add bank details'}
           </Link>
         </p>

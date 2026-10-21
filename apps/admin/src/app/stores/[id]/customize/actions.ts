@@ -154,4 +154,5 @@ export async function saveBankDetails(storeId: string, bankName: string, account
     .eq('id', storeId)
   if (error) return { error: error.message }
   revalidatePath(`/stores/${storeId}`)
+  revalidatePath(`/stores/${storeId}/delivery`)
 }
