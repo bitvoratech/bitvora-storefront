@@ -22,10 +22,16 @@ export function SetupWizard({
 
   return (
     <div className="max-w-md mx-auto mt-10">
-      <div className="flex items-center gap-2 mb-8">
-        <div className={`h-1.5 flex-1 rounded-full ${step >= 1 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
-        <div className={`h-1.5 flex-1 rounded-full ${step >= 2 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
-      </div>
+      <ol className="grid grid-cols-2 gap-2 mb-8" aria-label="Setup steps">
+        {['Brand color', 'First product'].map((label, i) => (
+          <li key={label} aria-current={step === i + 1 ? 'step' : undefined}>
+            <div className={`h-1.5 rounded-full ${step >= i + 1 ? 'bg-indigo-600' : 'bg-sand-200'}`} />
+            <p className={`text-xs mt-1.5 ${step === i + 1 ? 'text-ink font-medium' : 'text-ink/40'}`}>
+              <span className="sr-only">Step {i + 1}: </span>{label}
+            </p>
+          </li>
+        ))}
+      </ol>
 
       {step === 1 && (
         <div>
