@@ -23,5 +23,7 @@ export async function GET(request: NextRequest) {
 
   // The email is confirmed by the time Supabase redirects here; exchanging the
   // code only fails when the link is opened in another browser, so logging in works.
-  return NextResponse.redirect(new URL(ok ? next : '/login', origin))
+  // A failed password-reset link needs a fresh email, not the login page.
+  const fallback = next === '/reset-password' ? '/forgot-password?expired=1' : '/login'
+  return NextResponse.redirect(new URL(ok ? next : fallback, origin))
 }

@@ -5,21 +5,35 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle } from 'switch-icons'
+import { AlertTriangle, Check } from 'switch-icons'
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/client'
 import { AuthLayout } from '../../components/AuthLayout'
+import { PasswordInput } from '../../components/PasswordInput'
+
+// Supabase's own wording ("Invalid login credentials") reads like a system
+// error; say what happened and what to do instead.
+function friendlyLoginError(code: string | undefined, message: string) {
+  if (code === 'invalid_credentials') return 'That email and password don’t match. Check them and try again.'
+  if (code === 'email_not_confirmed') return 'Confirm your email first. Open the link we sent when you signed up.'
+  if (code === 'over_request_rate_limit') return 'Too many attempts. Wait a few minutes and try again.'
+  return message
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [unconfirmed, setUnconfirmed] = useState(false)
+  const [resent, setResent] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    setUnconfirmed(false)
+    setResent(false)
     setLoading(true)
     const supabase = createClient()
 
@@ -27,12 +41,27 @@ export default function LoginPage() {
     setLoading(false)
 
     if (error) {
-      setError(error.message)
+      setError(friendlyLoginError(error.code, error.message))
+      setUnconfirmed(error.code === 'email_not_confirmed')
       return
     }
 
     router.push('/')
     router.refresh()
+  }
+
+  async function resendConfirmation() {
+    const { error } = await createClient().auth.resend({
+      type: 'signup',
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/auth/confirm?next=/verify` },
+    })
+    if (error) {
+      setError(error.status === 429 ? 'We just sent one. Wait a minute before asking again.' : error.message)
+      return
+    }
+    setError(null)
+    setResent(true)
   }
 
   return (
@@ -41,20 +70,36 @@ export default function LoginPage() {
       <p className="text-sm text-ink/50 mb-8">Welcome back — manage your store.</p>
 
       {error && (
-        <div className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          {error}
+        <div role="alert" className="bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
+          <p className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            {error}
+          </p>
+          {unconfirmed && (
+            <button type="button" onClick={resendConfirmation} className="font-medium underline mt-1 ml-6">
+              Send the link again
+            </button>
+          )}
+        </div>
+      )}
+      {resent && (
+        <div role="status" className="flex items-start gap-2 bg-palm-50 text-palm-600 text-sm rounded-lg px-3 py-2 mb-4">
+          <Check className="w-4 h-4 shrink-0 mt-0.5" />
+          Sent. Check your inbox (and spam) for the confirmation link.
         </div>
       )}
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <Label htmlFor="email">Email</Label>
-          <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required  className="px-2 py-3"/>
+          <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} required  className="px-2 py-3"/>
         </div>
         <div>
-          <Label htmlFor="password">Password</Label>
-          <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="px-2 py-3"/>
+          <div className="flex items-baseline justify-between gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Link href="/forgot-password" className="text-xs text-indigo-600 font-medium">Forgot password?</Link>
+          </div>
+          <PasswordInput id="password" autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} required className="px-2 py-3"/>
         </div>
         {/*
           Was `bg-ink` — that token is inverted for dark mode (it's meant

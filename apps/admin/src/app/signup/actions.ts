@@ -6,6 +6,7 @@ import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { normalizeNigerianPhone } from '../../lib/termii'
 import { normalizeCac, normalizeNin } from '../../lib/merchant-identity'
+import { passwordError } from '../../lib/password'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -42,7 +43,8 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
     return fail('Enter your business name as registered with CAC.')
   }
   if (!EMAIL_RE.test(values.email) || values.email.length > 200) return fail('Enter a valid email address.')
-  if (password.length < 6) return fail('Password must be at least 6 characters.')
+  const invalidPassword = passwordError(password)
+  if (invalidPassword) return fail(invalidPassword)
 
   let phone: string
   try {

@@ -1,6 +1,8 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
+import { sendSms } from '../../lib/termii'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { requireStaff } from '../../lib/auth/require-owner'
 
@@ -80,16 +82,30 @@ export async function reviewMerchantVerification(merchantId: string, decision: '
     .not('phone_verified_at', 'is', null)
     .not('nin', 'is', null)
     .not('cac_number', 'is', null)
-    .select('id, nin, cac_number')
+    .select('id, nin, cac_number, phone')
   if (error) return { error: error.message }
   if (!updated?.length) return { error: 'This merchant has nothing to review right now.' }
 
-  const { nin, cac_number } = updated[0]
+  const { nin, cac_number, phone } = updated[0]
   const { error: logError } = await admin.from('merchant_verifications').insert([
     { merchant_id: merchantId, type: 'nin', reference: nin, provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
     { merchant_id: merchantId, type: 'cac', reference: cac_number, provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
   ])
   if (logError) console.error('verification audit log insert failed', logError)
+
+  // Tell the merchant so they don't have to keep checking. Best-effort: the
+  // decision is saved either way, and they see it next time they log in.
+  if (phone) {
+    const origin = (await headers()).get('origin') ?? ''
+    const message = approved
+      ? `Bitvora: Your business details are approved. You can now create your store${origin ? `: ${origin}/stores/new` : '.'}`
+      : `Bitvora: We couldn't verify your business details: ${reason.slice(0, 200).replace(/([^.!?])$/, '$1.')} Update them${origin ? ` at ${origin}/verify` : ' when you next log in'}.`
+    try {
+      await sendSms(phone, message)
+    } catch (e) {
+      console.error('verification decision SMS failed', e)
+    }
+  }
 
   revalidatePath('/owner/verifications')
   revalidatePath('/owner/merchants')

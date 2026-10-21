@@ -45,6 +45,12 @@ export function Nav() {
 
         <div className="flex items-center gap-2">
           <a
+            href={`${ADMIN_URL}/login`}
+            className="hidden md:inline-block text-sm font-medium text-ink-soft hover:text-ink transition-colors px-2 py-2 whitespace-nowrap"
+          >
+            Log in
+          </a>
+          <a
             href={`${ADMIN_URL}/signup`}
             className="shrink-0 rounded-lg bg-indigo-600 hidden md:inline-block text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
@@ -75,6 +81,12 @@ export function Nav() {
             </Link>
           ))}
 
+          <a
+            href={`${ADMIN_URL}/login`}
+            className="rounded-lg px-2 py-2.5 text-sm font-medium text-ink hover:bg-sand-100 transition-colors"
+          >
+            Log in
+          </a>
           <a
             href={`${ADMIN_URL}/signup`}
             className="shrink-0 rounded-lg bg-indigo-600 text-center text-white text-sm font-medium px-3  py-2 hover:bg-indigo-700 transition-colors whitespace-nowrap"
