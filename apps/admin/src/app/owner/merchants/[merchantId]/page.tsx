@@ -16,7 +16,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
 
   const { data: merchant } = await admin
     .from('merchants')
-    .select('id, full_name, business_name, phone, avatar_url, is_suspended, created_at')
+    .select('id, full_name, business_name, phone, avatar_url, is_suspended, created_at, verification_status, verification_type, verification_reference')
     .eq('id', merchantId)
     .single()
 
@@ -61,6 +61,13 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
 
   const initial = merchant.full_name?.[0]?.toUpperCase() || '?'
   const memberSince = new Date(merchant.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  // CAC numbers are typed in by the merchant and not checked against the
+  // registry, so the owner console flags them for a manual look.
+  const idLabel = merchant.verification_type === 'cac'
+    ? `CAC ${merchant.verification_reference ?? ''} (not checked)`
+    : merchant.verification_type === 'nin'
+      ? `NIN (${merchant.verification_status})`
+      : merchant.verification_status
 
   return (
     <div>
@@ -83,6 +90,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
             <p className="text-sm text-ink/50 mb-4">{merchant.business_name || '—'}</p>
             <div className="w-full space-y-2 text-left text-sm border-t border-sand-200 pt-4">
               <div className="flex justify-between"><span className="text-ink/50">Phone</span><span className="font-mono">{merchant.phone || '—'}</span></div>
+              <div className="flex justify-between gap-3"><span className="text-ink/50">ID</span><span className="font-mono text-right">{idLabel}</span></div>
               <div className="flex justify-between"><span className="text-ink/50">Stores</span><span className="font-mono">{stores?.length ?? 0}</span></div>
               <div className="flex justify-between"><span className="text-ink/50">Since</span><span>{memberSince}</span></div>
             </div>
