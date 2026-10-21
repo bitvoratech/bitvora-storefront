@@ -7,6 +7,7 @@ import { createAdminClient } from '../../lib/supabase/admin'
 import { normalizeNigerianPhone } from '../../lib/termii'
 import { normalizeCac, normalizeNin } from '../../lib/merchant-identity'
 import { passwordError } from '../../lib/password'
+import { parseInterval, parsePlan } from '../../lib/plans'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -84,6 +85,17 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   if (updateError) {
     console.error('signup: saving merchant details failed', updateError)
     return fail('Your account was created, but we could not save your details. Log in to finish verification.')
+  }
+
+  // The plan picked on the pricing page. Saved on its own so a failure here
+  // never blocks signup; it's only shown in the owner console for now.
+  const plan = parsePlan(formData.get('plan'))
+  if (plan) {
+    const { error: planError } = await createAdminClient()
+      .from('merchants')
+      .update({ plan, plan_interval: parseInterval(formData.get('interval')) ?? 'monthly' })
+      .eq('user_id', data.user.id)
+    if (planError) console.error('signup: saving plan failed', planError)
   }
 
   // No session yet means the project requires email confirmation first.

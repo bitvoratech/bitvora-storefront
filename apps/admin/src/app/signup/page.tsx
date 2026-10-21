@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { use, useActionState } from 'react'
 import Link from 'next/link'
 import { AuthLayout } from '../../components/AuthLayout'
 import { Button } from '@bitvora/ui/src/Button'
@@ -10,9 +10,14 @@ import { AlertTriangle, Check } from 'switch-icons'
 import { signUp } from './actions'
 import { PasswordInput } from '../../components/PasswordInput'
 import { MIN_PASSWORD_LENGTH } from '../../lib/password'
+import { PLAN_NAMES, parseInterval, parsePlan } from '../../lib/plans'
 
-export default function SignupPage() {
+export default function SignupPage({ searchParams }: { searchParams: Promise<{ plan?: string; interval?: string }> }) {
   const [state, action, pending] = useActionState(signUp, undefined)
+  // Set by the pricing page's "Get <plan>" buttons.
+  const params = use(searchParams)
+  const plan = parsePlan(params.plan)
+  const interval = parseInterval(params.interval) ?? 'monthly'
   const v = state?.values ?? {}
 
   if (state?.checkEmail) {
@@ -37,6 +42,12 @@ export default function SignupPage() {
         We check every merchant&apos;s NIN and CAC details before their store can go live.
       </p>
 
+      {plan && (
+        <p className="text-sm bg-indigo-50 text-indigo-600 rounded-lg px-3 py-2 mb-4">
+          You picked the <span className="font-medium">{PLAN_NAMES[plan]}</span> plan, billed {interval === 'annual' ? 'annually' : 'monthly'}.
+        </p>
+      )}
+
       {state?.error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
           <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -47,6 +58,8 @@ export default function SignupPage() {
       {/* key: remount with the echoed values after each attempt, so a failed
           submit keeps what was typed (passwords excepted). */}
       <form key={JSON.stringify(v)} action={action} className="space-y-4">
+        {plan && <input type="hidden" name="plan" value={plan} />}
+        {plan && <input type="hidden" name="interval" value={interval} />}
         <div>
           <Label htmlFor="fullName">Full name</Label>
           <Input id="fullName" name="fullName" type="text" autoComplete="name" defaultValue={v.fullName} required maxLength={100} className="px-2 py-3" />
