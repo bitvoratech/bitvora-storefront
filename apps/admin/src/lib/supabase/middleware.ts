@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/signup', '/auth/']
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/auth/']
 const SUSPENDED_PATH = '/suspended'
 
 export async function updateSession(request: NextRequest) {
@@ -32,10 +32,10 @@ export async function updateSession(request: NextRequest) {
 
   // Redirects must carry any refreshed session cookies, or the user gets
   // logged out when a token refresh coincides with a redirect.
-  const redirectTo = (pathname: string) => {
+  const redirectTo = (pathname: string, search = '') => {
     const url = request.nextUrl.clone()
     url.pathname = pathname
-    url.search = ''
+    url.search = search
     const res = NextResponse.redirect(url)
     supabaseResponse.cookies.getAll().forEach((c) => res.cookies.set(c))
     return res
@@ -50,6 +50,11 @@ export async function updateSession(request: NextRequest) {
     url.search = ''
     url.searchParams.set('code', code)
     return NextResponse.redirect(url)
+  }
+
+  // A reset link that didn't sign anyone in has expired or was already used.
+  if (!user && path === '/reset-password') {
+    return redirectTo('/forgot-password', '?expired=1')
   }
 
   // Redirect unauthenticated users away from protected routes

@@ -150,6 +150,7 @@ export function Sidebar({
   merchantName,
   avatarUrl,
   staffRole,
+  canCreateStore = false,
   open,
   onClose,
 }: {
@@ -157,6 +158,7 @@ export function Sidebar({
   merchantName?: string | null
   avatarUrl?: string | null
   staffRole?: 'owner' | 'admin' | null
+  canCreateStore?: boolean
   open: boolean
   onClose: () => void
 }) {
@@ -274,7 +276,10 @@ export function Sidebar({
           ) : (
             <>
               <SimpleLink item={{ href: '/', icon: Home, label: 'Dashboard' }} active={isActive('/')} collapsed={collapsed} onClick={onClose} />
-              <SimpleLink item={{ href: '/stores/new', icon: Plus, label: 'New store' }} active={isActive('/stores/new')} collapsed={collapsed} onClick={onClose} />
+              {/* Unverified merchants can't create a store yet; the dashboard shows why. */}
+              {canCreateStore && (
+                <SimpleLink item={{ href: '/stores/new', icon: Plus, label: 'New store' }} active={isActive('/stores/new')} collapsed={collapsed} onClick={onClose} />
+              )}
             </>
           )}
 

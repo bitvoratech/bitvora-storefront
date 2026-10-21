@@ -6,6 +6,10 @@ import { useState } from 'react'
 import { Sidebar } from './Sidebar'
 import { IconMenu2 } from '@tabler/icons-react'
 
+// Full-screen pages with no dashboard chrome: signing in, and the steps a
+// merchant goes through before they have a dashboard to use.
+const AUTH_PAGES = ['/login', '/signup', '/forgot-password', '/reset-password', '/verify', '/suspended']
+
 export function Shell({
   children,
   userEmail,
@@ -13,6 +17,7 @@ export function Shell({
   staffRole,
   merchantName,
   avatarUrl,
+  canCreateStore = false,
 }: {
   children: React.ReactNode
   userEmail: string | null
@@ -20,9 +25,10 @@ export function Shell({
   staffRole?: 'owner' | 'admin' | null
   merchantName?: string | null
   avatarUrl?: string | null
+  canCreateStore?: boolean
 }) {
   const pathname = usePathname()
-  const isAuthPage = pathname === '/login' || pathname === '/signup'
+  const isAuthPage = AUTH_PAGES.includes(pathname)
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (isAuthPage) {
@@ -36,6 +42,7 @@ export function Shell({
         merchantName={merchantName}
         avatarUrl={avatarUrl}
         staffRole={staffRole}
+        canCreateStore={canCreateStore}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
