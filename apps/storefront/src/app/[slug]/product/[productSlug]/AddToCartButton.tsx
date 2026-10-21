@@ -45,7 +45,7 @@ export function AddToCartButton({
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
-  const item = { productId, name, price, image }
+  const item = { productId, name, price, image, maxQuantity: stock }
 
   function handleAdd() {
     addItem(item, quantity)
@@ -88,7 +88,7 @@ export function AddToCartButton({
           onClick={handleBuyNow}
           tabIndex={showStickyBar ? 0 : -1}
           className="shrink-0 rounded-lg px-6 py-3 text-sm font-medium text-white"
-          style={{ backgroundColor: accent }}
+          style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
         >
           Buy now
         </button>
@@ -121,7 +121,7 @@ export function AddToCartButton({
       <button
         onClick={handleBuyNow}
         className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3.5 text-sm font-medium text-white transition-opacity hover:opacity-90"
-        style={{ backgroundColor: accent }}
+        style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
       >
         Buy now
       </button>

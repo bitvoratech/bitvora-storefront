@@ -97,6 +97,9 @@ export default async function OrderDetailPage({
             {order.delivery_method}
             {order.delivery_area && ` · ${order.delivery_area}`}
           </p>
+          {order.delivery_address && (
+            <p className="text-sm text-ink mt-1 whitespace-pre-line">{order.delivery_address}</p>
+          )}
           <p className="text-sm text-ink/50 mt-1 capitalize">
             Payment: {String(order.payment_method).replaceAll('_', ' ')}
           </p>

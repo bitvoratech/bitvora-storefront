@@ -12,6 +12,7 @@ type CheckoutInput = {
   customerEmail?: string
   deliveryMethod: 'pickup' | 'delivery'
   deliveryArea?: string
+  deliveryAddress?: string
   paymentMethod: 'bank_transfer' | 'pay_on_delivery'
   paymentProofUrl?: string
   items: { productId: string; name: string; price: number; quantity: number }[]
@@ -70,9 +71,13 @@ export async function createOrder(input: CheckoutInput) {
   }
 
   let deliveryArea: string | null = null
+  let deliveryAddress: string | null = null
   if (input.deliveryMethod === 'delivery') {
     deliveryArea = (input.deliveryArea ?? '').trim()
     if (!deliveryArea || deliveryArea.length > 80) return { error: 'Choose a delivery area.' }
+    deliveryAddress = (input.deliveryAddress ?? '').trim().replace(/\s+\n/g, '\n')
+    if (deliveryAddress.length < 5) return { error: 'Enter the address to deliver to.' }
+    if (deliveryAddress.length > 300) return { error: 'Keep the delivery address under 300 characters.' }
   }
 
   let paymentProofUrl: string | null = null
@@ -123,6 +128,16 @@ export async function createOrder(input: CheckoutInput) {
     }
     console.error('create_order failed', error)
     return { error: 'Could not place your order. Please try again.' }
+  }
+
+  if (deliveryAddress) {
+    // create_order predates addresses, so the address is saved on the new
+    // order straight after. A failure here shouldn't lose the order itself.
+    const { error: addressError } = await supabase
+      .from('orders')
+      .update({ delivery_address: deliveryAddress })
+      .eq('id', data.order_id)
+    if (addressError) console.error('saving delivery address failed', addressError)
   }
 
   // No redirect() here — the caller (checkout page) clears the cart first,

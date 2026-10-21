@@ -7,6 +7,14 @@ export type CartItem = {
   price: number
   image: string | null
   quantity: number
+  // Stock when the item was added. Older carts don't have it; the
+  // create_order RPC still enforces live stock either way.
+  maxQuantity?: number
+}
+
+/** Most of this item a shopper can put in the cart. */
+export function lineLimit(item: Pick<CartItem, 'maxQuantity'>) {
+  return Math.max(1, Math.min(item.maxQuantity ?? MAX_ITEM_QUANTITY, MAX_ITEM_QUANTITY))
 }
 
 // Matches the per-line cap enforced by the create_order RPC.
@@ -31,12 +39,12 @@ export const useCartStore = create<CartState>()(
           const items = state.carts[slug] ?? []
           const existing = items.find((i) => i.productId === item.productId)
           const next = existing
-            ? items.map((i) =>
-                i.productId === item.productId
-                  ? { ...i, quantity: Math.min(i.quantity + quantity, MAX_ITEM_QUANTITY) }
-                  : i
-              )
-            : [...items, { ...item, quantity: Math.min(quantity, MAX_ITEM_QUANTITY) }]
+            ? items.map((i) => {
+                if (i.productId !== item.productId) return i
+                const merged = { ...i, maxQuantity: item.maxQuantity ?? i.maxQuantity }
+                return { ...merged, quantity: Math.min(i.quantity + quantity, lineLimit(merged)) }
+              })
+            : [...items, { ...item, quantity: Math.min(quantity, lineLimit(item)) }]
           return { carts: { ...state.carts, [slug]: next } }
         }),
       removeItem: (slug, productId) =>
@@ -52,7 +60,7 @@ export const useCartStore = create<CartState>()(
           const next = quantity <= 0
             ? items.filter((i) => i.productId !== productId)
             : items.map((i) =>
-                i.productId === productId ? { ...i, quantity: Math.min(quantity, MAX_ITEM_QUANTITY) } : i
+                i.productId === productId ? { ...i, quantity: Math.min(quantity, lineLimit(i)) } : i
               )
           return { carts: { ...state.carts, [slug]: next } }
         }),

@@ -39,8 +39,9 @@ function OptionButton({ selected, onClick, children }: { selected: boolean; onCl
       aria-checked={selected}
       onClick={onClick}
       className={`rounded-lg border px-3 py-3 text-sm text-left ${
-        selected ? 'border-[#171717] bg-[#fafafa] font-medium' : 'border-[#e5e5e5]'
+        selected ? 'bg-[#fafafa] font-medium' : 'border-[#e5e5e5]'
       }`}
+      style={selected ? { borderColor: 'var(--accent)', boxShadow: 'inset 0 0 0 1px var(--accent)' } : undefined}
     >
       {children}
     </button>
@@ -65,6 +66,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   const [email, setEmail] = useState('')
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('delivery')
   const [area, setArea] = useState('')
+  const [address, setAddress] = useState('')
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('bank_transfer')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -138,6 +140,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         customerEmail: email,
         deliveryMethod,
         deliveryArea: deliveryMethod === 'delivery' ? area : undefined,
+        deliveryAddress: deliveryMethod === 'delivery' ? address : undefined,
         paymentMethod,
         paymentProofUrl: paymentMethod === 'bank_transfer' ? proofUrl : undefined,
         items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
@@ -248,6 +251,19 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
               {store?.delivery_note && (
                 <p className="text-xs text-[#525252] mt-1.5 whitespace-pre-line">{store.delivery_note}</p>
               )}
+              <label htmlFor="checkout-address" className="block text-sm font-medium mb-1.5 mt-4">Delivery address</label>
+              <textarea
+                id="checkout-address"
+                required
+                rows={2}
+                minLength={5}
+                maxLength={300}
+                autoComplete="street-address"
+                placeholder="House number, street, and a landmark the rider can find"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                className={inputClass}
+              />
             </div>
           )}
 
@@ -314,7 +330,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
           <button
             type="submit"
             disabled={loading || !canCheckout || (paymentMethod === 'bank_transfer' && !proofUrl)}
-            className="w-full rounded-lg px-4 py-3.5 text-sm font-medium bg-[#171717] text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+            className="w-full rounded-lg px-4 py-3.5 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+            style={{ backgroundColor: 'var(--accent)', color: 'var(--accent-fg)' }}
           >
             {loading ? 'Placing order…' : `Place order · ₦${grandTotal.toLocaleString()}`}
           </button>

@@ -74,7 +74,7 @@ export function RestockForm({ slug, productId, storeName, accent }: { slug: stri
         type="submit"
         disabled={isPending}
         className="w-full rounded-lg px-4 py-3 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ backgroundColor: accent }}
+        style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
       >
         {isPending ? 'Saving…' : 'Notify me'}
       </button>
