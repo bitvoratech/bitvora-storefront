@@ -13,6 +13,8 @@ type Merchant = {
   phone: string | null
   is_suspended: boolean
   created_at: string
+  /** e.g. "Growth · annual"; null when none was picked at signup */
+  plan: string | null
 }
 
 export function MerchantsTable({ merchants }: { merchants: Merchant[] }) {
@@ -87,7 +89,10 @@ export function MerchantsTable({ merchants }: { merchants: Merchant[] }) {
               className="absolute inset-0"
             />
             <p className="text-sm font-medium truncate">{m.full_name || '—'}</p>
-            <p className="text-sm text-ink/60 truncate">{m.business_name || '—'}</p>
+            <div className="min-w-0">
+              <p className="text-sm text-ink/60 truncate">{m.business_name || '—'}</p>
+              {m.plan && <p className="text-xs text-ink/40 truncate">{m.plan}</p>}
+            </div>
             <p className="text-sm font-mono text-ink/60 hidden sm:block">{m.phone || '—'}</p>
             <button
               type="button"
