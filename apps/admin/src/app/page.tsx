@@ -15,12 +15,18 @@ export default async function DashboardPage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, full_name, is_owner, is_admin')
+    .select('id, full_name, is_owner, is_admin, verification_status, phone_verified_at')
     .eq('user_id', user.id)
     .single()
 
   // The owner and admins don't run stores; their home is the console.
   if (merchant?.is_owner || merchant?.is_admin) redirect('/owner')
+
+  // New merchants haven't confirmed their phone yet: take them to the OTP
+  // step rather than an empty dashboard they can't do anything from.
+  if (merchant && merchant.verification_status !== 'verified' && !merchant.phone_verified_at) {
+    redirect('/verify')
+  }
 
   const { data: stores } = await supabase
     .from('stores')

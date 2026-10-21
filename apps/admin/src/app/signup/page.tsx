@@ -21,7 +21,7 @@ export default function SignupPage() {
         </div>
         <h1 className="text-2xl font-display font-semibold mb-1">Check your email</h1>
         <p className="text-sm text-ink/50 mb-6">
-          We sent you a link to confirm your account. After that, log in to verify your phone number.
+          We sent you a link to confirm your account. Open it to continue to phone verification.
         </p>
         <Link href="/login" className="text-indigo-600 font-medium text-sm">Go to log in</Link>
       </AuthLayout>

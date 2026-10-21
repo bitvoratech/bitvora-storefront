@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/signup']
+const PUBLIC_PATHS = ['/login', '/signup', '/auth/']
 const SUSPENDED_PATH = '/suspended'
 
 export async function updateSession(request: NextRequest) {
@@ -39,6 +39,17 @@ export async function updateSession(request: NextRequest) {
     const res = NextResponse.redirect(url)
     supabaseResponse.cookies.getAll().forEach((c) => res.cookies.set(c))
     return res
+  }
+
+  // If the confirmation email's redirect URL isn't allow-listed, Supabase
+  // falls back to the Site URL with the code on it; finish signing in there.
+  const code = request.nextUrl.searchParams.get('code')
+  if (path === '/' && code) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/confirm'
+    url.search = ''
+    url.searchParams.set('code', code)
+    return NextResponse.redirect(url)
   }
 
   // Redirect unauthenticated users away from protected routes
