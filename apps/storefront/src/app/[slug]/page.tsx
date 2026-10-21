@@ -11,8 +11,7 @@ import { getPublishedStore, whatsappLink } from '../../lib/store'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
 import { BrandIcon } from '../../components/BrandIcon'
-
-const PRODUCTS_POSITION = 5
+import { splitSections } from '../../lib/sections'
 
 type SearchParams = { q?: string; category?: string; sort?: string }
 
@@ -123,11 +122,7 @@ export default async function StorePage({
   const typography = store.typography || { pairing: 'editorial', scale: 'standard' }
   const displayFont = DISPLAY_FONTS[typography.pairing ?? 'editorial'] || DISPLAY_FONTS.editorial
   const scale = SCALE_CLASSES[typography.scale ?? 'standard'] || SCALE_CLASSES.standard
-  // The product grid sits at position 5: sections the merchant orders above it
-  // render before the products, the rest after. Any section type can go either
-  // side, so reordering in the admin never makes a section disappear.
-  const beforeProducts = (allSections || []).filter((s) => s.position < PRODUCTS_POSITION)
-  const afterProducts = (allSections || []).filter((s) => s.position >= PRODUCTS_POSITION)
+  const { beforeProducts, afterProducts } = splitSections(allSections)
 
   // Two columns on phones (the shopping norm); density only widens larger screens.
   const gridCols = store.grid_density === 2 ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-3'
