@@ -3,6 +3,7 @@ import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { AuthLayout } from '../../components/AuthLayout'
 import { VerifyWizard } from './VerifyWizard'
+import type { VerificationStatus } from '../../lib/merchant-identity'
 
 export default async function VerifyPage() {
   const supabase = await createClient()
@@ -11,7 +12,7 @@ export default async function VerifyPage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, phone, phone_verified_at, verification_status')
+    .select('id, phone, phone_verified_at, verification_status, nin, cac_number, business_name, verification_note')
     .eq('user_id', user.id)
     .single()
 
@@ -39,6 +40,11 @@ export default async function VerifyPage() {
         initialPhone={merchant?.phone ?? null}
         phoneVerified={!!merchant?.phone_verified_at}
         hasPendingCode={hasPendingCode}
+        status={(merchant?.verification_status ?? 'unverified') as VerificationStatus}
+        nin={merchant?.nin ?? null}
+        cacNumber={merchant?.cac_number ?? null}
+        businessName={merchant?.business_name ?? null}
+        reviewNote={merchant?.verification_note ?? null}
       />
     </AuthLayout>
   )

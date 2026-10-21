@@ -63,8 +63,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   // No separate verification redirect here — a merchant can't create a store
-  // (and therefore can't reach any store-scoped route) until stores/new marks
-  // them verified, so that page is the single enforcement point.
+  // (and therefore can't reach any store-scoped route) until an owner approves
+  // their NIN/CAC; stores/new and its action (plus RLS) enforce that.
 
   return supabaseResponse
 }

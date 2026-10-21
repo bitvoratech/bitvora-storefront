@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
 import { StoreForm } from './StoreForm'
-import { VerifyWizard } from '../../verify/VerifyWizard'
 import { Card } from '@bitvora/ui/src/Card'
 
 export default async function NewStorePage() {
@@ -11,25 +10,18 @@ export default async function NewStorePage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('phone, phone_verified_at, verification_status')
+    .select('verification_status')
     .eq('user_id', user.id)
     .single()
 
-  const isVerified = merchant?.verification_status === 'verified'
+  // Phone OTP and the owner's manual NIN/CAC review both live on /verify.
+  if (merchant?.verification_status !== 'verified') redirect('/verify')
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-      <h1 className="text-2xl font-display font-semibold mb-1">
-        {isVerified ? 'Create your store' : 'Verify your account'}
-      </h1>
-      {!isVerified && (
-        <p className="text-sm text-ink/50 mb-6">
-          Quick phone and identity check before you can create a store — required since your
-          store will be handling customer payments.
-        </p>
-      )}
+      <h1 className="text-2xl font-display font-semibold mb-1">Create your store</h1>
       <Card>
-        {isVerified ? <StoreForm /> : <VerifyWizard initialPhone={merchant?.phone ?? null} phoneVerified={!!merchant?.phone_verified_at} />}
+        <StoreForm />
       </Card>
     </div>
   )

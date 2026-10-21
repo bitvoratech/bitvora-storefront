@@ -37,3 +37,52 @@ export async function unpublishStore(storeId: string) {
 
   revalidatePath('/owner/stores')
 }
+// Manual NIN/CAC review. Both numbers are checked by the owner outside the
+// app (NIMC / CAC portals); this records the decision.
+export async function reviewMerchantVerification(merchantId: string, decision: 'approve' | 'reject', note?: string) {
+  const auth = await requireOwner()
+  if (!auth.ok) return { error: auth.error }
+
+  if (typeof merchantId !== 'string' || (decision !== 'approve' && decision !== 'reject')) {
+    return { error: 'Invalid request' }
+  }
+  const reason = (note ?? '').trim().slice(0, 500)
+  if (decision === 'reject' && !reason) {
+    return { error: 'Say why, so the merchant knows what to fix.' }
+  }
+
+  const admin = createAdminClient()
+  const now = new Date().toISOString()
+  const approved = decision === 'approve'
+
+  // Only merchants who've verified their phone and submitted details can be
+  // reviewed; the status filter also stops two owners double-handling one.
+  const { data: updated, error } = await admin
+    .from('merchants')
+    .update({
+      verification_status: approved ? 'verified' : 'failed',
+      verified_at: approved ? now : null,
+      verification_reviewed_at: now,
+      verification_reviewed_by: auth.merchantId,
+      verification_note: approved ? null : reason,
+    })
+    .eq('id', merchantId)
+    .in('verification_status', ['pending', 'failed'])
+    .not('phone_verified_at', 'is', null)
+    .not('nin', 'is', null)
+    .not('cac_number', 'is', null)
+    .select('id, nin, cac_number')
+  if (error) return { error: error.message }
+  if (!updated?.length) return { error: 'This merchant has nothing to review right now.' }
+
+  const { nin, cac_number } = updated[0]
+  const { error: logError } = await admin.from('merchant_verifications').insert([
+    { merchant_id: merchantId, type: 'nin', reference: nin, provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
+    { merchant_id: merchantId, type: 'cac', reference: cac_number, provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
+  ])
+  if (logError) console.error('verification audit log insert failed', logError)
+
+  revalidatePath('/owner/verifications')
+  revalidatePath('/owner/merchants')
+  revalidatePath(`/owner/merchants/${merchantId}`)
+}
