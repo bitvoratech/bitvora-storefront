@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { createClient } from "../lib/supabase/server";
+import { cookies } from "next/headers";
 import { Shell } from "../components/Shell";
+import { SIDEBAR_COOKIE } from "../lib/sidebar";
 
 import { Inter, Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
@@ -39,6 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         merchantName={merchant?.full_name}
         avatarUrl={merchant?.avatar_url}
         canCreateStore={merchant?.verification_status === 'verified'}
+        sidebarCollapsed={(await cookies()).get(SIDEBAR_COOKIE)?.value === '1'}
           >
       {children}
       </Shell>

@@ -11,7 +11,7 @@ import { AlertTriangle } from 'switch-icons'
 
 export function ProductForm({ storeId }: { storeId: string }) {
   const boundAction = createProduct.bind(null, storeId)
-  const [state, formAction] = useActionState(boundAction, undefined)
+  const [state, formAction, pending] = useActionState(boundAction, undefined)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -36,7 +36,8 @@ export function ProductForm({ storeId }: { storeId: string }) {
         </div>
         <div>
           <Label htmlFor="stock_quantity">Stock</Label>
-          <Input id="stock_quantity" name="stock_quantity" type="number" min="0" defaultValue={0} className="font-mono" />
+          {/* Starting at 0 marked every new product sold out; make the count a deliberate choice. */}
+          <Input id="stock_quantity" name="stock_quantity" type="number" min="0" step="1" required placeholder="How many?" className="font-mono" />
         </div>
       </div>
       <div>
@@ -48,7 +49,9 @@ export function ProductForm({ storeId }: { storeId: string }) {
         <Input id="category" name="category" type="text" placeholder="e.g. Dresses" />
       </div>
       <ImageUploader />
-      <Button type="submit" className="w-full">Add product</Button>
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? 'Adding product...' : 'Add product'}
+      </Button>
     </form>
   )
 }

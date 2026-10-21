@@ -12,7 +12,7 @@ import { IconChevronLeft, IconChevronRight, IconEye, IconPencil } from '@tabler/
 import {
   saveBrandColor, saveHeroSection, saveBannerGridSection, saveCtaBannerSection,
   saveTypography, saveLogo, saveGridDensity,
-  saveAboutSection, saveSocialLinks, toggleSectionVisibility, reorderSection, saveBankDetails,
+  saveAboutSection, saveSocialLinks, toggleSectionVisibility, reorderSection,
 } from './actions'
 import { FONT_PAIRINGS, SCALES } from '../../../../lib/font-pairings'
 
@@ -28,8 +28,15 @@ const PRESETS = [
   { name: 'Ocean', value: '#1D6C8C' },
 ]
 
-const TABS = ['brand', 'design', 'hero', 'about', 'collections', 'banner', 'sections', 'social', 'payments'] as const
+const TABS = ['brand', 'design', 'hero', 'about', 'collections', 'banner', 'sections', 'social'] as const
 type Tab = typeof TABS[number]
+// 'sections' saves each change as it's made, so it never has unsaved edits.
+type EditableTab = Exclude<Tab, 'sections'>
+
+const TAB_LABELS: Record<Tab, string> = {
+  brand: 'Brand', design: 'Design', hero: 'Hero', about: 'About',
+  collections: 'Collections', banner: 'Banner', sections: 'Sections', social: 'Social',
+}
 
 export function CustomizeWorkspace({
   storeId,
@@ -43,7 +50,6 @@ export function CustomizeWorkspace({
   initialGridDensity,
   initialAbout,
   initialSocial,
-  initialBankDetails,
   sectionsMeta,
 }: {
   storeId: string
@@ -57,7 +63,6 @@ export function CustomizeWorkspace({
   initialGridDensity: number
   initialAbout: { heading: string; body: string }
   initialSocial: { whatsapp?: string; instagram?: string; facebook?: string; tiktok?: string }
-  initialBankDetails: { bank_name: string; account_number: string; account_name: string }
   sectionsMeta: { type: string; label: string; is_visible: boolean; position: number }[]
 }) {
   const [logo, setLogo] = useState(initialLogo)
@@ -72,9 +77,31 @@ export function CustomizeWorkspace({
   const [tiles, setTiles] = useState<Tile[]>([0, 1, 2].map((i) => initialTiles[i] || { heading: '', image_url: '', cta_text: '' }))
   const [cta, setCta] = useState(initialCta)
   const [isPending, startTransition] = useTransition()
-  const [savedTab, setSavedTab] = useState<Tab | null>(null)
+  const [justSaved, setJustSaved] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [bankDetails, setBankDetails] = useState(initialBankDetails)
+
+  // Each tab's current values, serialized, compared with what was last saved:
+  // that's what tells us which tabs have unsaved edits.
+  const current: Record<EditableTab, string> = {
+    brand: JSON.stringify(color),
+    design: JSON.stringify({ typography, logo, gridDensity }),
+    hero: JSON.stringify(hero),
+    about: JSON.stringify(about),
+    collections: JSON.stringify(tiles),
+    banner: JSON.stringify(cta),
+    social: JSON.stringify(social),
+  }
+  const [saved, setSaved] = useState(current)
+  const dirtyTabs = (Object.keys(current) as EditableTab[]).filter((t) => current[t] !== saved[t])
+  const hasUnsaved = dirtyTabs.length > 0
+
+  // Warn before a reload or closing the tab would throw edits away.
+  useEffect(() => {
+    if (!hasUnsaved) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [hasUnsaved])
 
   // Mobile-only: which pane is showing. Desktop always shows both.
   const [mobileView, setMobileView] = useState<'edit' | 'preview'>('edit')
@@ -102,37 +129,58 @@ export function CustomizeWorkspace({
     tabsScrollRef.current?.scrollBy({ left: dir === 'left' ? -160 : 160, behavior: 'smooth' })
   }
 
+  // Saves every tab with unsaved edits, not just the one that's open, so
+  // switching tabs before saving never loses work.
   function save() {
-    setSavedTab(null)
+    if (!hasUnsaved) return
+    setJustSaved(false)
     setSaveError(null)
+    const toSave = dirtyTabs
+    const snapshot = current
     startTransition(async () => {
-      const results: ({ error?: string } | void)[] = []
-      try {
-        if (tab === 'brand') results.push(await saveBrandColor(storeId, color))
-        if (tab === 'hero') results.push(await saveHeroSection(storeId, hero))
-        if (tab === 'collections') results.push(await saveBannerGridSection(storeId, tiles))
-        if (tab === 'banner') results.push(await saveCtaBannerSection(storeId, cta))
-        if (tab === 'design') {
-          results.push(await saveTypography(storeId, typography.pairing, typography.scale))
-          results.push(await saveLogo(storeId, logo))
-          results.push(await saveGridDensity(storeId, gridDensity))
+      const savers: Record<EditableTab, () => Promise<({ error?: string } | void)[]>> = {
+        brand: async () => [await saveBrandColor(storeId, color)],
+        design: async () => [
+          await saveTypography(storeId, typography.pairing, typography.scale),
+          await saveLogo(storeId, logo),
+          await saveGridDensity(storeId, gridDensity),
+        ],
+        hero: async () => [await saveHeroSection(storeId, hero)],
+        about: async () => [await saveAboutSection(storeId, about.heading, about.body)],
+        collections: async () => [await saveBannerGridSection(storeId, tiles)],
+        banner: async () => [await saveCtaBannerSection(storeId, cta)],
+        social: async () => [await saveSocialLinks(storeId, social)],
+      }
+      const succeeded: EditableTab[] = []
+      let firstError: string | null = null
+      for (const t of toSave) {
+        try {
+          const failed = (await savers[t]()).find((r) => r && r.error)
+          if (failed && failed.error) firstError ??= `${TAB_LABELS[t]}: ${failed.error}`
+          else succeeded.push(t)
+        } catch {
+          firstError ??= 'Could not save. Check your connection and try again.'
         }
-        if (tab === 'about') results.push(await saveAboutSection(storeId, about.heading, about.body))
-        if (tab === 'social') results.push(await saveSocialLinks(storeId, social))
-        if (tab === 'payments') results.push(await saveBankDetails(storeId, bankDetails.bank_name, bankDetails.account_number, bankDetails.account_name))
-      } catch {
-        setSaveError('Could not save. Check your connection and try again.')
+      }
+      // Tabs that saved stop counting as unsaved even if another tab failed.
+      setSaved((prev) => {
+        const next = { ...prev }
+        for (const t of succeeded) next[t] = snapshot[t]
+        return next
+      })
+      if (firstError) {
+        setSaveError(firstError)
         return
       }
-      // Only report "Saved" when every save for this tab actually succeeded.
-      const failed = results.find((r) => r && r.error)
-      if (failed && failed.error) {
-        setSaveError(failed.error)
-        return
-      }
-      setSavedTab(tab)
+      setJustSaved(true)
     })
   }
+
+  const saveLabel = isPending
+    ? 'Saving...'
+    : hasUnsaved
+      ? dirtyTabs.length > 1 ? `Save changes (${dirtyTabs.length} tabs)` : 'Save changes'
+      : justSaved ? 'Saved ✓' : 'No unsaved changes'
 
   async function handleToggleVisibility(sectionType: string, visible: boolean) {
     setSections((prev) => prev.map((s) => (s.type === sectionType ? { ...s, is_visible: visible } : s)))
@@ -178,11 +226,14 @@ export function CustomizeWorkspace({
               <button
                 key={t}
                 onClick={() => setTab(t)}
-                className={`shrink-0 snap-start whitespace-nowrap px-3 py-2 text-sm capitalize border-b-2 -mb-px transition-colors ${
+                className={`shrink-0 snap-start whitespace-nowrap px-3 py-2 text-sm border-b-2 -mb-px transition-colors ${
                   tab === t ? 'border-indigo-600 text-indigo-600 font-medium' : 'border-transparent text-ink/50 hover:text-ink'
                 }`}
               >
-                {t === 'collections' ? 'Collections' : t}
+                {TAB_LABELS[t]}
+                {t !== 'sections' && dirtyTabs.includes(t) && (
+                  <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-marigold-500 align-middle" aria-label="unsaved changes" />
+                )}
               </button>
             ))}
           </div>
@@ -426,33 +477,13 @@ export function CustomizeWorkspace({
           </div>
         )}
 
-        {tab === 'payments' && (
-          <div className="space-y-3">
-            <p className="text-xs text-ink/50 -mt-1">
-              Shown to customers at checkout when they choose bank transfer.
-            </p>
-            <div>
-              <Label>Bank name</Label>
-              <Input value={bankDetails.bank_name} onChange={(e) => setBankDetails({ ...bankDetails, bank_name: e.target.value })} placeholder="e.g. GTBank" />
-            </div>
-            <div>
-              <Label>Account number</Label>
-              <Input value={bankDetails.account_number} onChange={(e) => setBankDetails({ ...bankDetails, account_number: e.target.value })} placeholder="0123456789" />
-            </div>
-            <div>
-              <Label>Account name</Label>
-              <Input value={bankDetails.account_name} onChange={(e) => setBankDetails({ ...bankDetails, account_name: e.target.value })} placeholder="e.g. Ada Okonkwo" />
-            </div>
-          </div>
-        )}
-
         {saveError && (
           <p role="alert" className="text-sm text-red-600 mt-4">{saveError}</p>
         )}
 
         {/* Desktop save button — mobile uses the sticky bar below instead */}
-        <Button onClick={save} disabled={isPending} className="hidden lg:inline-flex w-full mt-5">
-          {isPending ? 'Saving...' : savedTab === tab ? 'Saved ✓' : 'Save changes'}
+        <Button onClick={save} disabled={isPending || !hasUnsaved} className="hidden lg:inline-flex w-full mt-5">
+          {saveLabel}
         </Button>
 
         {/* Room for the fixed mobile bar so content isn't hidden behind it */}
@@ -560,8 +591,8 @@ export function CustomizeWorkspace({
             <IconEye className="w-3.5 h-3.5" stroke={1.75} /> Preview
           </button>
         </div>
-        <Button onClick={save} disabled={isPending} className="shrink-0 px-4">
-          {isPending ? 'Saving...' : savedTab === tab ? 'Saved ✓' : 'Save'}
+        <Button onClick={save} disabled={isPending || !hasUnsaved} className="shrink-0 px-4">
+          {isPending ? 'Saving...' : hasUnsaved ? 'Save' : justSaved ? 'Saved ✓' : 'Saved'}
         </Button>
       </div>
     </div>

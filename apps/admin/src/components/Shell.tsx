@@ -18,6 +18,7 @@ export function Shell({
   merchantName,
   avatarUrl,
   canCreateStore = false,
+  sidebarCollapsed = false,
 }: {
   children: React.ReactNode
   userEmail: string | null
@@ -26,6 +27,7 @@ export function Shell({
   merchantName?: string | null
   avatarUrl?: string | null
   canCreateStore?: boolean
+  sidebarCollapsed?: boolean
 }) {
   const pathname = usePathname()
   const isAuthPage = AUTH_PAGES.includes(pathname)
@@ -43,6 +45,7 @@ export function Shell({
         avatarUrl={avatarUrl}
         staffRole={staffRole}
         canCreateStore={canCreateStore}
+        initialCollapsed={sidebarCollapsed}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

@@ -23,7 +23,7 @@ type Product = {
 
 export function EditProductForm({ product, storeId }: { product: Product; storeId: string }) {
   const boundAction = updateProduct.bind(null, product.id, storeId)
-  const [state, formAction] = useActionState(boundAction, undefined)
+  const [state, formAction, pending] = useActionState(boundAction, undefined)
 
   return (
     <form action={formAction} className="space-y-4">
@@ -64,7 +64,9 @@ export function EditProductForm({ product, storeId }: { product: Product; storeI
         Active (visible on storefront)
       </label>
       <ImageUploader initialImages={product.images ?? []} />
-      <Button type="submit" className="w-full">Save changes</Button>
+      <Button type="submit" disabled={pending} className="w-full">
+        {pending ? 'Saving...' : 'Save changes'}
+      </Button>
     </form>
   )
 }
