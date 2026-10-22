@@ -38,6 +38,7 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   if (!rl.ok) return fail('Too many sign-up attempts. Try again in a few minutes.')
 
   const password = (formData.get('password') as string) || ''
+  if (formData.get('acceptTerms') !== 'on') return fail('Agree to the Terms of Service and Privacy Policy to continue.')
 
   if (values.fullName.length < 2 || values.fullName.length > 100) return fail('Enter your full name.')
   if (values.businessName.length < 2 || values.businessName.length > 200) {
@@ -64,7 +65,8 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
     email: values.email,
     password,
     options: {
-      data: { full_name: values.fullName },
+      // When they agreed to the Terms and Privacy Policy, kept for the record.
+      data: { full_name: values.fullName, terms_accepted_at: new Date().toISOString() },
       // Confirming the email signs the merchant in and opens phone verification.
       ...(origin ? { emailRedirectTo: `${origin}/auth/confirm?next=/verify` } : {}),
     },
