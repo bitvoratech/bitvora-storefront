@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { sendSms } from '../../lib/termii'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { requireStaff } from '../../lib/auth/require-owner'
+import { maskNin } from '../../lib/merchant-identity'
 
 export async function toggleMerchantSuspension(merchantId: string, suspend: boolean) {
   const auth = await requireStaff()
@@ -87,8 +88,14 @@ export async function reviewMerchantVerification(merchantId: string, decision: '
   if (!updated?.length) return { error: 'This merchant has nothing to review right now.' }
 
   const { nin, cac_number, phone } = updated[0]
+  // Once approved, keep only the last 4 digits of the NIN. A rejected
+  // merchant's NIN stays as typed so they can correct it on /verify.
+  if (approved) {
+    const { error: maskError } = await admin.from('merchants').update({ nin: maskNin(nin) }).eq('id', merchantId)
+    if (maskError) console.error('masking approved NIN failed', maskError)
+  }
   const { error: logError } = await admin.from('merchant_verifications').insert([
-    { merchant_id: merchantId, type: 'nin', reference: nin, provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
+    { merchant_id: merchantId, type: 'nin', reference: maskNin(nin), provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
     { merchant_id: merchantId, type: 'cac', reference: cac_number, provider: 'manual', status: approved ? 'verified' : 'failed', provider_response: { reviewed_by: auth.merchantId, note: reason || null } },
   ])
   if (logError) console.error('verification audit log insert failed', logError)
