@@ -51,7 +51,7 @@ export function Nav() {
             Log in
           </a>
           <a
-            href={`${ADMIN_URL}/signup`}
+            href="/pricing"
             className="shrink-0 rounded-lg bg-indigo-600 hidden md:inline-block text-white text-xs sm:text-sm font-medium px-3 sm:px-4 py-2 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             Get started
@@ -88,7 +88,7 @@ export function Nav() {
             Log in
           </a>
           <a
-            href={`${ADMIN_URL}/signup`}
+            href="/pricing"
             className="shrink-0 rounded-lg bg-indigo-600 text-center text-white text-sm font-medium px-3  py-2 hover:bg-indigo-700 transition-colors whitespace-nowrap"
           >
             Get started

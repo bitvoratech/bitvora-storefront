@@ -5,7 +5,7 @@ import Image from "next/image";
 import { motion } from "motion/react";
 import { AdireStrip } from "./AdireStrip";
 import { fadeUp, staggerContainer, viewport } from "../lib/motion";
-import { ADMIN_URL, PLANS } from "../lib/plans";
+import { PLANS } from "../lib/plans";
 
 export function CtaBand() {
   return (
@@ -36,7 +36,7 @@ export function CtaBand() {
           </motion.p>
           <motion.div variants={fadeUp}>
             <Link
-              href={`${ADMIN_URL}/signup`}
+              href="/pricing"
               className="inline-block rounded-lg bg-marigold-500 px-6 py-3.5 text-[14.5px] font-semibold text-indigo-950 transition hover:-translate-y-px"
             >
               Start your store

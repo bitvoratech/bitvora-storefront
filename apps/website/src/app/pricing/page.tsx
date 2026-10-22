@@ -28,6 +28,10 @@ const PRICING_FAQS: FaqItem[] = [
     a: "Annual billing charges you once for 10 months and covers 12 — that's two months free compared with paying monthly.",
   },
   {
+    q: "How do I pay for my plan?",
+    a: "By debit card through Paystack, once your NIN and CAC have been approved. Your plan renews automatically and you can cancel from your dashboard.",
+  },
+  {
     q: "What payment methods can my customers use?",
     a: "Customers pay by bank transfer or pay-on-delivery, straight to the merchant.",
   },

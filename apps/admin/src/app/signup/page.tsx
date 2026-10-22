@@ -11,6 +11,7 @@ import { signUp } from './actions'
 import { PasswordInput } from '../../components/PasswordInput'
 import { MIN_PASSWORD_LENGTH } from '../../lib/password'
 import { PLAN_NAMES, parseInterval, parsePlan } from '../../lib/plans'
+import { PlanOptions } from '../../components/PlanOptions'
 import { WEBSITE_URL } from '../../lib/website-url'
 
 export default function SignupPage({ searchParams }: { searchParams: Promise<{ plan?: string; interval?: string }> }) {
@@ -36,6 +37,25 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
     )
   }
 
+  // Every account starts with a plan: without one from the pricing page,
+  // pick it here first. The choice rides along in the URL.
+  if (!plan) {
+    return (
+      <AuthLayout>
+        <h1 className="text-2xl font-display font-semibold mb-1">Pick your plan</h1>
+        <p className="text-sm text-ink/50 mb-6">
+          You&apos;ll pay for it after we&apos;ve checked your NIN and CAC, before you create your first store.{' '}
+          <a href={`${WEBSITE_URL}/pricing`} target="_blank" rel="noopener" className="text-indigo-600 font-medium">Compare plans</a>
+        </p>
+        <PlanOptions defaultInterval={interval} hrefFor={(p, i) => `/signup?plan=${p}&interval=${i}`} />
+        <p className="text-sm text-ink/50 mt-6 text-center">
+          Already have an account?{' '}
+          <Link href="/login" className="text-indigo-600 font-medium">Log in</Link>
+        </p>
+      </AuthLayout>
+    )
+  }
+
   return (
     <AuthLayout>
       <h1 className="text-2xl font-display font-semibold mb-1">Create your account</h1>
@@ -43,11 +63,10 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
         We check every merchant&apos;s NIN and CAC details before their store can go live.
       </p>
 
-      {plan && (
-        <p className="text-sm bg-indigo-50 text-indigo-600 rounded-lg px-3 py-2 mb-4">
-          You picked the <span className="font-medium">{PLAN_NAMES[plan]}</span> plan, billed {interval === 'annual' ? 'annually' : 'monthly'}.
-        </p>
-      )}
+      <p className="text-sm bg-indigo-50 text-indigo-600 rounded-lg px-3 py-2 mb-4">
+        You picked the <span className="font-medium">{PLAN_NAMES[plan]}</span> plan, billed {interval === 'annual' ? 'annually' : 'monthly'}.{' '}
+        <Link href={`/signup?interval=${interval}`} className="font-medium underline">Change</Link>
+      </p>
 
       {state?.error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
@@ -59,8 +78,8 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
       {/* key: remount with the echoed values after each attempt, so a failed
           submit keeps what was typed (passwords excepted). */}
       <form key={JSON.stringify(v)} action={action} className="space-y-4">
-        {plan && <input type="hidden" name="plan" value={plan} />}
-        {plan && <input type="hidden" name="interval" value={interval} />}
+        <input type="hidden" name="plan" value={plan} />
+        <input type="hidden" name="interval" value={interval} />
         <div>
           <Label htmlFor="fullName">Full name</Label>
           <Input id="fullName" name="fullName" type="text" autoComplete="name" defaultValue={v.fullName} required maxLength={100} className="px-2 py-3" />

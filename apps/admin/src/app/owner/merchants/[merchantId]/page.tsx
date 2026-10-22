@@ -9,7 +9,7 @@ import { Sparkline } from '../../SparkLine'
 import { computeTrend } from '../../../../lib/computeTrend'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { requireStaffPage } from '../../../../lib/auth/require-owner'
-import { planLabel } from '../../../../lib/plans'
+import { hasActivePlan, planLabel } from '../../../../lib/plans'
 
 export default async function MerchantDetailPage({ params }: { params: Promise<{ merchantId: string }> }) {
   await requireStaffPage()
@@ -25,7 +25,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
   if (!merchant) notFound()
 
   // Separate query so the page still loads if the plan columns are missing.
-  const { data: planRow } = await admin.from('merchants').select('plan, plan_interval').eq('id', merchantId).maybeSingle()
+  const { data: planRow } = await admin.from('merchants').select('plan, plan_interval, subscription_status, current_period_end').eq('id', merchantId).maybeSingle()
   const plan = planLabel(planRow?.plan, planRow?.plan_interval)
 
   const { data: stores } = await admin
@@ -105,6 +105,14 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
                 <p className="text-xs text-pepper-600">{merchant.verification_note}</p>
               )}
               <div className="flex justify-between gap-3"><span className="text-ink/50">Plan</span><span className="text-right">{plan ?? 'Not picked'}</span></div>
+              <div className="flex justify-between gap-3">
+                <span className="text-ink/50">Billing</span>
+                <span className="text-right">
+                  {hasActivePlan(planRow) ? 'Paid' : 'Not paid'}
+                  {planRow?.subscription_status && planRow.subscription_status !== 'active' ? ` (${planRow.subscription_status.replace('_', '-')})` : ''}
+                  {planRow?.current_period_end && planRow.subscription_status !== 'comped' ? ` · until ${new Date(planRow.current_period_end).toLocaleDateString('en-NG')}` : ''}
+                </span>
+              </div>
               <div className="flex justify-between"><span className="text-ink/50">Stores</span><span className="font-mono">{stores?.length ?? 0}</span></div>
               <div className="flex justify-between"><span className="text-ink/50">Since</span><span>{memberSince}</span></div>
             </div>
