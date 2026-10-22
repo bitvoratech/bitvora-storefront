@@ -22,7 +22,7 @@ export function About() {
             Built by a studio that actually ships.
           </h2>
           <p className="text-[16px] leading-relaxed text-ink-soft mb-4">
-            Bitvora Storefront is built by Bitvoratech, a software studio focused on tools for Nigerian businesses. We didn&apos;t build this by guessing — every feature comes from watching how sellers actually operate: on WhatsApp, on Instagram, at the market.
+            Bitvora Stores is built by Bitvoratech, a software studio focused on tools for Nigerian businesses. We didn&apos;t build this by guessing — every feature comes from watching how sellers actually operate: on WhatsApp, on Instagram, at the market.
           </p>
           <p className="text-[16px] leading-relaxed text-ink-soft">
             No investors telling us what matters. Just a product built to solve a real problem for real Nigerian merchants.

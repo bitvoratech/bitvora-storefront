@@ -12,7 +12,7 @@ const PILLARS = [
     image: '/feature/brand.webp',
     tag: 'Real branding',
     title: 'Your store looks like your business, not a rented template.',
-    body: 'Most store builders in Nigeria give every merchant the same layout with a different logo pasted on top. We built Bitvora Storefront the other way around: pick your accent color, your font pairing, your hero image, your homepage sections — and the platform disappears behind your brand. Customers see your business. They never see ours.',
+    body: 'Most store builders in Nigeria give every merchant the same layout with a different logo pasted on top. We built Bitvora Stores the other way around: pick your accent color, your font pairing, your hero image, your homepage sections — and the platform disappears behind your brand. Customers see your business. They never see ours.',
   },
   {
     icon: null,
@@ -20,14 +20,14 @@ const PILLARS = [
     image: '/feature/whatsapp.webp',
     tag: 'Sell where you already sell',
     title: 'WhatsApp isn\'t an afterthought — it\'s the default.',
-    body: 'Nigerian commerce runs on WhatsApp, and pretending otherwise is why so many "modern" storefronts feel disconnected from how sellers actually operate. Every product on Bitvora Storefront has a built-in "Order via WhatsApp" button that auto-fills the product name, price, and quantity into a message — so customers can order the exact same way they already do, just faster.',
+    body: 'Nigerian commerce runs on WhatsApp, and pretending otherwise is why so many "modern" storefronts feel disconnected from how sellers actually operate. Every product on Bitvora Stores has a built-in "Order via WhatsApp" button that auto-fills the product name, price, and quantity into a message — so customers can order the exact same way they already do, just faster.',
   },
   {
     icon: IconBolt,
     image: '/feature/demo.webp',
     tag: 'Built for real conditions',
     title: 'Fast on a budget phone, on a slow connection, in real Lagos traffic.',
-    body: 'A lot of storefront builders are engineered for demo videos on fast wifi and flagship phones — not the reality of most Nigerian shoppers. We built Bitvora Storefront on modern, statically-rendered web architecture specifically so pages load quickly even on mid-range Android devices and inconsistent mobile data. Speed isn\'t a nice-to-have here, it\'s survival.',
+    body: 'A lot of storefront builders are engineered for demo videos on fast wifi and flagship phones — not the reality of most Nigerian shoppers. We built Bitvora Stores on modern, statically-rendered web architecture specifically so pages load quickly even on mid-range Android devices and inconsistent mobile data. Speed isn\'t a nice-to-have here, it\'s survival.',
   },
   {
     icon: IconShieldCheck,
@@ -60,13 +60,13 @@ export function WhyBitvora() {
             variants={fadeUp}
             className="mb-3 block text-[12.5px] font-bold uppercase tracking-widest text-pepper-600"
           >
-            Why Bitvora Storefront
+            Why Bitvora Stores
           </motion.span>
           <motion.h2 variants={fadeUp} className="mb-5 font-display text-3xl font-bold md:text-5xl leading-tight">
             We didn&apos;t build another generic store builder.
           </motion.h2>
           <motion.p variants={fadeUp} className="text-[17px] leading-relaxed text-ink-soft">
-            Most storefront platforms in Nigeria were adapted from Western templates, then patched to add Naira pricing and a WhatsApp button. We built Bitvora Storefront from the ground up around how Nigerian merchants and customers actually behave — and that difference shows up in every decision below.
+            Most storefront platforms in Nigeria were adapted from Western templates, then patched to add Naira pricing and a WhatsApp button. We built Bitvora Stores from the ground up around how Nigerian merchants and customers actually behave — and that difference shows up in every decision below.
           </motion.p>
         </motion.div>
 
@@ -127,7 +127,7 @@ export function WhyBitvora() {
           <motion.div variants={fadeUp} className="rounded-2xl border border-sand-300 bg-paper overflow-hidden">
             <div className="grid grid-cols-2 border-b border-sand-300">
               <div className="p-4 text-center font-display font-semibold text-indigo-900 border-r border-sand-300">
-                Bitvora Storefront
+                Bitvora Stores
               </div>
               <div className="p-4 text-center font-display font-semibold text-ink-soft">
                 Typical store builders

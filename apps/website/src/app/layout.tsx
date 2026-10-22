@@ -23,7 +23,7 @@ const plexMono = IBM_Plex_Mono({
   preload: false,
 });
 
-const title = "Bitvora Storefront — Storefronts that look like your brand";
+const title = "Bitvora Stores — Storefronts that look like your brand";
 const description = "Build a beautiful, branded online store for your business in minutes. No template look, no code required.";
 
 export const metadata: Metadata = {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "Bitvora Storefront",
+    siteName: "Bitvora Stores",
     title,
     description,
     locale: "en_NG",

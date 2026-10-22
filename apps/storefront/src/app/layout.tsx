@@ -3,7 +3,7 @@ import "./globals.css";
 import { fontVariables } from "../lib/fonts";
 
 export const metadata: Metadata = {
-  title: "Bitvora Storefront",
+  title: "Bitvora Stores",
   description: "Storefronts that look like your brand.",
   ...(process.env.NEXT_PUBLIC_STOREFRONT_URL
     ? { metadataBase: new URL(process.env.NEXT_PUBLIC_STOREFRONT_URL) }

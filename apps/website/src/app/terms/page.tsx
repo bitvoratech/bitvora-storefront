@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { LegalLayout } from '@/components/LegalLayout'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Bitvora Storefront',
+  title: 'Terms of Service — Bitvora Stores',
   alternates: { canonical: '/terms' },
 }
 
@@ -12,14 +12,14 @@ export default function TermsPage() {
       <section>
         <h2 className="mb-3 font-display text-xl font-semibold">1. Agreement to terms</h2>
         <p className="text-[14.5px] leading-relaxed text-ink-soft">
-          By creating an account or using Bitvora Storefront (&quot;the Service&quot;), operated by Bitvoratech (&quot;we&quot;, &quot;us&quot;), you agree to these Terms of Service. If you do not agree, please do not use the Service.
+          By creating an account or using Bitvora Stores (&quot;the Service&quot;), operated by Bitvoratech (&quot;we&quot;, &quot;us&quot;), you agree to these Terms of Service. If you do not agree, please do not use the Service.
         </p>
       </section>
 
       <section>
-        <h2 className="mb-3 font-display text-xl font-semibold">2. What Bitvora Storefront is</h2>
+        <h2 className="mb-3 font-display text-xl font-semibold">2. What Bitvora Stores is</h2>
         <p className="text-[14.5px] leading-relaxed text-ink-soft">
-          Bitvora Storefront lets merchants create and manage an online store, list products, and receive orders from customers. We provide the platform and tools; we are not a party to transactions between merchants and their customers.
+          Bitvora Stores lets merchants create and manage an online store, list products, and receive orders from customers. We provide the platform and tools; we are not a party to transactions between merchants and their customers.
         </p>
       </section>
 
@@ -40,7 +40,7 @@ export default function TermsPage() {
       <section>
         <h2 className="mb-3 font-display text-xl font-semibold">4. Payments and orders</h2>
         <p className="text-[14.5px] leading-relaxed text-ink-soft">
-          Bitvora Storefront does not currently process card payments directly. Orders placed with bank transfer or pay-on-delivery are settled directly between the merchant and their customer. We are not responsible for payment disputes between merchants and customers.
+          Bitvora Stores does not currently process card payments directly. Orders placed with bank transfer or pay-on-delivery are settled directly between the merchant and their customer. We are not responsible for payment disputes between merchants and customers.
         </p>
       </section>
 

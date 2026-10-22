@@ -142,7 +142,7 @@ export default async function StoreLayout({
             <span className="text-xs text-[#737373]"> · identity checked by Bitvora</span>
           </p>
         )}
-        <p className="text-xs text-[#737373]">Powered by Bitvora Storefront</p>
+        <p className="text-xs text-[#737373]">Powered by Bitvora Stores</p>
       </footer>
     </div>
   )

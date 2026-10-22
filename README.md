@@ -1,4 +1,4 @@
-# Bitvora Storefront
+# Bitvora Stores
 
 Online stores for Nigerian small businesses: merchants build a store in the admin, shoppers order on the storefront, and payment is by bank transfer (with proof upload) or pay-on-delivery.
 
