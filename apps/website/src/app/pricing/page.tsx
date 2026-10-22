@@ -7,6 +7,7 @@ import { Pricing } from "@/components/Pricing";
 export const metadata: Metadata = {
   title: "Pricing — Bitvora Stores",
   description: "Simple Naira pricing for Bitvora Stores. Compare plans, store and product limits, and customization features.",
+  alternates: { canonical: "/pricing" },
 };
 
 const PRICING_FAQS: FaqItem[] = [

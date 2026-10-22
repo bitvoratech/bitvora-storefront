@@ -11,6 +11,7 @@ import { signUp } from './actions'
 import { PasswordInput } from '../../components/PasswordInput'
 import { MIN_PASSWORD_LENGTH } from '../../lib/password'
 import { PLAN_NAMES, parseInterval, parsePlan } from '../../lib/plans'
+import { WEBSITE_URL } from '../../lib/website-url'
 
 export default function SignupPage({ searchParams }: { searchParams: Promise<{ plan?: string; interval?: string }> }) {
   const [state, action, pending] = useActionState(signUp, undefined)
@@ -92,6 +93,15 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
           <PasswordInput id="password" name="password" autoComplete="new-password" required minLength={MIN_PASSWORD_LENGTH} className="px-2 py-3" />
           <p className="text-xs text-ink/40 mt-1">At least {MIN_PASSWORD_LENGTH} characters.</p>
         </div>
+        <label className="flex items-start gap-2 text-sm text-ink/60">
+          <input type="checkbox" name="acceptTerms" required className="mt-0.5 rounded border-sand-200 text-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-600" />
+          <span>
+            I agree to the{' '}
+            <a href={`${WEBSITE_URL}/terms`} target="_blank" rel="noopener" className="text-indigo-600 font-medium">Terms of Service</a>
+            {' '}and{' '}
+            <a href={`${WEBSITE_URL}/privacy`} target="_blank" rel="noopener" className="text-indigo-600 font-medium">Privacy Policy</a>.
+          </span>
+        </label>
         {/* Was `bg-ink` — see LoginPage for why that breaks in dark mode. */}
         <Button type="submit" disabled={pending} variant="primary" className="w-full">
           {pending ? 'Creating account...' : 'Sign up'}
