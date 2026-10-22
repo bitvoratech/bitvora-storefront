@@ -7,6 +7,8 @@ import { createClient } from '../lib/supabase/server'
 import { IconChevronRight } from '@tabler/icons-react'
 import { StoresGrid } from './StoresGrid'
 import { VerificationStatusCard } from './VerificationStatusCard'
+import { PayForPlanCard } from './PayForPlanCard'
+import { hasActivePlan, planLabel } from '../lib/plans'
 
 
 export default async function DashboardPage() {
@@ -16,7 +18,7 @@ export default async function DashboardPage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, full_name, is_owner, is_admin, verification_status, phone_verified_at, nin, cac_number, verification_note')
+    .select('id, full_name, is_owner, is_admin, verification_status, phone_verified_at, nin, cac_number, verification_note, plan, plan_interval, subscription_status, current_period_end')
     .eq('user_id', user.id)
     .single()
 
@@ -32,6 +34,8 @@ export default async function DashboardPage() {
   // Only verified merchants can create a store; until then the dashboard
   // shows where their verification stands instead of an empty store list.
   const isVerified = merchant?.verification_status === 'verified'
+  // Once verified, a store also needs the plan paid for.
+  const canCreateStore = isVerified && hasActivePlan(merchant)
 
   const { data: stores } = await supabase
     .from('stores')
@@ -78,7 +82,7 @@ export default async function DashboardPage() {
         <h1 className="text-2xl sm:text-3xl font-display font-semibold tracking-tight">
           {merchant?.full_name ? `Welcome back, ${merchant.full_name.split(' ')[0]}` : 'Your stores'}
         </h1>
-        {isVerified && (
+        {canCreateStore && (
           <Link href="/stores/new" className="self-start sm:self-auto">
             <Button>+ New store</Button>
           </Link>
@@ -90,6 +94,8 @@ export default async function DashboardPage() {
           status={merchant?.verification_status === 'failed' ? 'rejected' : merchant?.nin && merchant?.cac_number && merchant?.verification_status === 'pending' ? 'in_review' : 'details_needed'}
           note={merchant?.verification_note ?? null}
         />
+      ) : !canCreateStore && storeRows.length === 0 ? (
+        <PayForPlanCard plan={planLabel(merchant?.plan, merchant?.plan_interval)} lapsed={!!merchant?.subscription_status} />
       ) : storeRows.length === 0 ? (
         <Card className="text-center py-14 relative overflow-hidden">
           <div
@@ -112,6 +118,11 @@ export default async function DashboardPage() {
             <KpiCard label="Revenue · this week" value={`₦${combinedRevenueThisWeek.toLocaleString()}`} />
           </div>
 
+          {!canCreateStore && (
+            <div className="mb-6">
+              <PayForPlanCard plan={planLabel(merchant?.plan, merchant?.plan_interval)} lapsed />
+            </div>
+          )}
           <StoresGrid stores={enrichedStores} />
         </>
       )}

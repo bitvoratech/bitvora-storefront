@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
 import { StoreForm } from './StoreForm'
 import { Card } from '@bitvora/ui/src/Card'
+import { hasActivePlan } from '../../../lib/plans'
 
 export default async function NewStorePage() {
   const supabase = await createClient()
@@ -10,7 +11,7 @@ export default async function NewStorePage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('verification_status, is_owner, is_admin')
+    .select('verification_status, is_owner, is_admin, subscription_status, current_period_end')
     .eq('user_id', user.id)
     .single()
 
@@ -19,6 +20,8 @@ export default async function NewStorePage() {
 
   // Phone OTP and the owner's manual NIN/CAC review both live on /verify.
   if (merchant?.verification_status !== 'verified') redirect('/verify')
+  // Then the plan picked at signup has to be paid for.
+  if (!hasActivePlan(merchant)) redirect('/billing')
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">

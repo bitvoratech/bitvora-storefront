@@ -6,7 +6,7 @@ import { motion } from "motion/react";
 import { AdireStrip } from "./AdireStrip";
 import { fadeUp, staggerContainer, EASE } from "../lib/motion";
 import { hexToRgba, getContrastText } from "../lib/color";
-import { ADMIN_URL, PLANS } from "../lib/plans";
+import { PLANS } from "../lib/plans";
 
 const SWATCHES = [
   { name: "pepper", hex: "#A73A3F" },
@@ -97,7 +97,7 @@ export function Hero() {
               className="rounded-lg"
             >
               <Link
-                href={`${ADMIN_URL}/signup`}
+                href="/pricing"
                 className="block rounded-lg px-5 py-3.5 sm:py-3 text-center text-[15px] sm:text-[14.5px] font-semibold transition hover:-translate-y-px"
               >
                 Start your store

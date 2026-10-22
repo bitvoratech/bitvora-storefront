@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Home, Plus, Grid, PackageBox, Storefront, Receipt, User, Users } from 'switch-icons'
-import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar } from '@tabler/icons-react'
+import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar, IconCreditCard } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
@@ -308,6 +308,9 @@ export function Sidebar({
             Settings
           </p>
           <SimpleLink item={{ href: '/profile', icon: User, label: 'Profile' }} active={isActive('/profile')} collapsed={collapsed} onClick={onClose} />
+          {!staffRole && (
+            <SimpleLink item={{ href: '/billing', icon: IconCreditCard, label: 'Plan & billing' }} active={isActive('/billing')} collapsed={collapsed} onClick={onClose} />
+          )}
         </nav>
 
         <div className="relative p-3 border-t border-white/10 space-y-0.5">

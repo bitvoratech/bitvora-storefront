@@ -5,7 +5,6 @@ import { IconBrandInstagram, IconBrandTiktok, IconBrandX, IconBrandWhatsapp } fr
 import { motion } from 'motion/react'
 import { AdireStrip } from './AdireStrip'
 import { fadeUp, staggerContainer, viewport } from '../lib/motion'
-import { ADMIN_URL } from '../lib/plans'
 
 const SOCIALS = [
   { Icon: IconBrandX, label: 'X (Twitter)' },
@@ -45,7 +44,7 @@ export function PremiumFooter() {
               We&apos;re here to help. If you need assistance switching from your current setup, have questions about whether Bitvora Stores fits your business, or want help getting started, talk to a member of our team.
             </p>
             <Link
-              href={`${ADMIN_URL}/signup`}
+              href="/pricing"
               className="inline-flex items-center gap-2 rounded-lg bg-marigold-500 px-5 py-3 text-[14.5px] font-semibold text-indigo-950 transition hover:-translate-y-px"
             >
               Get started →

@@ -1,7 +1,8 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/auth/']
+// The Paystack webhook has no session; it checks Paystack's signature instead.
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/auth/', '/api/paystack/webhook']
 const SUSPENDED_PATH = '/suspended'
 
 export async function updateSession(request: NextRequest) {

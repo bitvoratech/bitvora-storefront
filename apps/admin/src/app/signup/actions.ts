@@ -37,6 +37,10 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   const rl = await rateLimit('signup', await getClientIp(), 5, '10 m')
   if (!rl.ok) return fail('Too many sign-up attempts. Try again in a few minutes.')
 
+  const plan = parsePlan(formData.get('plan'))
+  if (!plan) return fail('Pick a plan to continue.')
+  const interval = parseInterval(formData.get('interval')) ?? 'monthly'
+
   const password = (formData.get('password') as string) || ''
   if (formData.get('acceptTerms') !== 'on') return fail('Agree to the Terms of Service and Privacy Policy to continue.')
 
@@ -89,16 +93,13 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
     return fail('Your account was created, but we could not save your details. Log in to finish verification.')
   }
 
-  // The plan picked on the pricing page. Saved on its own so a failure here
-  // never blocks signup; it's only shown in the owner console for now.
-  const plan = parsePlan(formData.get('plan'))
-  if (plan) {
-    const { error: planError } = await createAdminClient()
-      .from('merchants')
-      .update({ plan, plan_interval: parseInterval(formData.get('interval')) ?? 'monthly' })
-      .eq('user_id', data.user.id)
-    if (planError) console.error('signup: saving plan failed', planError)
-  }
+  // The plan they'll pay for once verified (on /billing, where it can still
+  // be changed). Saved on its own so a failure here never blocks signup.
+  const { error: planError } = await createAdminClient()
+    .from('merchants')
+    .update({ plan, plan_interval: interval })
+    .eq('user_id', data.user.id)
+  if (planError) console.error('signup: saving plan failed', planError)
 
   // No session yet means the project requires email confirmation first.
   if (!data.session) return { checkEmail: true }

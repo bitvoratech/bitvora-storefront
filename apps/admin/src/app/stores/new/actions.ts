@@ -3,6 +3,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
+import { PLAN_STORE_LIMIT, hasActivePlan, parsePlan } from '../../../lib/plans'
 
 // Top-level storefront paths a store slug must never shadow.
 const RESERVED_SLUGS = new Set([
@@ -30,7 +31,7 @@ export async function createStore(prevState: { error?: string } | undefined, for
 
   const { data: merchant, error: merchantError } = await supabase
     .from('merchants')
-    .select('id, verification_status, is_suspended, is_owner, is_admin')
+    .select('id, verification_status, is_suspended, is_owner, is_admin, plan, subscription_status, current_period_end')
     .eq('user_id', user.id)
     .single()
 
@@ -48,6 +49,14 @@ export async function createStore(prevState: { error?: string } | undefined, for
   }
   if (merchant.verification_status !== 'verified') {
     return { error: 'Verify your account before creating a store.' }
+  }
+  if (!hasActivePlan(merchant)) {
+    return { error: 'Pay for your plan under Plan & billing before creating a store.' }
+  }
+  const plan = parsePlan(merchant.plan)
+  const { count } = await supabase.from('stores').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id)
+  if (plan && (count ?? 0) >= PLAN_STORE_LIMIT[plan]) {
+    return { error: `Your plan includes ${PLAN_STORE_LIMIT[plan]} store${PLAN_STORE_LIMIT[plan] === 1 ? '' : 's'}. Email help@bitvoratech.com to upgrade.` }
   }
 
   const name = ((formData.get('name') as string) || '').trim()
