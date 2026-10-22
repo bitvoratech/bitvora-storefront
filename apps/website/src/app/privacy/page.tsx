@@ -70,7 +70,7 @@ export default function PrivacyPage() {
       <section>
         <h2 className="mb-3 font-display text-xl font-semibold">8. Contact</h2>
         <p className="text-[14.5px] leading-relaxed text-ink-soft">
-          Questions about your data? Reach us at help@bitvorastorefront.com.
+          Questions about your data? Reach us at help@bitvoratech.com.
         </p>
       </section>
 

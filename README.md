@@ -4,15 +4,15 @@ Online stores for Nigerian small businesses: merchants build a store in the admi
 
 ## Layout
 
-| Path | What it is | Dev URL |
-| --- | --- | --- |
-| `apps/admin` | Merchant dashboard and platform-owner console (Next.js) | http://localhost:3000 |
-| `apps/storefront` | Public stores at `/<store-slug>` (Next.js) | http://localhost:3001 |
-| `apps/website` | Marketing site, static export deployed to Cloudflare with Wrangler | http://localhost:3002 |
-| `packages/ui` | Shared React components | |
-| `packages/lib` | Shared helpers: rate limiting, Cloudinary upload/resize | |
-| `packages/config` | Shared Tailwind tokens and TypeScript base config | |
-| `supabase/migrations` | Database schema, RLS policies and RPCs | |
+| Path | What it is | Dev URL | Production |
+| --- | --- | --- | --- |
+| `apps/admin` | Merchant dashboard and platform-owner console (Next.js, Vercel) | http://localhost:3000 | https://app.bitvoratech.com |
+| `apps/storefront` | Public stores at `/<store-slug>` (Next.js, Vercel) | http://localhost:3001 | https://shop.bitvoratech.com |
+| `apps/website` | Marketing site, static export deployed to Cloudflare with Wrangler | http://localhost:3002 | https://stores.bitvoratech.com |
+| `packages/ui` | Shared React components | | |
+| `packages/lib` | Shared helpers: rate limiting, Cloudinary upload/resize | | |
+| `packages/config` | Shared Tailwind tokens and TypeScript base config | | |
+| `supabase/migrations` | Database schema, RLS policies and RPCs | | |
 
 ## Setup
 

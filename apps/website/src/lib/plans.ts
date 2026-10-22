@@ -78,7 +78,7 @@ export const PLANS: Plan[] = [
 // 2 months free on annual (pay for 10, get 12).
 export const ANNUAL_MONTHS = 10
 
-export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://bitvora-storefront.vercel.app'
+export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://app.bitvoratech.com'
 
 export function formatNaira(amount: number) {
   return `₦${amount.toLocaleString()}`
