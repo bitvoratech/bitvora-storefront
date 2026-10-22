@@ -62,8 +62,8 @@ export function PremiumFooter() {
             </div>
             <div>
               <p className="mb-1.5 text-paper/50">Email</p>
-              <a href="mailto:help@bitvorastorefront.com" className="font-semibold hover:underline break-all">
-                help@bitvorastorefront.com
+              <a href="mailto:help@bitvoratech.com" className="font-semibold hover:underline break-all">
+                help@bitvoratech.com
               </a>
             </div>
             <div>
