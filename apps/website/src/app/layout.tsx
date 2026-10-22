@@ -4,6 +4,7 @@ import "./globals.css";
 import { Analytics } from "@vercel/analytics/next"
 import { MotionSafety } from "@/components/MotionSafety";
 import { MotionProvider } from "@/components/MotionProvider";
+import { SITE_URL } from "@/lib/site";
 
 // Self-hosted by next/font: no render-blocking request to Google Fonts,
 // which matters most on mobile data.
@@ -22,9 +23,23 @@ const plexMono = IBM_Plex_Mono({
   preload: false,
 });
 
+const title = "Bitvora Storefront — Storefronts that look like your brand";
+const description = "Build a beautiful, branded online store for your business in minutes. No template look, no code required.";
+
 export const metadata: Metadata = {
-  title: "Bitvora Storefront — Storefronts that look like your brand",
-  description: "Build a beautiful, branded online store for your business in minutes. No template look, no code required.",
+  metadataBase: new URL(SITE_URL),
+  title,
+  description,
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: "Bitvora Storefront",
+    title,
+    description,
+    locale: "en_NG",
+    images: [{ url: "/brand/og-image.png" }],
+  },
+  twitter: { card: "summary_large_image", title, description, images: ["/brand/og-image.png"] },
 };
 
 export const viewport: Viewport = {
