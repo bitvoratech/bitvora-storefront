@@ -7,9 +7,18 @@ import { PLAN_NAMES, planPrice, type PlanId, type PlanInterval } from './plans'
 
 const API = 'https://api.paystack.co'
 
+/** A Paystack failure; `message` is Paystack's own explanation where it gave one. */
+export class PaystackError extends Error {
+  constructor(message: string, readonly reason: 'missing_key' | 'api', readonly path?: string, readonly status?: number) {
+    super(message)
+    this.name = 'PaystackError'
+  }
+}
+
 function secretKey() {
-  const key = process.env.PAYSTACK_SECRET_KEY
-  if (!key) throw new Error('Missing PAYSTACK_SECRET_KEY')
+  // Trimmed: a key pasted into Vercel with a trailing space or newline is rejected by Paystack.
+  const key = process.env.PAYSTACK_SECRET_KEY?.trim()
+  if (!key) throw new PaystackError('PAYSTACK_SECRET_KEY is not set', 'missing_key')
   return key
 }
 
@@ -22,7 +31,7 @@ async function paystack<T>(path: string, init?: { method?: string; body?: unknow
   })
   const json = (await res.json().catch(() => null)) as { status?: boolean; message?: string; data?: T } | null
   if (!res.ok || !json?.status) {
-    throw new Error(`Paystack ${path} failed: ${res.status} ${json?.message ?? ''}`.trim())
+    throw new PaystackError(json?.message || `request failed (${res.status})`, 'api', path.split('?')[0], res.status)
   }
   return json.data as T
 }
@@ -123,7 +132,7 @@ export async function subscriptionManageLink(subscriptionCode: string) {
 }
 
 /** Checks a webhook's x-paystack-signature (HMAC-SHA512 of the raw body). */
-export function isValidSignature(rawBody: string, signature: string | null, key = process.env.PAYSTACK_SECRET_KEY) {
+export function isValidSignature(rawBody: string, signature: string | null, key = process.env.PAYSTACK_SECRET_KEY?.trim()) {
   if (!signature || !key) return false
   const expected = createHmac('sha512', key).update(rawBody).digest('hex')
   const a = Buffer.from(expected)

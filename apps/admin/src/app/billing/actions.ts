@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { hasActivePlan, parseInterval, parsePlan } from '../../lib/plans'
-import { initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
+import { PaystackError, initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
 export type BillingState = { error?: string } | undefined
@@ -20,6 +20,16 @@ async function currentMerchant() {
     .eq('user_id', user.id)
     .single()
   return { user, merchant }
+}
+
+// Says which setup step is missing instead of a generic failure, so a broken
+// Paystack setup can be fixed without digging through the server logs.
+function checkoutError(error: unknown) {
+  if (error instanceof PaystackError) {
+    if (error.reason === 'missing_key') return 'Card payments aren’t set up yet. Please try again later.'
+    return `Paystack couldn’t start the payment: ${error.message}`
+  }
+  return 'We couldn’t reach Paystack. Try again in a moment.'
 }
 
 // Sends the merchant to Paystack to pay for (and subscribe to) a plan.
@@ -66,7 +76,7 @@ export async function startCheckout(prevState: BillingState, formData: FormData)
     authorizationUrl = tx.authorization_url
   } catch (error) {
     console.error('billing: starting checkout failed', error)
-    return { error: 'We couldn’t reach Paystack. Try again in a moment.' }
+    return { error: checkoutError(error) }
   }
 
   redirect(authorizationUrl)
