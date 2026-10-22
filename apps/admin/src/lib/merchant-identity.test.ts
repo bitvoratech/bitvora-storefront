@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeCac, normalizeNin } from './merchant-identity'
+import { maskNin, normalizeCac, normalizeNin } from './merchant-identity'
 
 describe('normalizeNin', () => {
   it('accepts 11 digits, ignoring spaces and dashes', () => {
@@ -24,5 +24,11 @@ describe('normalizeCac', () => {
 
   it.each(['', 'RC', 'XX123', 'RC12345678901', null])('rejects %s', (raw) => {
     expect(normalizeCac(raw)).toBeNull()
+  })
+})
+
+describe('maskNin', () => {
+  it('keeps only the last 4 digits', () => {
+    expect(maskNin('12345678901')).toBe('*******8901')
   })
 })

@@ -9,6 +9,15 @@ export function normalizeNin(raw: string | null | undefined): string | null {
 }
 
 /**
+ * What's kept of a NIN once an owner has approved it: only the last 4 digits,
+ * e.g. *******8901. The full number isn't needed after the check, and not
+ * holding it limits the damage of a leak.
+ */
+export function maskNin(nin: string): string {
+  return '*'.repeat(7) + nin.slice(-4)
+}
+
+/**
  * CAC registration number: RC (company), BN (business name) or IT
  * (incorporated trustees) followed by digits. A bare number is accepted too.
  */
