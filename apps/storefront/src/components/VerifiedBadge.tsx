@@ -2,12 +2,26 @@ import { IconRosetteDiscountCheckFilled } from '@tabler/icons-react'
 
 // Trust signal: every seller is identity-checked (NIN or CAC) before they can
 // open a store. Customers paying a stranger by bank transfer should see that.
-export function VerifiedBadge({ variant = 'pill' }: { variant?: 'pill' | 'inline' }) {
+// `detail` is rendered inside the badge so the label and the sentence share one
+// line box: same size, same baseline, and the text wraps under itself on mobile
+// while the icon stays pinned to the first line.
+export function VerifiedBadge({
+  variant = 'pill',
+  detail,
+  className = '',
+}: {
+  variant?: 'pill' | 'inline'
+  detail?: React.ReactNode
+  className?: string
+}) {
   if (variant === 'inline') {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-[#525252]">
-        <IconRosetteDiscountCheckFilled className="w-4 h-4 text-sky-600" aria-hidden="true" />
-        Verified seller
+      <span className={`inline-flex items-start gap-1.5 text-xs leading-4 text-[#525252] ${className}`}>
+        <IconRosetteDiscountCheckFilled className="w-4 h-4 shrink-0 text-sky-600" aria-hidden="true" />
+        <span>
+          <span className="font-medium text-[#404040]">Verified seller</span>
+          {detail && <span className="text-[#737373]"> · {detail}</span>}
+        </span>
       </span>
     )
   }
