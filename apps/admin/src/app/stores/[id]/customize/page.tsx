@@ -21,13 +21,23 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
   const { data: allSections } = await supabase
     .from('sections').select('type, config, is_visible, position').eq('store_id', id).order('position')
 
+  // The categories merchants already typed on their products: what a
+  // collection tile can link to. Case-insensitive, like the storefront chips.
+  const { data: productRows } = await supabase.from('products').select('category').eq('store_id', id)
+  const categoryByKey = new Map<string, string>()
+  for (const p of productRows ?? []) {
+    const c = p.category?.trim()
+    if (c && !categoryByKey.has(c.toLowerCase())) categoryByKey.set(c.toLowerCase(), c)
+  }
+  const productCategories = [...categoryByKey.values()].sort((a, b) => a.localeCompare(b))
+
   const heroSection = allSections?.find((s) => s.type === 'hero')
   const bannerGridSection = allSections?.find((s) => s.type === 'banner_grid')
   const ctaSection = allSections?.find((s) => s.type === 'cta_banner')
   const aboutSection = allSections?.find((s) => s.type === 'about')
 
   const heroConfig = (heroSection?.config as { heading?: string; subheading?: string; image_url?: string; cta_text?: string }) || {}
-  const bannerGridTiles = (bannerGridSection?.config as { tiles?: { heading: string; image_url: string; cta_text: string }[] })?.tiles || []
+  const bannerGridTiles = (bannerGridSection?.config as { tiles?: { heading: string; image_url: string; cta_text: string; category?: string }[] })?.tiles || []
   const ctaConfig = (ctaSection?.config as { heading?: string; image_url?: string; cta_text?: string }) || {}
 
   const sectionsMeta = (allSections || [])
@@ -55,6 +65,7 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
           cta_text: heroConfig.cta_text || '',
         }}
         initialTiles={bannerGridTiles}
+        productCategories={productCategories}
         initialCta={{
           heading: ctaConfig.heading || '',
           image_url: ctaConfig.image_url || '',

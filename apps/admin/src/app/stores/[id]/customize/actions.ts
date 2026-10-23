@@ -33,7 +33,7 @@ export async function saveHeroSection(
 
 export async function saveBannerGridSection(
   storeId: string,
-  tiles: { heading: string; image_url: string; cta_text: string }[]
+  tiles: { heading: string; image_url: string; cta_text: string; category?: string }[]
 ) {
   const supabase = await createClient()
   const { data: existing } = await supabase.from('sections').select('id').eq('store_id', storeId).eq('type', 'banner_grid').maybeSingle()

@@ -8,10 +8,10 @@ import { IconCheck, IconSearchOff } from '@tabler/icons-react'
 import { ProductCard } from './ProductCard'
 import { DISPLAY_FONTS, SCALE_CLASSES } from '../../lib/font-pairings'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
+import { collectionTileHref, splitSections } from '../../lib/sections'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
 import { BrandIcon } from '../../components/BrandIcon'
-import { splitSections } from '../../lib/sections'
 import { aboutParagraphs, isAboutEmpty, normalizeAbout } from '@bitvora/lib/about-section'
 
 type SearchParams = { q?: string; category?: string; sort?: string }
@@ -160,7 +160,7 @@ function renderSection(section: { type: string; config: unknown }) {
   }
 
   if (section.type === 'banner_grid') {
-    const tiles = ((section.config as { tiles?: { heading: string; image_url: string; cta_text: string }[] })?.tiles || []).filter((t) => t.heading)
+    const tiles = ((section.config as { tiles?: { heading: string; image_url: string; cta_text: string; category?: string }[] })?.tiles || []).filter((t) => t.heading)
     if (tiles.length === 0) return null
     return (
       // Phones: a swipeable row of shorter tiles, so shoppers reach products
@@ -182,7 +182,7 @@ function renderSection(section: { type: string; config: unknown }) {
               <p className={`${scale.tile} text-white mb-3 leading-tight`} style={{ fontFamily: displayFont, fontWeight: 600 }}>
                 {tile.heading}
               </p>
-              <a href="#products" className="inline-block w-fit rounded-full bg-white text-[#171717] px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity">
+              <a href={collectionTileHref(slug, tile.category, categoryByKey)} className="inline-block w-fit rounded-full bg-white text-[#171717] px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity">
                 {tile.cta_text || 'Shop now'}
               </a>
             </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { splitSections } from './sections'
+import { collectionTileHref, splitSections } from './sections'
 
 describe('splitSections', () => {
   it('uses the default layout: hero and banners above, about and CTA below', () => {
@@ -27,5 +27,20 @@ describe('splitSections', () => {
 
   it('handles a store with no sections', () => {
     expect(splitSections(null)).toEqual({ beforeProducts: [], afterProducts: [] })
+  })
+})
+
+describe('collectionTileHref', () => {
+  const categories = new Map([['dresses', 'Dresses'], ['bags & shoes', 'Bags & Shoes']])
+
+  it('opens the store filtered to the tile’s category, ignoring case', () => {
+    expect(collectionTileHref('demo-store', 'dresses', categories)).toBe('/demo-store?category=Dresses#products')
+    expect(collectionTileHref('demo-store', 'Bags & Shoes', categories)).toBe('/demo-store?category=Bags%20%26%20Shoes#products')
+  })
+
+  it('falls back to all products with no category or one with no products left', () => {
+    expect(collectionTileHref('demo-store', undefined, categories)).toBe('#products')
+    expect(collectionTileHref('demo-store', '', categories)).toBe('#products')
+    expect(collectionTileHref('demo-store', 'Hats', categories)).toBe('#products')
   })
 })
