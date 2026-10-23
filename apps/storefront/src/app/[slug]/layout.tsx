@@ -137,7 +137,7 @@ export default async function StoreLayout({
           </div>
         )}
         {store.is_verified && (
-          <p className="mb-2">
+          <p className="mb-2 items-center">
             <VerifiedBadge variant="inline" />
             <span className="text-xs text-[#737373]"> · identity checked by Bitvora</span>
           </p>
