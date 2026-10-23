@@ -10,3 +10,11 @@ export function splitSections<T extends { position: number }>(sections: T[] | nu
     afterProducts: all.filter((s) => s.position >= PRODUCTS_POSITION),
   }
 }
+
+// Where a collection tile's button goes. A tile linked to a category opens
+// the store filtered to it; with no category, or one that no longer has any
+// products, it falls back to the full product list.
+export function collectionTileHref(slug: string, category: string | undefined, categoryByKey: Map<string, string>) {
+  const match = category?.trim() && categoryByKey.get(category.trim().toLowerCase())
+  return match ? `/${slug}?category=${encodeURIComponent(match)}#products` : '#products'
+}

@@ -15,8 +15,14 @@ import {
   saveAboutSection, saveSocialLinks, toggleSectionVisibility, reorderSection,
 } from './actions'
 import { FONT_PAIRINGS, SCALES } from '../../../../lib/font-pairings'
+import { ABOUT_LIMITS, aboutParagraphs, type AboutConfig } from '@bitvora/lib/about-section'
 
-type Tile = { heading: string; image_url: string; cta_text: string }
+// category: the product category the tile's button opens; empty = all products.
+type Tile = { heading: string; image_url: string; cta_text: string; category?: string }
+
+function CharCount({ value, max }: { value: string; max: number }) {
+  return <span className={`text-[11px] tabular-nums ${value.length >= max ? 'text-red-600' : 'text-ink/40'}`}>{value.length}/{max}</span>
+}
 
 const PRESETS = [
   { name: 'Ink', value: '#171717' },
@@ -44,6 +50,7 @@ export function CustomizeWorkspace({
   initialColor,
   initialHero,
   initialTiles,
+  productCategories,
   initialCta,
   initialLogo,
   initialTypography,
@@ -57,18 +64,23 @@ export function CustomizeWorkspace({
   initialColor: string
   initialHero: { heading: string; subheading: string; image_url: string; cta_text: string }
   initialTiles: Tile[]
+  productCategories: string[]
   initialCta: { heading: string; image_url: string; cta_text: string }
   initialLogo: string
   initialTypography: { pairing: string; scale: string }
   initialGridDensity: number
-  initialAbout: { heading: string; body: string }
+  initialAbout: AboutConfig
   initialSocial: { whatsapp?: string; instagram?: string; facebook?: string; tiktok?: string }
   sectionsMeta: { type: string; label: string; is_visible: boolean; position: number }[]
 }) {
   const [logo, setLogo] = useState(initialLogo)
   const [typography, setTypography] = useState(initialTypography)
   const [gridDensity, setGridDensity] = useState(initialGridDensity)
-  const [about, setAbout] = useState(initialAbout)
+  // Always three highlight inputs; empty ones are dropped when saving.
+  const [about, setAbout] = useState<AboutConfig>({
+    ...initialAbout,
+    highlights: [0, 1, 2].map((i) => initialAbout.highlights[i] || ''),
+  })
   const [social, setSocial] = useState(initialSocial)
   const [sections, setSections] = useState(sectionsMeta)
   const [tab, setTab] = useState<Tab>('brand')
@@ -146,7 +158,7 @@ export function CustomizeWorkspace({
           await saveGridDensity(storeId, gridDensity),
         ],
         hero: async () => [await saveHeroSection(storeId, hero)],
-        about: async () => [await saveAboutSection(storeId, about.heading, about.body)],
+        about: async () => [await saveAboutSection(storeId, about)],
         collections: async () => [await saveBannerGridSection(storeId, tiles)],
         banner: async () => [await saveCtaBannerSection(storeId, cta)],
         social: async () => [await saveSocialLinks(storeId, social)],
@@ -335,8 +347,33 @@ export function CustomizeWorkspace({
                   <Label>Image</Label>
                   <ImageField value={tile.image_url} onChange={(url) => updateTile(i, { image_url: url })} />
                 </div>
+                {productCategories.length > 0 && (
+                  <div>
+                    <Label htmlFor={`tile_category_${i}`}>Button opens</Label>
+                    <select
+                      id={`tile_category_${i}`}
+                      value={tile.category || ''}
+                      onChange={(e) => updateTile(i, { category: e.target.value })}
+                      className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2.5 text-base sm:text-sm text-ink outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:border-indigo-600 transition-colors"
+                    >
+                      <option value="">All products</option>
+                      {productCategories.map((c) => (
+                        <option key={c} value={c}>Only {c}</option>
+                      ))}
+                      {/* A saved category whose products were all removed or renamed: keep it visible rather than silently changing the choice. */}
+                      {tile.category && !productCategories.some((c) => c.toLowerCase() === tile.category!.toLowerCase()) && (
+                        <option value={tile.category}>Only {tile.category} (no products, shows all)</option>
+                      )}
+                    </select>
+                  </div>
+                )}
               </div>
             ))}
+            <p className="text-xs text-ink/50">
+              {productCategories.length > 0
+                ? 'Pick a category to make a tile show only those products, like a "Dresses" tile that opens your dresses.'
+                : 'Tip: give your products a Category (for example "Dresses") and each tile can open just those products.'}
+            </p>
           </div>
         )}
 
@@ -416,22 +453,95 @@ export function CustomizeWorkspace({
         )}
 
         {tab === 'about' && (
-          <div className="space-y-3">
+          <div className="space-y-4">
+            <p className="text-xs text-ink/50">
+              Tell shoppers who&apos;s behind {storeName}. A short, personal story builds trust, especially with first-time buyers.
+            </p>
+            {!about.heading && !about.body && (
+              <button
+                type="button"
+                onClick={() =>
+                  setAbout({
+                    ...about,
+                    heading: 'Our story',
+                    body: `${storeName} started with a simple idea: quality pieces, made with care, at prices that feel fair.\n\nEvery order is packed by hand and sent out quickly. Have a question? We're always a message away.`,
+                    highlights: ['Quality guaranteed', 'Fast delivery', 'Friendly support'],
+                  })
+                }
+                className="w-full rounded-lg border border-dashed border-sand-200 px-3 py-2.5 text-sm text-ink/60 hover:border-indigo-600 hover:text-indigo-600 transition-colors"
+              >
+                Start from an example, then make it yours
+              </button>
+            )}
             <div>
-              <Label htmlFor="about_heading">Heading</Label>
-              <Input id="about_heading" value={about.heading} onChange={(e) => setAbout({ ...about, heading: e.target.value })} placeholder="e.g. Our story" maxLength={60} />
+              <div className="flex items-baseline justify-between">
+                <Label htmlFor="about_heading">Heading</Label>
+                <CharCount value={about.heading} max={ABOUT_LIMITS.heading} />
+              </div>
+              <Input id="about_heading" value={about.heading} onChange={(e) => setAbout({ ...about, heading: e.target.value })} placeholder="e.g. Our story" maxLength={ABOUT_LIMITS.heading} />
             </div>
             <div>
-              <Label htmlFor="about_body">Body text</Label>
+              <div className="flex items-baseline justify-between">
+                <Label htmlFor="about_body">Your story</Label>
+                <CharCount value={about.body} max={ABOUT_LIMITS.body} />
+              </div>
               <textarea
                 id="about_body"
                 value={about.body}
                 onChange={(e) => setAbout({ ...about, body: e.target.value })}
-                rows={5}
-                placeholder="Tell customers about your brand..."
-                className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2.5 text-base sm:text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
+                rows={7}
+                maxLength={ABOUT_LIMITS.body}
+                placeholder="How did you start? What makes your products special? Who makes them?"
+                aria-describedby="about_body_hint"
+                className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2.5 text-base sm:text-sm leading-relaxed outline-none focus-visible:ring-2 focus-visible:ring-indigo-600"
               />
+              <p id="about_body_hint" className="text-xs text-ink/50 mt-1">Leave an empty line to start a new paragraph.</p>
             </div>
+            <div>
+              <Label>Photo <span className="font-normal text-ink/40">(optional)</span></Label>
+              <ImageField value={about.image_url} onChange={(url) => setAbout({ ...about, image_url: url })} />
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-ink/50">You, your team, or where the magic happens.</p>
+                {about.image_url && (
+                  <button type="button" onClick={() => setAbout({ ...about, image_url: '' })} className="text-xs text-ink/50 hover:text-red-600">
+                    Remove
+                  </button>
+                )}
+              </div>
+            </div>
+            <div>
+              <Label>Highlights <span className="font-normal text-ink/40">(optional)</span></Label>
+              <p className="text-xs text-ink/50 -mt-0.5 mb-1.5">Short facts shown as badges under your story.</p>
+              <div className="space-y-2">
+                {about.highlights.map((h, i) => (
+                  <Input
+                    key={i}
+                    aria-label={`Highlight ${i + 1}`}
+                    value={h}
+                    onChange={(e) => setAbout({ ...about, highlights: about.highlights.map((x, j) => (j === i ? e.target.value : x)) })}
+                    placeholder={['e.g. Handmade in Lagos', 'e.g. Nationwide delivery', 'e.g. Since 2019'][i]}
+                    maxLength={ABOUT_LIMITS.highlight}
+                  />
+                ))}
+              </div>
+            </div>
+            <p className="text-xs text-ink/50 rounded-lg bg-sand-100 px-3 py-2.5">
+              {social.whatsapp ? (
+                <>Shoppers also get a <span className="font-medium text-ink/70">Chat with us</span> button that opens your WhatsApp.</>
+              ) : (
+                <>
+                  Add your WhatsApp number in{' '}
+                  <button type="button" onClick={() => setTab('social')} className="underline hover:text-indigo-600">Social</button>{' '}
+                  to show a <span className="font-medium text-ink/70">Chat with us</span> button here.
+                </>
+              )}
+              {sections.some((s) => s.type === 'about' && !s.is_visible) && (
+                <>
+                  {' '}This section is hidden right now; turn it on in{' '}
+                  <button type="button" onClick={() => setTab('sections')} className="underline hover:text-indigo-600">Sections</button>.
+                </>
+              )}
+            </p>
           </div>
         )}
 
@@ -548,6 +658,27 @@ export function CustomizeWorkspace({
                 ))}
               </div>
             </div>
+
+            {(about.heading || about.body) && (
+              <div className={`rounded-xl px-3 py-4 flex gap-3 items-center ${about.image_url ? '' : 'text-center justify-center'}`} style={{ backgroundColor: `color-mix(in srgb, ${color} 8%, white)` }}>
+                {about.image_url && <img src={about.image_url} alt="" className="w-16 h-20 rounded-lg object-cover shrink-0" />}
+                <div className="min-w-0 text-[#171717]">
+                  <p className="text-[8px] font-semibold uppercase tracking-widest text-[#525252] mb-0.5">About {storeName}</p>
+                  <p className="text-xs font-semibold leading-tight mb-1">{about.heading || `Meet ${storeName}`}</p>
+                  {about.body && <p className="text-[9px] text-[#404040] leading-snug line-clamp-3">{aboutParagraphs(about.body)[0]}</p>}
+                  {about.highlights.some((h) => h.trim()) && (
+                    <div className={`flex flex-wrap gap-1 mt-1.5 ${about.image_url ? '' : 'justify-center'}`}>
+                      {about.highlights.filter((h) => h.trim()).map((h, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 rounded-full bg-white px-1.5 py-0.5 text-[8px] font-medium">
+                          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: color }} />
+                          {h}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {cta.heading && (
               <div className="relative h-20 rounded-xl overflow-hidden">

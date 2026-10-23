@@ -3,6 +3,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '../../../../lib/supabase/server'
+import { normalizeAbout, type AboutConfig } from '@bitvora/lib/about-section'
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
 
@@ -32,7 +33,7 @@ export async function saveHeroSection(
 
 export async function saveBannerGridSection(
   storeId: string,
-  tiles: { heading: string; image_url: string; cta_text: string }[]
+  tiles: { heading: string; image_url: string; cta_text: string; category?: string }[]
 ) {
   const supabase = await createClient()
   const { data: existing } = await supabase.from('sections').select('id').eq('store_id', storeId).eq('type', 'banner_grid').maybeSingle()
@@ -84,10 +85,11 @@ export async function saveGridDensity(storeId: string, density: number) {
   revalidatePath(`/stores/${storeId}`)
 }
 
-export async function saveAboutSection(storeId: string, heading: string, body: string) {
+export async function saveAboutSection(storeId: string, about: AboutConfig) {
   const supabase = await createClient()
   const { data: existing } = await supabase.from('sections').select('id').eq('store_id', storeId).eq('type', 'about').maybeSingle()
-  const config = { heading, body }
+  // Same trimming and limits the storefront reads with.
+  const config = normalizeAbout(about)
   if (existing) {
     const { error } = await supabase.from('sections').update({ config }).eq('id', existing.id)
     if (error) return { error: error.message }

@@ -4,14 +4,15 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { PackageBox } from 'switch-icons'
-import { IconSearchOff } from '@tabler/icons-react'
+import { IconCheck, IconSearchOff } from '@tabler/icons-react'
 import { ProductCard } from './ProductCard'
 import { DISPLAY_FONTS, SCALE_CLASSES } from '../../lib/font-pairings'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
+import { collectionTileHref, splitSections } from '../../lib/sections'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
 import { BrandIcon } from '../../components/BrandIcon'
-import { splitSections } from '../../lib/sections'
+import { aboutParagraphs, isAboutEmpty, normalizeAbout } from '@bitvora/lib/about-section'
 
 type SearchParams = { q?: string; category?: string; sort?: string }
 
@@ -159,7 +160,7 @@ function renderSection(section: { type: string; config: unknown }) {
   }
 
   if (section.type === 'banner_grid') {
-    const tiles = ((section.config as { tiles?: { heading: string; image_url: string; cta_text: string }[] })?.tiles || []).filter((t) => t.heading)
+    const tiles = ((section.config as { tiles?: { heading: string; image_url: string; cta_text: string; category?: string }[] })?.tiles || []).filter((t) => t.heading)
     if (tiles.length === 0) return null
     return (
       // Phones: a swipeable row of shorter tiles, so shoppers reach products
@@ -181,7 +182,7 @@ function renderSection(section: { type: string; config: unknown }) {
               <p className={`${scale.tile} text-white mb-3 leading-tight`} style={{ fontFamily: displayFont, fontWeight: 600 }}>
                 {tile.heading}
               </p>
-              <a href="#products" className="inline-block w-fit rounded-full bg-white text-[#171717] px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity">
+              <a href={collectionTileHref(slug, tile.category, categoryByKey)} className="inline-block w-fit rounded-full bg-white text-[#171717] px-4 py-2 text-xs font-medium hover:opacity-90 transition-opacity">
                 {tile.cta_text || 'Shop now'}
               </a>
             </div>
@@ -192,13 +193,80 @@ function renderSection(section: { type: string; config: unknown }) {
   }
 
   if (section.type === 'about') {
-    const a = section.config as { heading?: string; body?: string }
-    if (!a.heading) return null
+    const a = normalizeAbout(section.config)
+    if (isAboutEmpty(a)) return null
+    const hasImage = !!a.image_url
+    const align = hasImage ? '' : 'justify-center'
+    const chatLink = whatsappLink(currentStore.social_links, `Hi ${currentStore.name}, I'd love to know more about your store.`)
     return (
-      <div key="about" className="mb-16 max-w-2xl">
-        <h2 className={`${scale.section} mb-3`} style={{ fontFamily: displayFont, fontWeight: 600 }}>{a.heading}</h2>
-        <p className="text-[#525252] leading-relaxed whitespace-pre-line">{a.body}</p>
-      </div>
+      // A full-bleed band tinted with the brand color, so the story reads as
+      // its own chapter instead of a stray paragraph under the products.
+      <section
+        key="about"
+        id="about"
+        aria-labelledby="about-heading"
+        className="-mx-4 sm:-mx-6 my-12 sm:my-16 px-4 sm:px-6 py-12 sm:py-20 scroll-mt-28"
+        style={{ backgroundColor: 'color-mix(in srgb, var(--accent) 7%, white)' }}
+      >
+        <div className={`mx-auto grid gap-10 md:gap-16 items-center ${hasImage ? 'max-w-6xl md:grid-cols-[5fr_7fr]' : 'max-w-3xl text-center'}`}>
+          {hasImage && (
+            <div className="relative mx-2 sm:mx-0">
+              <div aria-hidden className="absolute -inset-2 sm:-inset-3 rounded-[2rem] -rotate-2" style={{ backgroundColor: accent, opacity: 0.18 }} />
+              <img
+                src={cldImage(a.image_url, 1000)}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                className="relative w-full aspect-4/3 md:aspect-4/5 object-cover rounded-3xl"
+              />
+            </div>
+          )}
+          <div>
+            <p className={`flex items-center gap-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#525252] mb-4 ${align}`}>
+              <span aria-hidden className="h-0.5 w-8 rounded-full" style={{ backgroundColor: accent }} />
+              About {currentStore.name}
+            </p>
+            <h2 id="about-heading" className={`${scale.section} leading-tight mb-5`} style={{ fontFamily: displayFont, fontWeight: 600 }}>
+              {a.heading || `Meet ${currentStore.name}`}
+            </h2>
+            {a.body && (
+              <div className="space-y-4 text-[#404040] text-base sm:text-lg leading-relaxed">
+                {aboutParagraphs(a.body).map((p, i) => (
+                  <p key={i} className="whitespace-pre-line">{p}</p>
+                ))}
+              </div>
+            )}
+            {a.highlights.length > 0 && (
+              <ul className={`mt-7 flex flex-wrap gap-2 ${align}`}>
+                {a.highlights.map((h, i) => (
+                  <li key={i} className="inline-flex items-center gap-2 rounded-full bg-white border border-black/5 pl-1.5 pr-4 py-1.5 text-sm font-medium shadow-sm">
+                    <span className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}>
+                      <IconCheck className="w-3.5 h-3.5" stroke={3} aria-hidden />
+                    </span>
+                    {h}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className={`mt-8 flex flex-wrap items-center gap-3 ${align}`}>
+              <a href="#products" className="inline-block rounded-full px-6 py-3 text-sm font-medium transition-opacity hover:opacity-90" style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}>
+                Shop the collection
+              </a>
+              {chatLink && (
+                <a
+                  href={chatLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#d4d4d4] bg-white px-5 py-3 text-sm font-medium hover:bg-[#fafafa] transition-colors"
+                >
+                  <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+                  Chat with us
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
     )
   }
 

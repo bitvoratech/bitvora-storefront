@@ -6,7 +6,8 @@
   "exports": {
     "./rate-limit": "./src/rate-limit.ts",
     "./cloudinary-image": "./src/cloudinary-image.ts",
-    "./cloudinary-upload": "./src/cloudinary-upload.ts"
+    "./cloudinary-upload": "./src/cloudinary-upload.ts",
+    "./about-section": "./src/about-section.ts"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.2.0",
