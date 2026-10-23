@@ -2,6 +2,7 @@ import { createClient } from '../../../../lib/supabase/server'
 import { notFound } from 'next/navigation'
 import { PublishToggle } from '../PublishToggle'
 import { CustomizeWorkspace } from './CustomizeWorkspace'
+import { normalizeAbout } from '@bitvora/lib/about-section'
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Homepage hero',
@@ -28,7 +29,6 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
   const heroConfig = (heroSection?.config as { heading?: string; subheading?: string; image_url?: string; cta_text?: string }) || {}
   const bannerGridTiles = (bannerGridSection?.config as { tiles?: { heading: string; image_url: string; cta_text: string }[] })?.tiles || []
   const ctaConfig = (ctaSection?.config as { heading?: string; image_url?: string; cta_text?: string }) || {}
-  const aboutConfig = (aboutSection?.config as { heading?: string; body?: string }) || {}
 
   const sectionsMeta = (allSections || [])
     .filter((s) => SECTION_LABELS[s.type])
@@ -63,7 +63,7 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
         initialLogo={store.logo_url || ''}
         initialTypography={store.typography || { pairing: 'editorial', scale: 'standard' }}
         initialGridDensity={store.grid_density || 3}
-        initialAbout={{ heading: aboutConfig.heading || '', body: aboutConfig.body || '' }}
+        initialAbout={normalizeAbout(aboutSection?.config)}
         initialSocial={store.social_links || {}}
         sectionsMeta={sectionsMeta}
       />
