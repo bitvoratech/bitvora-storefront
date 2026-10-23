@@ -162,9 +162,11 @@ export default async function ProductPage({
           {stock <= 0 && <RestockForm slug={slug} productId={product.id} storeName={store.name} accent={accent} />}
 
           {store.is_verified && (
-            <div className="mt-6 items-center rounded-lg bg-[#fafafa] px-3 py-2.5 text-xs text-[#525252]">
-              <VerifiedBadge variant="inline" />
-              <span> — {store.name}&apos;s identity was checked by Bitvora before they could sell here.</span>
+            <div className="mt-6 rounded-lg bg-[#fafafa] px-3 py-2.5">
+              <VerifiedBadge
+                variant="inline"
+                detail={<>{store.name}&apos;s identity was checked by Bitvora before they could sell here.</>}
+              />
             </div>
           )}
         </div>
