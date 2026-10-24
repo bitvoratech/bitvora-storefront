@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ANNUAL_MONTHS, PLAN_IDS, PLAN_NAMES, PLAN_SUMMARY, formatNaira, planPrice, type PlanId, type PlanInterval } from '../lib/plans'
+import { ANNUAL_MONTHS, PLAN_IDS, PLAN_NAMES, PLAN_SUMMARY, discountedPrice, formatNaira, planPrice, type PlanId, type PlanInterval } from '../lib/plans'
 
 // Plan and billing-period choice. As radios inside a form (name="plan" and
 // name="interval"), or, with `hrefFor`, as links that carry the choice on.
@@ -9,7 +9,9 @@ export function PlanOptions({
   defaultPlan,
   defaultInterval = 'monthly',
   hrefFor,
+  discountPercent = 0,
 }: {
+  discountPercent?: number
   defaultPlan?: PlanId | null
   defaultInterval?: PlanInterval
   hrefFor?: (plan: PlanId, interval: PlanInterval) => string
@@ -39,7 +41,10 @@ export function PlanOptions({
         {PLAN_IDS.map((id) => {
           const price = (
             <span className="text-right">
-              <span className="font-semibold">{formatNaira(planPrice(id, interval))}</span>
+              {discountPercent > 0 && (
+                <span className="text-xs text-ink/40 line-through mr-1.5">{formatNaira(planPrice(id, interval))}</span>
+              )}
+              <span className="font-semibold">{formatNaira(discountedPrice(id, interval, discountPercent))}</span>
               <span className="text-xs text-ink/40"> / {interval === 'annual' ? 'year' : 'month'}</span>
             </span>
           )

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ANNUAL_MONTHS, PLAN_IDS, PLAN_MONTHLY, hasActivePlan, parseInterval, parsePlan, planLabel, planPrice } from './plans'
+import { ANNUAL_MONTHS, PLAN_IDS, PLAN_MONTHLY, discountedPrice, hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel, planPrice } from './plans'
 
 describe('parsePlan', () => {
   it('accepts known plan ids only', () => {
@@ -58,5 +58,22 @@ describe('hasActivePlan', () => {
 
   it('treats comped accounts as paid', () => {
     expect(hasActivePlan({ subscription_status: 'comped', current_period_end: null }, now)).toBe(true)
+  })
+})
+
+describe('plan discount', () => {
+  it('reads a whole percent between 1 and 99, else none', () => {
+    expect(planDiscountPercent('50')).toBe(50)
+    expect(planDiscountPercent(undefined)).toBe(0)
+    expect(planDiscountPercent('')).toBe(0)
+    expect(planDiscountPercent('100')).toBe(0)
+    expect(planDiscountPercent('12.5')).toBe(0)
+    expect(planDiscountPercent('abc')).toBe(0)
+  })
+
+  it('takes the percent off the plan price', () => {
+    expect(discountedPrice('starter', 'monthly', 50)).toBe(2500)
+    expect(discountedPrice('pro', 'annual', 50)).toBe(125000)
+    expect(discountedPrice('growth', 'monthly', 0)).toBe(12000)
   })
 })
