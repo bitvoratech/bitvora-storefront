@@ -43,6 +43,21 @@ export function planPrice(plan: PlanId, interval: PlanInterval): number {
   return interval === 'annual' ? PLAN_MONTHLY[plan] * ANNUAL_MONTHS : PLAN_MONTHLY[plan]
 }
 
+/**
+ * Percent off every plan for merchants who start paying now, from
+ * PLAN_DISCOUNT_PERCENT (e.g. 50 during the closed beta). Server-only; 0 when
+ * unset or invalid.
+ */
+export function planDiscountPercent(value = process.env.PLAN_DISCOUNT_PERCENT): number {
+  const n = Number(value)
+  return Number.isInteger(n) && n > 0 && n < 100 ? n : 0
+}
+
+/** ₦ charged per billing period after a percent discount, rounded to the naira. */
+export function discountedPrice(plan: PlanId, interval: PlanInterval, percent: number): number {
+  return Math.round((planPrice(plan, interval) * (100 - percent)) / 100)
+}
+
 export function formatNaira(amount: number) {
   return `₦${amount.toLocaleString('en-NG')}`
 }

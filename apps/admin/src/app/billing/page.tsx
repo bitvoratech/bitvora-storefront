@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Card } from '@bitvora/ui/src/Card'
 import { createClient } from '../../lib/supabase/server'
-import { hasActivePlan, parseInterval, parsePlan, planLabel } from '../../lib/plans'
+import { hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel } from '../../lib/plans'
 import { CheckoutForm, ManageButton } from './CheckoutForm'
 
 const PAYMENT_NOTE: Record<string, { text: string; tone: string }> = {
@@ -79,7 +79,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           ) : (
             <p className="text-sm text-ink/60 mb-4">Your details are approved. Pay for your plan to create your first store.</p>
           )}
-          <CheckoutForm plan={parsePlan(merchant?.plan)} interval={parseInterval(merchant?.plan_interval) ?? 'monthly'} />
+          <CheckoutForm
+            plan={parsePlan(merchant?.plan)}
+            interval={parseInterval(merchant?.plan_interval) ?? 'monthly'}
+            discountPercent={planDiscountPercent()}
+          />
         </Card>
       )}
     </div>

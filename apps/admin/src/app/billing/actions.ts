@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
-import { hasActivePlan, parseInterval, parsePlan } from '../../lib/plans'
+import { hasActivePlan, parseInterval, parsePlan, planDiscountPercent } from '../../lib/plans'
 import { initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
@@ -61,6 +61,7 @@ export async function startCheckout(prevState: BillingState, formData: FormData)
       merchantId: merchant.id,
       plan,
       interval,
+      discountPercent: planDiscountPercent(),
       callbackUrl: `${origin}/billing/callback`,
     })
     authorizationUrl = tx.authorization_url

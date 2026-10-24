@@ -3,7 +3,7 @@
 // payment; every write here is safe to repeat.
 
 import { createAdminClient } from './supabase/admin'
-import { parseInterval, parsePlan, planPrice, type SubscriptionStatus } from './plans'
+import { discountedPrice, parseInterval, parsePlan, planDiscountPercent, type SubscriptionStatus } from './plans'
 import { periodEnd, readMetadata, type PaystackTransaction } from './paystack'
 
 type MerchantBilling = {
@@ -45,8 +45,9 @@ export async function recordPayment(tx: PaystackTransaction, opts: { expectMerch
   const plan = parsePlan(meta.plan) ?? parsePlan(merchant.plan)
   const interval = parseInterval(meta.interval) ?? parseInterval(merchant.plan_interval) ?? 'monthly'
   if (!plan) return null
-  // A first payment must cover the plan it claims; renewals are priced by Paystack's plan.
-  if (meta.plan && tx.amount < planPrice(plan, interval) * 100) return null
+  // A first payment must cover the plan it claims, less any discount on offer;
+  // renewals are priced by Paystack's plan.
+  if (meta.plan && tx.amount < discountedPrice(plan, interval, planDiscountPercent()) * 100) return null
 
   const paidAt = tx.paid_at ? new Date(tx.paid_at) : new Date()
   const end = periodEnd(paidAt, interval)

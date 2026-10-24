@@ -17,12 +17,17 @@ function ErrorNote({ error }: { error?: string }) {
   )
 }
 
-export function CheckoutForm({ plan, interval }: { plan: PlanId | null; interval: PlanInterval }) {
+export function CheckoutForm({ plan, interval, discountPercent }: { plan: PlanId | null; interval: PlanInterval; discountPercent: number }) {
   const [state, action, pending] = useActionState(startCheckout, undefined)
   return (
     <form action={action} className="space-y-4">
       <ErrorNote error={state?.error} />
-      <PlanOptions defaultPlan={plan} defaultInterval={interval} />
+      {discountPercent > 0 && (
+        <p className="text-sm rounded-lg px-3 py-2 bg-palm-50 text-palm-600">
+          Beta price: {discountPercent}% off any plan, and your renewals stay at this price.
+        </p>
+      )}
+      <PlanOptions defaultPlan={plan} defaultInterval={interval} discountPercent={discountPercent} />
       <Button type="submit" disabled={pending} className="w-full">
         {pending ? 'Opening Paystack...' : 'Pay with Paystack'}
       </Button>

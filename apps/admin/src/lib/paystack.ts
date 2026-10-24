@@ -3,7 +3,7 @@
 // Server-only: it uses PAYSTACK_SECRET_KEY.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { PLAN_NAMES, planPrice, type PlanId, type PlanInterval } from './plans'
+import { PLAN_NAMES, discountedPrice, type PlanId, type PlanInterval } from './plans'
 
 const API = 'https://api.paystack.co'
 
@@ -32,9 +32,10 @@ export const PAYSTACK_INTERVAL: Record<PlanInterval, 'monthly' | 'annually'> = {
   annual: 'annually',
 }
 
-/** The Paystack plan name for one of our plans, e.g. "Bitvora Stores Growth (annual)". */
-export function paystackPlanName(plan: PlanId, interval: PlanInterval) {
-  return `Bitvora Stores ${PLAN_NAMES[plan]} (${interval})`
+/** The Paystack plan name for one of our plans, e.g. "Bitvora Stores Growth (annual, 50% off)". */
+export function paystackPlanName(plan: PlanId, interval: PlanInterval, discountPercent = 0) {
+  const off = discountPercent ? `, ${discountPercent}% off` : ''
+  return `Bitvora Stores ${PLAN_NAMES[plan]} (${interval}${off})`
 }
 
 type PaystackPlan = { plan_code: string; name: string; amount: number; interval: string; currency: string }
@@ -43,10 +44,11 @@ type PaystackPlan = { plan_code: string; name: string; amount: number; interval:
  * The Paystack plan code for a plan and interval. Plans are created in Paystack
  * on first use, so nothing has to be set up by hand; a price change in
  * plans.ts creates a fresh plan rather than repricing existing subscribers.
+ * A discounted plan is its own Paystack plan, so renewals keep the discount.
  */
-export async function getPlanCode(plan: PlanId, interval: PlanInterval): Promise<string> {
-  const name = paystackPlanName(plan, interval)
-  const amount = planPrice(plan, interval) * 100 // kobo
+export async function getPlanCode(plan: PlanId, interval: PlanInterval, discountPercent = 0): Promise<string> {
+  const name = paystackPlanName(plan, interval, discountPercent)
+  const amount = discountedPrice(plan, interval, discountPercent) * 100 // kobo
   const existing = await paystack<PaystackPlan[]>('/plan?perPage=100')
   const match = existing.find(
     (p) => p.name === name && p.amount === amount && p.interval === PAYSTACK_INTERVAL[interval] && p.currency === 'NGN',
@@ -82,15 +84,16 @@ export async function initializeSubscription(input: {
   merchantId: string
   plan: PlanId
   interval: PlanInterval
+  discountPercent: number
   callbackUrl: string
 }) {
-  const planCode = await getPlanCode(input.plan, input.interval)
+  const planCode = await getPlanCode(input.plan, input.interval, input.discountPercent)
   const data = await paystack<{ authorization_url: string; reference: string }>('/transaction/initialize', {
     method: 'POST',
     body: {
       email: input.email,
       // Paystack charges the plan's amount; this must still be sent.
-      amount: planPrice(input.plan, input.interval) * 100,
+      amount: discountedPrice(input.plan, input.interval, input.discountPercent) * 100,
       plan: planCode,
       // Renewals charge the saved card, so the first payment has to be a card.
       channels: ['card'],
