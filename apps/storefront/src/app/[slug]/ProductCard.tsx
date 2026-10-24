@@ -18,6 +18,7 @@ type Product = {
   category: string | null
   images: string[] | null
   stock_quantity: number
+  sizes?: string[] | null
 }
 
 export function ProductCard({
@@ -36,6 +37,9 @@ export function ProductCard({
   const router = useRouter()
   const [added, setAdded] = useState(false)
   const inStock = product.stock_quantity > 0
+  // Sized products need a size picked on the product page first.
+  const hasSizes = (product.sizes?.length ?? 0) > 0
+  const productHref = `/${storeSlug}/product/${product.slug}`
   const cartItem = { productId: product.id, name: product.name, price: Number(product.price), image: product.images?.[0] ?? null, maxQuantity: product.stock_quantity }
 
   function handleAdd(e: React.MouseEvent) {
@@ -53,7 +57,7 @@ export function ProductCard({
 
   return (
     <div className="bg-white border border-[#ececec] rounded-xl overflow-hidden group flex flex-col">
-      <Link href={`/${storeSlug}/product/${product.slug}`} className="block flex-1">
+      <Link href={productHref} className="block flex-1">
         <div className="aspect-square bg-[#fafafa] relative overflow-hidden">
           {product.category && (
             <span className="absolute top-2 right-2 bg-white/95 text-[10px] uppercase tracking-wide text-[#525252] rounded-full px-2 py-1 z-10 max-w-[55%] truncate">
@@ -92,23 +96,35 @@ export function ProductCard({
         </div>
       </Link>
 
-      <div className="px-3 sm:px-4 pb-3 sm:pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-        <button
-          onClick={handleAdd}
-          disabled={!inStock}
-          className="rounded-full border border-[#e5e5e5] text-xs font-medium py-2 hover:bg-[#fafafa] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          <span aria-live="polite">{added ? 'Added ✓' : 'Add to cart'}</span>
-        </button>
-        <button
-          onClick={handleBuyNow}
-          disabled={!inStock}
-          className="rounded-full text-white text-xs font-medium py-2 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
-          style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
-        >
-          Buy now
-        </button>
-      </div>
+      {hasSizes && inStock ? (
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4">
+          <Link
+            href={productHref}
+            className="block text-center rounded-full text-white text-xs font-medium py-2 hover:opacity-90 transition-opacity"
+            style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
+          >
+            Choose size
+          </Link>
+        </div>
+      ) : (
+        <div className="px-3 sm:px-4 pb-3 sm:pb-4 grid grid-cols-1 md:grid-cols-2 gap-2">
+          <button
+            onClick={handleAdd}
+            disabled={!inStock}
+            className="rounded-full border border-[#e5e5e5] text-xs font-medium py-2 hover:bg-[#fafafa] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <span aria-live="polite">{added ? 'Added ✓' : 'Add to cart'}</span>
+          </button>
+          <button
+            onClick={handleBuyNow}
+            disabled={!inStock}
+            className="rounded-full text-white text-xs font-medium py-2 hover:opacity-90 transition-opacity disabled:opacity-40 disabled:cursor-not-allowed"
+            style={{ backgroundColor: accent, color: 'var(--accent-fg)' }}
+          >
+            Buy now
+          </button>
+        </div>
+      )}
     </div>
   )
 }

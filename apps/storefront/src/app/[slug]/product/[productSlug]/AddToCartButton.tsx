@@ -13,6 +13,7 @@ export function AddToCartButton({
   price,
   image,
   stock,
+  sizes,
   accent,
   storeName,
   whatsappNumber,
@@ -23,6 +24,8 @@ export function AddToCartButton({
   price: number
   image: string | null
   stock: number
+  /** The merchant's own sizes for this product; empty when it has none. */
+  sizes: string[]
   accent: string
   storeName: string
   /** Digits only, international format (e.g. 2348012345678), or null if the store has none. */
@@ -31,6 +34,9 @@ export function AddToCartButton({
   const { addItem } = useCart(slug)
   const [added, setAdded] = useState(false)
   const [quantity, setQuantity] = useState(1)
+  const [size, setSize] = useState<string | null>(sizes.length === 1 ? sizes[0] : null)
+  const [sizeMissing, setSizeMissing] = useState(false)
+  const sizesRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const maxQuantity = Math.max(1, Math.min(stock, MAX_ITEM_QUANTITY))
 
@@ -45,15 +51,25 @@ export function AddToCartButton({
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
-  const item = { productId, name, price, image, maxQuantity: stock }
+  const item = { productId, name, price, image, maxQuantity: stock, size: size ?? undefined }
+
+  // A product with sizes can't go in the cart until one is picked.
+  function sizeReady() {
+    if (sizes.length === 0 || size) return true
+    setSizeMissing(true)
+    sizesRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    return false
+  }
 
   function handleAdd() {
+    if (!sizeReady()) return
     addItem(item, quantity)
     setAdded(true)
     setTimeout(() => setAdded(false), 1500)
   }
 
   function handleBuyNow() {
+    if (!sizeReady()) return
     addItem(item, quantity)
     router.push(`/${slug}/checkout`)
   }
@@ -68,7 +84,7 @@ export function AddToCartButton({
 
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-        `Hi ${storeName} 👋\nI'd like to order:\n\n*${name}* — ₦${price.toLocaleString()}\nQuantity: ${quantity}`
+        `Hi ${storeName} 👋\nI'd like to order:\n\n*${name}* — ₦${price.toLocaleString()}${size ? `\nSize: ${size}` : ''}\nQuantity: ${quantity}`
       )}`
     : null
 
@@ -93,6 +109,39 @@ export function AddToCartButton({
           Buy now
         </button>
       </div>
+      {sizes.length > 0 && (
+        <div ref={sizesRef} className="mb-3">
+          <p className="text-sm text-[#525252] mb-2" id="size-label">
+            Size{size && <span className="text-[#171717] font-medium">: {size}</span>}
+          </p>
+          <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="size-label">
+            {sizes.map((s) => {
+              const selected = s === size
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() => {
+                    setSize(s)
+                    setSizeMissing(false)
+                  }}
+                  className={`min-w-11 rounded-lg border px-3.5 py-2 text-sm transition-colors ${
+                    selected ? 'font-medium' : 'border-[#e5e5e5] hover:border-[#a3a3a3]'
+                  }`}
+                  style={selected ? { borderColor: accent, boxShadow: `inset 0 0 0 1px ${accent}` } : undefined}
+                >
+                  {s}
+                </button>
+              )
+            })}
+          </div>
+          {sizeMissing && (
+            <p role="alert" className="text-sm text-red-600 mt-2">Choose a size first.</p>
+          )}
+        </div>
+      )}
       <div className="flex items-center gap-3 mb-1">
         <span className="text-sm text-[#525252]" id="qty-label">Quantity</span>
         <div className="flex items-center border border-[#e5e5e5] rounded-lg" role="group" aria-labelledby="qty-label">

@@ -15,7 +15,7 @@ type CheckoutInput = {
   deliveryAddress?: string
   paymentMethod: 'bank_transfer' | 'pay_on_delivery'
   paymentProofUrl?: string
-  items: { productId: string; name: string; price: number; quantity: number }[]
+  items: { productId: string; name: string; price: number; quantity: number; size?: string }[]
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -36,6 +36,8 @@ const CUSTOMER_FACING_DB_ERRORS = [
   'does not accept pay on delivery',
   'out of stock',
   'left in stock',
+  'Choose a size',
+  'no longer comes in size',
 ]
 
 // The create_order RPC is only executable by the service role, so this
@@ -100,7 +102,8 @@ export async function createOrder(input: CheckoutInput) {
       !UUID_RE.test(item.productId) ||
       !Number.isInteger(item.quantity) ||
       item.quantity < 1 ||
-      item.quantity > 999
+      item.quantity > 999 ||
+      (item.size != null && (typeof item.size !== 'string' || item.size.length > 40))
     ) {
       return { error: 'Your cart has an invalid item. Remove it and try again.' }
     }
@@ -118,7 +121,7 @@ export async function createOrder(input: CheckoutInput) {
     p_delivery_fee: 0, // ignored: computed from the store's delivery zones
     p_payment_method: input.paymentMethod,
     p_payment_proof_url: paymentProofUrl,
-    p_items: input.items.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+    p_items: input.items.map((i) => ({ productId: i.productId, quantity: i.quantity, size: i.size || null })),
   })
 
   if (error || !data) {

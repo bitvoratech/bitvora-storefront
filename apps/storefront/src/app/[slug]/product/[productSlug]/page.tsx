@@ -26,13 +26,14 @@ type Product = {
   compare_at_price: number | null
   images: string[] | null
   stock_quantity: number | null
+  sizes: string[] | null
 }
 
 const getProduct = cache(async (storeId: string, productSlug: string) => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('id, name, description, price, compare_at_price, images, stock_quantity')
+    .select('id, name, description, price, compare_at_price, images, stock_quantity, sizes')
     .eq('store_id', storeId)
     .eq('slug', productSlug)
     .eq('is_active', true)
@@ -154,6 +155,7 @@ export default async function ProductPage({
             price={Number(product.price)}
             image={product.images?.[0] ?? null}
             stock={stock}
+            sizes={product.sizes ?? []}
             accent={accent}
             storeName={store.name}
             whatsappNumber={whatsappNumber}

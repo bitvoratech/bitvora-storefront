@@ -3,6 +3,7 @@
 import { useActionState } from 'react'
 import { createProduct } from '../actions'
 import { ImageUploader } from '../ImageUploader'
+import { SizesInput } from '../SizesInput'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Textarea } from '@bitvora/ui/src/Textarea'
@@ -40,6 +41,7 @@ export function ProductForm({ storeId }: { storeId: string }) {
           <Input id="stock_quantity" name="stock_quantity" type="number" min="0" step="1" required placeholder="How many?" className="font-mono" />
         </div>
       </div>
+      <SizesInput />
       <div>
         <Label htmlFor="compare_at_price">Was price (₦) <span className="font-normal text-ink/40">— optional</span></Label>
         <Input id="compare_at_price" name="compare_at_price" type="number" step="0.01" min="0" placeholder="Shows the price as a discount" className="font-mono" />

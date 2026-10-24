@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createOrder } from './actions'
 import { ArrowLeft, AlertTriangle, Upload, Check } from 'switch-icons'
 import Link from 'next/link'
-import { useCart } from '../../../lib/cart-store'
+import { lineKey, useCart } from '../../../lib/cart-store'
 import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 import { CopyButton } from '../../../components/CopyButton'
 import { VerifiedBadge } from '../../../components/VerifiedBadge'
@@ -143,7 +143,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         deliveryAddress: deliveryMethod === 'delivery' ? address : undefined,
         paymentMethod,
         paymentProofUrl: paymentMethod === 'bank_transfer' ? proofUrl : undefined,
-        items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity })),
+        items: items.map((i) => ({ productId: i.productId, name: i.name, price: i.price, quantity: i.quantity, size: i.size })),
       })
     } catch {
       setError('We couldn’t reach the store. Check your connection and try again.')
@@ -340,8 +340,8 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         <div>
           <div className="border border-[#e5e5e5] rounded-xl p-5 space-y-2">
             {items.map((item) => (
-              <div key={item.productId} className="flex justify-between gap-3 text-sm">
-                <span className="text-[#525252]">{item.name} × {item.quantity}</span>
+              <div key={lineKey(item)} className="flex justify-between gap-3 text-sm">
+                <span className="text-[#525252]">{item.name}{item.size ? ` (${item.size})` : ''} × {item.quantity}</span>
                 <span className="font-mono shrink-0">₦{(item.price * item.quantity).toLocaleString()}</span>
               </div>
             ))}
