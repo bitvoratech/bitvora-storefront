@@ -130,9 +130,13 @@ export default async function OrderDetailPage({
         <Card>
           <p className="text-sm font-medium mb-3">Items</p>
           <div className="space-y-2">
-            {order.order_items.map((item: { id: string; product_name: string; quantity: number; unit_price: number }) => (
+            {order.order_items.map((item: { id: string; product_name: string; size: string | null; quantity: number; unit_price: number }) => (
               <div key={item.id} className="flex justify-between gap-3 text-sm">
-                <span className="text-ink/70">{item.product_name} × {item.quantity}</span>
+                <span className="text-ink/70">
+                  {item.product_name}
+                  {item.size && <span className="ml-1.5 rounded bg-sand-100 px-1.5 py-0.5 text-xs font-medium text-ink">Size {item.size}</span>}
+                  {' '}× {item.quantity}
+                </span>
                 <span className="font-mono shrink-0">₦{(item.unit_price * item.quantity).toLocaleString()}</span>
               </div>
             ))}

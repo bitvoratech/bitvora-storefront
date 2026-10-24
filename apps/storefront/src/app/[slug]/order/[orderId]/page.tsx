@@ -19,7 +19,7 @@ type OrderConfirmation = {
   delivery_fee: number
   total: number
   status: string
-  order_items: { id: string; product_name: string; quantity: number; unit_price: number }[]
+  order_items: { id: string; product_name: string; size?: string | null; quantity: number; unit_price: number }[]
 }
 
 export default async function OrderConfirmationPage({
@@ -53,7 +53,7 @@ export default async function OrderConfirmationPage({
       <div className="border border-[#e5e5e5] rounded-xl p-5 text-left space-y-2">
         {order.order_items.map((item) => (
           <div key={item.id} className="flex justify-between text-sm">
-            <span className="text-[#525252]">{item.product_name} × {item.quantity}</span>
+            <span className="text-[#525252]">{item.product_name}{item.size ? ` (${item.size})` : ''} × {item.quantity}</span>
             <span className="font-mono">₦{(item.unit_price * item.quantity).toLocaleString()}</span>
           </div>
         ))}

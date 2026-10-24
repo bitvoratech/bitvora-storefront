@@ -4,6 +4,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../../lib/supabase/server'
+import { normalizeSizes } from '../../../../lib/product-sizes'
 
 function slugify(name: string) {
   return name
@@ -17,7 +18,7 @@ function slugify(name: string) {
 const MAX_IMAGES = 8
 
 type ParsedProduct =
-  | { ok: true; name: string; description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number; category: string | null; images: string[] }
+  | { ok: true; name: string; description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number; category: string | null; images: string[]; sizes: string[] }
   | { ok: false; error: string }
 
 // Server actions are public endpoints: never trust the form, even though the
@@ -64,6 +65,15 @@ function parseProductForm(formData: FormData): ParsedProduct {
     return { ok: false, error: 'Invalid images.' }
   }
 
+  let sizesRaw: unknown = []
+  try {
+    sizesRaw = JSON.parse((formData.get('sizes') as string | null) || '[]')
+  } catch {
+    return { ok: false, error: 'Invalid sizes.' }
+  }
+  const sizes = normalizeSizes(sizesRaw)
+  if (!sizes.ok) return { ok: false, error: sizes.error }
+
   return {
     ok: true,
     name,
@@ -73,6 +83,7 @@ function parseProductForm(formData: FormData): ParsedProduct {
     stockQuantity: stockRaw,
     category,
     images,
+    sizes: sizes.sizes,
   }
 }
 
@@ -81,7 +92,7 @@ export async function createProduct(storeId: string, prevState: { error?: string
 
   const parsed = parseProductForm(formData)
   if (!parsed.ok) return { error: parsed.error }
-  const { name, description, price, compareAtPrice, stockQuantity, category, images } = parsed
+  const { name, description, price, compareAtPrice, stockQuantity, category, images, sizes } = parsed
 
   const baseSlug = slugify(name).replace(/^-+|-+$/g, '').slice(0, 80) || 'product'
   let slug = baseSlug
@@ -112,6 +123,7 @@ export async function createProduct(storeId: string, prevState: { error?: string
     stock_quantity: stockQuantity,
     category,
     images,
+    sizes,
   })
 
   if (error) {
@@ -127,7 +139,7 @@ export async function updateProduct(productId: string, storeId: string, prevStat
 
   const parsed = parseProductForm(formData)
   if (!parsed.ok) return { error: parsed.error }
-  const { name, description, price, compareAtPrice, stockQuantity, category, images } = parsed
+  const { name, description, price, compareAtPrice, stockQuantity, category, images, sizes } = parsed
   const isActive = formData.get('is_active') === 'on'
 
   const { error } = await supabase
@@ -141,6 +153,7 @@ export async function updateProduct(productId: string, storeId: string, prevStat
       category,
       is_active: isActive,
       images,
+      sizes,
     })
     .eq('id', productId)
     .eq('store_id', storeId)

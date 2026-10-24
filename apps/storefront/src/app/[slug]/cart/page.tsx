@@ -4,7 +4,7 @@ import { use, useSyncExternalStore } from 'react'
 import Link from 'next/link'
 import { PackageBox, ArrowLeft } from 'switch-icons'
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
-import { lineLimit, useCart } from '../../../lib/cart-store'
+import { lineKey, lineLimit, useCart } from '../../../lib/cart-store'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 
 export default function CartPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -40,7 +40,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
         <div className="grid gap-8 sm:grid-cols-3">
           <div className="sm:col-span-2 space-y-4">
            {items.map((item) => (
-        <div key={item.productId} className="flex gap-4 border-b border-[#e5e5e5] pb-5">
+        <div key={lineKey(item)} className="flex gap-4 border-b border-[#e5e5e5] pb-5">
           <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg overflow-hidden bg-[#fafafa] shrink-0">
             {item.image ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -54,18 +54,19 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
           <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0">
               <p className="font-medium text-sm truncate">{item.name}</p>
+              {item.size && <p className="text-xs text-[#525252] mt-0.5">Size: {item.size}</p>}
               <p className="text-sm text-[#737373] font-mono mt-0.5">₦{item.price.toLocaleString()}</p>
             </div>
             <div className="flex items-center justify-between sm:justify-end gap-4">
               <div>
                 {/* 40px buttons: the old 20px ones were hard to hit on a phone. */}
                 <div className="flex items-center border border-[#e5e5e5] rounded-lg">
-                  <button onClick={() => updateQuantity(item.productId, item.quantity - 1)} aria-label={`Decrease quantity of ${item.name}`} className="w-10 h-10 flex items-center justify-center">
+                  <button onClick={() => updateQuantity(item.productId, item.size, item.quantity - 1)} aria-label={`Decrease quantity of ${item.name}`} className="w-10 h-10 flex items-center justify-center">
                     <IconMinus className="w-4 h-4" stroke={1.75} />
                   </button>
                   <span className="text-sm font-mono min-w-6 text-center" aria-live="polite">{item.quantity}</span>
                   <button
-                    onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.productId, item.size, item.quantity + 1)}
                     disabled={item.quantity >= lineLimit(item)}
                     aria-label={`Increase quantity of ${item.name}`}
                     className="w-10 h-10 flex items-center justify-center disabled:opacity-30"
@@ -77,7 +78,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
                   <p className="text-[11px] text-[#737373] mt-1 text-center">Only {item.maxQuantity} in stock</p>
                 )}
               </div>
-              <button onClick={() => removeItem(item.productId)} aria-label={`Remove ${item.name} from cart`} className="text-[#737373] hover:text-red-600 w-10 h-10 flex items-center justify-center">
+              <button onClick={() => removeItem(item.productId, item.size)} aria-label={`Remove ${item.name} from cart`} className="text-[#737373] hover:text-red-600 w-10 h-10 flex items-center justify-center">
                 <IconTrash className="w-4 h-4" stroke={1.75} />
               </button>
             </div>
