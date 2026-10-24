@@ -12,6 +12,7 @@ import { storefrontUrl } from '../../../lib/storefront-url'
 import { ShareStoreCard } from './ShareStoreCard'
 import { PublishToggle } from './PublishToggle'
 import { NeedsAttention, type AttentionItem } from './NeedsAttention'
+import { IconTruckDelivery, IconChevronRight } from '@tabler/icons-react'
 
 export default async function StoreDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -240,6 +241,26 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
       </div>
 
       <OnboardingProgress storeId={store.id} items={checklistItems} />
+
+      {/* Checkout only offers delivery once a store has delivery areas, so a
+          pickup-only store can look finished while shoppers can't get delivery. */}
+      {(zoneCount ?? 0) === 0 && (
+        <Link
+          href={`/stores/${id}/delivery`}
+          className="group mb-6 flex items-center gap-3 rounded-[var(--radius-card)] border border-marigold-500/30 bg-marigold-50 p-3.5 hover:border-indigo-600/50 transition-colors"
+        >
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-white/70 dark:bg-sand-100 text-marigold-500">
+            <IconTruckDelivery className="w-5 h-5" stroke={1.75} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium">Add delivery areas</span>
+            <span className="block text-xs text-ink/60">
+              Shoppers can only choose pickup right now. Add the areas you deliver to, with a fee, so they can pick delivery at checkout.
+            </span>
+          </span>
+          <IconChevronRight className="w-4 h-4 text-ink/30 group-hover:text-indigo-600 shrink-0" stroke={1.75} />
+        </Link>
+      )}
 
       <NeedsAttention items={attention} />
 

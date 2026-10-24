@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Home, Plus, Grid, PackageBox, Storefront, Receipt, User, Users } from 'switch-icons'
-import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar, IconCreditCard } from '@tabler/icons-react'
+import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar, IconCreditCard, IconMessage2 } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
 import { SIDEBAR_COOKIE } from '../lib/sidebar'
 
+// Beta feedback form (e.g. a Tally link). The link is hidden when unset.
+const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL
 const HELP_URL = `https://wa.me/2349038679199?text=${encodeURIComponent('Hi Bitvora, I need help with my store.')}`
 
 type NavItem = { href: string; icon: React.ComponentType<{ className?: string }>; label: string }
@@ -315,6 +317,25 @@ export function Sidebar({
 
         <div className="relative p-3 border-t border-white/10 space-y-0.5">
           <ThemeToggle collapsed={collapsed} />
+          {FEEDBACK_URL && (
+            <a
+              href={FEEDBACK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={collapsed ? 'Send feedback' : undefined}
+              className={`group relative w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-indigo-100/70 hover:bg-white/5 hover:text-white transition-colors ${
+                collapsed ? 'justify-center' : ''
+              }`}
+            >
+              <IconMessage2 className="w-4 h-4 shrink-0" stroke={1.75} />
+              {!collapsed && 'Send feedback'}
+              {collapsed && (
+                <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-md bg-white dark:bg-sand-100 px-2.5 py-1.5 text-xs font-medium text-indigo-950 dark:text-ink opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
+                  Send feedback
+                </span>
+              )}
+            </a>
+          )}
           {/* Support runs on WhatsApp, same number as the marketing site. */}
           <a
             href={HELP_URL}
