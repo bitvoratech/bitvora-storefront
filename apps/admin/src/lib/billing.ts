@@ -3,8 +3,8 @@
 // payment; every write here is safe to repeat.
 
 import { createAdminClient } from './supabase/admin'
-import { discountedPrice, parseInterval, parsePlan, planDiscountPercent, type SubscriptionStatus } from './plans'
-import { periodEnd, readMetadata, type PaystackTransaction } from './paystack'
+import { discountedPrice, firstPaymentDiscount, parseInterval, parsePlan, planDiscountPercent, type SubscriptionStatus } from './plans'
+import { createSubscription, periodEnd, readMetadata, type PaystackTransaction } from './paystack'
 
 type MerchantBilling = {
   id: string
@@ -47,25 +47,49 @@ export async function recordPayment(tx: PaystackTransaction, opts: { expectMerch
   if (!plan) return null
   // A first payment must cover the plan it claims, less any discount on offer;
   // renewals are priced by Paystack's plan.
-  if (meta.plan && tx.amount < discountedPrice(plan, interval, planDiscountPercent()) * 100) return null
+  const discount = firstPaymentDiscount(interval, planDiscountPercent())
+  if (meta.plan && tx.amount < discountedPrice(plan, interval, discount) * 100) return null
 
   const paidAt = tx.paid_at ? new Date(tx.paid_at) : new Date()
   const end = periodEnd(paidAt, interval)
   const current = merchant.current_period_end ? new Date(merchant.current_period_end) : null
+  const periodEndsAt = current && current > end ? current : end
 
-  const { error } = await admin
+  // The callback and the webhook can record the same payment at once; only the
+  // write that moves last_payment_reference onto this payment goes on to subscribe.
+  const { data: claimed, error } = await admin
     .from('merchants')
     .update({
       plan,
       plan_interval: interval,
       subscription_status: 'active' satisfies SubscriptionStatus,
       // Deliveries can arrive out of order; never shorten a paid period.
-      current_period_end: (current && current > end ? current : end).toISOString(),
+      current_period_end: periodEndsAt.toISOString(),
       paystack_customer_code: tx.customer?.customer_code ?? undefined,
       last_payment_reference: tx.reference,
     })
     .eq('id', merchant.id)
+    .or(`last_payment_reference.is.null,last_payment_reference.neq."${tx.reference.replace(/"/g, '')}"`)
+    .select('id')
   if (error) throw new Error(`billing: recording payment ${tx.reference} failed: ${error.message}`)
+
+  // A discounted first month is a plain charge, so the card still needs
+  // subscribing to the full-price plan, starting when the paid month ends.
+  if (claimed?.length && meta.discount_percent) {
+    try {
+      const customerCode = tx.customer?.customer_code
+      const authorizationCode = tx.authorization?.reusable ? tx.authorization.authorization_code : undefined
+      if (!customerCode || !authorizationCode) throw new Error('no reusable card on the payment')
+      await createSubscription({ customerCode, authorizationCode, plan, interval, startDate: periodEndsAt })
+    } catch (subError) {
+      // Release the payment so Paystack's webhook retry runs this again.
+      await admin
+        .from('merchants')
+        .update({ last_payment_reference: merchant.last_payment_reference })
+        .eq('id', merchant.id)
+      throw new Error(`billing: subscribing after discounted payment ${tx.reference} failed: ${(subError as Error).message}`)
+    }
+  }
   return merchant.id
 }
 

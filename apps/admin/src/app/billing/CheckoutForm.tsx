@@ -24,7 +24,7 @@ export function CheckoutForm({ plan, interval, discountPercent }: { plan: PlanId
       <ErrorNote error={state?.error} />
       {discountPercent > 0 && (
         <p className="text-sm rounded-lg px-3 py-2 bg-palm-50 text-palm-600">
-          Beta price: {discountPercent}% off any plan, and your renewals stay at this price.
+          Beta offer: {discountPercent}% off your first month on any monthly plan. After that it renews at the normal price.
         </p>
       )}
       <PlanOptions defaultPlan={plan} defaultInterval={interval} discountPercent={discountPercent} />

@@ -44,13 +44,18 @@ export function planPrice(plan: PlanId, interval: PlanInterval): number {
 }
 
 /**
- * Percent off every plan for merchants who start paying now, from
- * PLAN_DISCOUNT_PERCENT (e.g. 50 during the closed beta). Server-only; 0 when
- * unset or invalid.
+ * Percent off the first month of a monthly plan for merchants who start paying
+ * now, from PLAN_DISCOUNT_PERCENT (e.g. 50 during the closed beta). Renewals
+ * are full price. Server-only; 0 when unset or invalid.
  */
 export function planDiscountPercent(value = process.env.PLAN_DISCOUNT_PERCENT): number {
   const n = Number(value)
   return Number.isInteger(n) && n > 0 && n < 100 ? n : 0
+}
+
+/** The discount on a first payment: monthly plans only, so a year is never half price. */
+export function firstPaymentDiscount(interval: PlanInterval, percent: number): number {
+  return interval === 'monthly' ? percent : 0
 }
 
 /** ₦ charged per billing period after a percent discount, rounded to the naira. */

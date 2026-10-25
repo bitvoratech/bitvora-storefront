@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ANNUAL_MONTHS, PLAN_IDS, PLAN_MONTHLY, discountedPrice, hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel, planPrice } from './plans'
+import { ANNUAL_MONTHS, PLAN_IDS, PLAN_MONTHLY, discountedPrice, firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel, planPrice } from './plans'
 
 describe('parsePlan', () => {
   it('accepts known plan ids only', () => {
@@ -75,5 +75,10 @@ describe('plan discount', () => {
     expect(discountedPrice('starter', 'monthly', 50)).toBe(2500)
     expect(discountedPrice('pro', 'annual', 50)).toBe(125000)
     expect(discountedPrice('growth', 'monthly', 0)).toBe(12000)
+  })
+
+  it('applies to the first month of monthly plans only', () => {
+    expect(firstPaymentDiscount('monthly', 50)).toBe(50)
+    expect(firstPaymentDiscount('annual', 50)).toBe(0)
   })
 })
