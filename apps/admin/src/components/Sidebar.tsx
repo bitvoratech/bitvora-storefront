@@ -273,7 +273,8 @@ export function Sidebar({
           </div>
         </div>
 
-        <nav className="relative flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden min-h-0">
+        {/* Scrolls on short screens, without showing a scrollbar. */}
+        <nav className="relative flex-1 p-3 space-y-1 overflow-y-auto overflow-x-hidden min-h-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <p className={`px-3 pt-1 pb-1 text-[10.5px] uppercase tracking-wider text-indigo-300/50 font-semibold ${collapsed ? 'lg:hidden' : ''}`}>
             Main
           </p>
