@@ -55,8 +55,8 @@ export function PremiumFooter() {
             <div className='flex flex-col'>
               <p className="mb-1.5 text-paper/50">WhatsApp</p>
               {/* Tappable on phones: opens a WhatsApp chat */}
-              <a href="https://wa.me/2349038679199" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
-                +234 903 867 9199
+              <a href="https://wa.me/2349112449545" target="_blank" rel="noopener noreferrer" className="font-semibold hover:underline">
+                +234 911 244 9545
               </a>
             </div>
             <div>
