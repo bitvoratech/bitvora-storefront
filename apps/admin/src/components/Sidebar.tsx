@@ -14,7 +14,7 @@ import { SIDEBAR_COOKIE } from '../lib/sidebar'
 
 // Beta feedback form (e.g. a Tally link). The link is hidden when unset.
 const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL
-const HELP_URL = `https://wa.me/2349038679199?text=${encodeURIComponent('Hi Bitvora, I need help with my store.')}`
+const HELP_URL = `https://wa.me/2349112449545?text=${encodeURIComponent('Hi Bitvora, I need help with my store.')}`
 
 type NavItem = { href: string; icon: React.ComponentType<{ className?: string }>; label: string }
 
