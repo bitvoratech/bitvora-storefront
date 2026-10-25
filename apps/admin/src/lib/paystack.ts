@@ -3,7 +3,7 @@
 // Server-only: it uses PAYSTACK_SECRET_KEY.
 
 import { createHmac, timingSafeEqual } from 'node:crypto'
-import { PLAN_NAMES, discountedPrice, type PlanId, type PlanInterval } from './plans'
+import { PLAN_NAMES, discountedPrice, planPrice, type PlanId, type PlanInterval } from './plans'
 
 const API = 'https://api.paystack.co'
 
@@ -32,10 +32,9 @@ export const PAYSTACK_INTERVAL: Record<PlanInterval, 'monthly' | 'annually'> = {
   annual: 'annually',
 }
 
-/** The Paystack plan name for one of our plans, e.g. "Bitvora Stores Growth (annual, 50% off)". */
-export function paystackPlanName(plan: PlanId, interval: PlanInterval, discountPercent = 0) {
-  const off = discountPercent ? `, ${discountPercent}% off` : ''
-  return `Bitvora Stores ${PLAN_NAMES[plan]} (${interval}${off})`
+/** The Paystack plan name for one of our plans, e.g. "Bitvora Stores Growth (annual)". */
+export function paystackPlanName(plan: PlanId, interval: PlanInterval) {
+  return `Bitvora Stores ${PLAN_NAMES[plan]} (${interval})`
 }
 
 type PaystackPlan = { plan_code: string; name: string; amount: number; interval: string; currency: string }
@@ -44,11 +43,10 @@ type PaystackPlan = { plan_code: string; name: string; amount: number; interval:
  * The Paystack plan code for a plan and interval. Plans are created in Paystack
  * on first use, so nothing has to be set up by hand; a price change in
  * plans.ts creates a fresh plan rather than repricing existing subscribers.
- * A discounted plan is its own Paystack plan, so renewals keep the discount.
  */
-export async function getPlanCode(plan: PlanId, interval: PlanInterval, discountPercent = 0): Promise<string> {
-  const name = paystackPlanName(plan, interval, discountPercent)
-  const amount = discountedPrice(plan, interval, discountPercent) * 100 // kobo
+export async function getPlanCode(plan: PlanId, interval: PlanInterval): Promise<string> {
+  const name = paystackPlanName(plan, interval)
+  const amount = planPrice(plan, interval) * 100 // kobo
   const existing = await paystack<PaystackPlan[]>('/plan?perPage=100')
   const match = existing.find(
     (p) => p.name === name && p.amount === amount && p.interval === PAYSTACK_INTERVAL[interval] && p.currency === 'NGN',
@@ -78,7 +76,12 @@ export async function upsertCustomer(input: { email: string; merchantId: string;
   return customer.customer_code
 }
 
-/** Starts a card payment that subscribes the merchant to the plan once paid. */
+/**
+ * Starts a card payment that subscribes the merchant to the plan once paid.
+ * With a discount, the first payment is a plain charge for the discounted
+ * amount, and recordPayment subscribes the card at full price from the next
+ * period (see startDiscountedSubscription).
+ */
 export async function initializeSubscription(input: {
   email: string
   merchantId: string
@@ -87,22 +90,48 @@ export async function initializeSubscription(input: {
   discountPercent: number
   callbackUrl: string
 }) {
-  const planCode = await getPlanCode(input.plan, input.interval, input.discountPercent)
+  const discounted = input.discountPercent > 0
   const data = await paystack<{ authorization_url: string; reference: string }>('/transaction/initialize', {
     method: 'POST',
     body: {
       email: input.email,
-      // Paystack charges the plan's amount; this must still be sent.
+      // Without a discount Paystack charges the plan's amount; this must still be sent.
       amount: discountedPrice(input.plan, input.interval, input.discountPercent) * 100,
-      plan: planCode,
+      plan: discounted ? undefined : await getPlanCode(input.plan, input.interval),
       // Renewals charge the saved card, so the first payment has to be a card.
       channels: ['card'],
       callback_url: input.callbackUrl,
-      metadata: { merchant_id: input.merchantId, plan: input.plan, interval: input.interval },
+      metadata: {
+        merchant_id: input.merchantId,
+        plan: input.plan,
+        interval: input.interval,
+        discount_percent: discounted ? input.discountPercent : undefined,
+      },
     },
   })
   return data
 }
+
+/** Subscribes a saved card to the full-price plan, first charged at `startDate`. */
+export async function createSubscription(input: {
+  customerCode: string
+  authorizationCode: string
+  plan: PlanId
+  interval: PlanInterval
+  startDate: Date
+}) {
+  return paystack<{ subscription_code: string }>('/subscription', {
+    method: 'POST',
+    body: {
+      customer: input.customerCode,
+      plan: await getPlanCode(input.plan, input.interval),
+      authorization: input.authorizationCode,
+      start_date: input.startDate.toISOString(),
+    },
+  })
+}
+
+type TransactionMetadata = { merchant_id?: string; plan?: string; interval?: string; discount_percent?: number }
 
 export type PaystackTransaction = {
   reference: string
@@ -111,7 +140,8 @@ export type PaystackTransaction = {
   currency: string
   paid_at: string | null
   customer: { customer_code: string; email: string }
-  metadata: { merchant_id?: string; plan?: string; interval?: string } | string | null
+  authorization?: { authorization_code?: string; reusable?: boolean } | null
+  metadata: TransactionMetadata | string | null
   plan?: unknown
 }
 
@@ -143,7 +173,7 @@ export function periodEnd(from: Date, interval: PlanInterval): Date {
 }
 
 /** Paystack sends metadata as an object or, from some clients, a JSON string. */
-export function readMetadata(meta: PaystackTransaction['metadata']): { merchant_id?: string; plan?: string; interval?: string } {
+export function readMetadata(meta: PaystackTransaction['metadata']): TransactionMetadata {
   if (!meta) return {}
   if (typeof meta === 'string') {
     try {
