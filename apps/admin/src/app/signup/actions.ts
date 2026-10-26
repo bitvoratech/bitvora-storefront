@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { normalizeNigerianPhone } from '../../lib/termii'
-import { normalizeCac, normalizeNin } from '../../lib/merchant-identity'
 import { passwordError } from '../../lib/password'
 import { parseInterval, parsePlan } from '../../lib/plans'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
@@ -19,18 +18,15 @@ export type SignupState = {
   values?: Record<string, string>
 }
 
-// Signup runs on the server so the identity details are validated here and
-// written with the service role: merchants can't write nin/cac_number or the
-// verification columns themselves.
+// Signup only asks for the basics. The phone is checked by OTP on /verify,
+// and NIN/CAC come after that as an optional compliance step. Runs on the
+// server so the phone is saved with the service role.
 export async function signUp(prevState: SignupState | undefined, formData: FormData): Promise<SignupState> {
   const field = (name: string) => ((formData.get(name) as string) || '').trim()
   const values = {
     fullName: field('fullName'),
-    businessName: field('businessName'),
     email: field('email'),
     phone: field('phone'),
-    nin: field('nin'),
-    cac: field('cac'),
   }
   const fail = (error: string): SignupState => ({ error, values })
 
@@ -45,9 +41,6 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   if (formData.get('acceptTerms') !== 'on') return fail('Agree to the Terms of Service and Privacy Policy to continue.')
 
   if (values.fullName.length < 2 || values.fullName.length > 100) return fail('Enter your full name.')
-  if (values.businessName.length < 2 || values.businessName.length > 200) {
-    return fail('Enter your business name as registered with CAC.')
-  }
   if (!EMAIL_RE.test(values.email) || values.email.length > 200) return fail('Enter a valid email address.')
   const invalidPassword = passwordError(password)
   if (invalidPassword) return fail(invalidPassword)
@@ -58,10 +51,6 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   } catch {
     return fail('Enter a valid Nigerian phone number.')
   }
-  const nin = normalizeNin(values.nin)
-  if (!nin) return fail('NIN must be 11 digits.')
-  const cac = normalizeCac(values.cac)
-  if (!cac) return fail('Enter a valid CAC number, e.g. RC123456 or BN1234567.')
 
   const supabase = await createClient()
   const origin = (await headers()).get('origin')
@@ -86,14 +75,14 @@ export async function signUp(prevState: SignupState | undefined, formData: FormD
   // The merchants row is created by the on_auth_user_created trigger.
   const { error: updateError } = await createAdminClient()
     .from('merchants')
-    .update({ business_name: values.businessName, phone, nin, cac_number: cac })
+    .update({ phone })
     .eq('user_id', data.user.id)
   if (updateError) {
     console.error('signup: saving merchant details failed', updateError)
-    return fail('Your account was created, but we could not save your details. Log in to finish verification.')
+    return fail('Your account was created, but we could not save your details. Log in to verify your phone.')
   }
 
-  // The plan they'll pay for once verified (on /billing, where it can still
+  // The plan they'll pay for after phone verification (on /billing, where it can still
   // be changed). Saved on its own so a failure here never blocks signup.
   const { error: planError } = await createAdminClient()
     .from('merchants')

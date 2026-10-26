@@ -10,7 +10,10 @@ export const PLAN_IDS = Object.keys(PLAN_NAMES) as PlanId[]
 /** ₦ per month, billed monthly. */
 export const PLAN_MONTHLY: Record<PlanId, number> = { starter: 5000, growth: 12000, pro: 25000 }
 
+// Both limits are enforced in the database too (plan_store_limit /
+// plan_product_limit in the optional_compliance migration). null = unlimited.
 export const PLAN_STORE_LIMIT: Record<PlanId, number> = { starter: 1, growth: 2, pro: 5 }
+export const PLAN_PRODUCT_LIMIT: Record<PlanId, number | null> = { starter: 30, growth: 150, pro: null }
 
 /** Short summary for the signup plan picker. */
 export const PLAN_SUMMARY: Record<PlanId, string> = {

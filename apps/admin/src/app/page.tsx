@@ -9,6 +9,7 @@ import { StoresGrid } from './StoresGrid'
 import { VerificationStatusCard } from './VerificationStatusCard'
 import { PayForPlanCard } from './PayForPlanCard'
 import { hasActivePlan, planLabel } from '../lib/plans'
+import { canOpenStore, complianceOverdue } from '../lib/merchant-identity'
 
 
 export default async function DashboardPage() {
@@ -18,7 +19,7 @@ export default async function DashboardPage() {
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, full_name, is_owner, is_admin, verification_status, phone_verified_at, nin, cac_number, verification_note, plan, plan_interval, subscription_status, current_period_end')
+    .select('id, full_name, is_owner, is_admin, verification_status, phone_verified_at, nin, cac_number, verification_note, compliance_due_at, plan, plan_interval, subscription_status, current_period_end')
     .eq('user_id', user.id)
     .single()
 
@@ -27,15 +28,21 @@ export default async function DashboardPage() {
 
   // New merchants haven't confirmed their phone yet: take them to the OTP
   // step rather than an empty dashboard they can't do anything from.
-  if (merchant && merchant.verification_status !== 'verified' && !merchant.phone_verified_at) {
+  if (merchant && !canOpenStore(merchant)) {
     redirect('/verify')
   }
 
-  // Only verified merchants can create a store; until then the dashboard
-  // shows where their verification stands instead of an empty store list.
+  // Payment comes straight after the phone at signup: anyone who has never
+  // paid (no subscription status at all) finishes that before the dashboard.
+  if (merchant && !merchant.subscription_status) {
+    redirect('/billing')
+  }
+
+  // NIN/CAC compliance is optional: it earns the Verified seller badge, and
+  // until it's approved the dashboard keeps a card nudging them to finish it.
   const isVerified = merchant?.verification_status === 'verified'
-  // Once verified, a store also needs the plan paid for.
-  const canCreateStore = isVerified && hasActivePlan(merchant)
+  // With the phone verified, a store only needs the plan paid for.
+  const canCreateStore = hasActivePlan(merchant)
 
   const { data: stores } = await supabase
     .from('stores')
@@ -89,12 +96,18 @@ export default async function DashboardPage() {
         )}
       </div>
 
-      {!isVerified ? (
-        <VerificationStatusCard
-          status={merchant?.verification_status === 'failed' ? 'rejected' : merchant?.nin && merchant?.cac_number && merchant?.verification_status === 'pending' ? 'in_review' : 'details_needed'}
-          note={merchant?.verification_note ?? null}
-        />
-      ) : !canCreateStore && storeRows.length === 0 ? (
+      {!isVerified && (
+        <div className="mb-6">
+          <VerificationStatusCard
+            status={merchant?.verification_status === 'failed' ? 'rejected' : merchant?.nin && merchant?.cac_number && merchant?.verification_status === 'pending' ? 'in_review' : 'details_needed'}
+            note={merchant?.verification_note ?? null}
+            dueAt={merchant?.compliance_due_at ?? null}
+            overdue={complianceOverdue(merchant)}
+          />
+        </div>
+      )}
+
+      {!canCreateStore && storeRows.length === 0 ? (
         <PayForPlanCard plan={planLabel(merchant?.plan, merchant?.plan_interval)} lapsed={!!merchant?.subscription_status} />
       ) : storeRows.length === 0 ? (
         <Card className="text-center py-14 relative overflow-hidden">

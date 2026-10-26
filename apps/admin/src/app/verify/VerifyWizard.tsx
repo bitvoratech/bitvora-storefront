@@ -7,12 +7,12 @@ import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
 import { AlertTriangle, Check } from 'switch-icons'
-import type { VerificationStatus } from '../../lib/merchant-identity'
+import { COMPLIANCE_GRACE_DAYS, complianceDaysLeft, type VerificationStatus } from '../../lib/merchant-identity'
 import { createClient } from '../../lib/supabase/client'
 
 type Stage = 'phone' | 'otp' | 'details' | 'review'
 
-const STEPS = ['Phone', 'Business details', 'Review']
+const STEPS = ['Phone', 'Payment', 'Compliance']
 
 // Saved numbers are 2348012345678; merchants know them as 0801 234 5678.
 function displayPhone(phone: string) {
@@ -39,6 +39,9 @@ export function VerifyWizard({
   cacNumber,
   businessName,
   reviewNote,
+  planPaid = false,
+  justPaid = false,
+  complianceDueAt = null,
 }: {
   initialPhone: string | null
   phoneVerified?: boolean
@@ -48,10 +51,15 @@ export function VerifyWizard({
   cacNumber: string | null
   businessName: string | null
   reviewNote: string | null
+  planPaid?: boolean
+  justPaid?: boolean
+  complianceDueAt?: string | null
 }) {
-  // Phone first (the number comes from signup), then NIN/CAC go to an owner
-  // for a manual check. The code step only shows when a code was actually
-  // sent and is still valid.
+  // Phone first (the number comes from signup), then payment for the plan on
+  // /billing, then the optional compliance step: NIN/CAC go to an owner for a
+  // manual check, and approval earns the Verified seller badge. Skipping it
+  // takes the store offline after COMPLIANCE_GRACE_DAYS. The code step only
+  // shows when a code was actually sent and is still valid.
   const initialStage: Stage = !phoneVerified
     ? hasPendingCode ? 'otp' : 'phone'
     // 'pending' left over from the old automated check has no NIN/CAC to review.
@@ -59,6 +67,7 @@ export function VerifyWizard({
   const [stage, setStage] = useState<Stage>(initialStage)
   const [phone, setPhone] = useState(initialPhone ?? '')
   const [editingPhone, setEditingPhone] = useState(!initialPhone)
+  const [confirmingSkip, setConfirmingSkip] = useState(false)
   const router = useRouter()
 
   const [otpRequestState, otpRequestAction, otpRequestPending] = useActionState(requestPhoneOtp, undefined)
@@ -75,15 +84,28 @@ export function VerifyWizard({
   }
   if (otpConfirmState !== seen.otpConfirmState) {
     setSeen((s) => ({ ...s, otpConfirmState }))
-    if (otpConfirmState?.verified) setStage(otpConfirmState.submitted ? 'review' : 'details')
+    if (otpConfirmState?.verified) {
+      // Payment comes straight after the phone; billing sends them back here.
+      if (!planPaid) router.push('/billing')
+      else setStage(otpConfirmState.submitted ? 'review' : 'details')
+    }
   }
   if (detailsState !== seen.detailsState) {
     setSeen((s) => ({ ...s, detailsState }))
     if (detailsState?.submitted) setStage('review')
   }
 
+  const goToDashboard = () => {
+    router.push('/')
+    router.refresh()
+  }
+
   const sentTo = otpRequestState?.phone ?? (phone || null)
-  const stepNumber = stage === 'phone' || stage === 'otp' ? 1 : stage === 'details' ? 2 : 3
+  const stepNumber = stage === 'phone' || stage === 'otp' ? 1 : 3
+  const daysLeft = complianceDaysLeft(complianceDueAt)
+  const dueDate = complianceDueAt
+    ? new Date(complianceDueAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'long' })
+    : null
 
   return (
     <div>
@@ -148,13 +170,19 @@ export function VerifyWizard({
         </form>
       )}
 
-      {stage === 'details' && (
+      {stage === 'details' && !confirmingSkip && (
         <form action={detailsAction}>
           <h1 className="text-2xl font-display font-semibold mb-1">
-            {status === 'failed' ? 'Update your details' : 'Your NIN and CAC details'}
+            {status === 'failed' ? 'Update your details' : 'Get your Verified seller badge'}
           </h1>
+          {justPaid && (
+            <p className="text-sm bg-palm-50 text-palm-600 rounded-lg px-3 py-2 mb-4">
+              Payment received. Your plan is active.
+            </p>
+          )}
           <p className="text-ink/50 text-sm mb-6">
-            Our team checks these by hand before you can create a store.
+            Add your NIN and CAC number and our team will check them by hand. Once they&apos;re
+            approved, your store shows a Verified seller badge so customers know they can trust you.
           </p>
           {status === 'failed' && reviewNote && (
             <ErrorBox message={`We couldn't verify your details: ${reviewNote}`} />
@@ -169,7 +197,45 @@ export function VerifyWizard({
           <Button type="submit" disabled={detailsPending} className="w-full mt-6">
             {detailsPending ? 'Submitting...' : 'Submit for review'}
           </Button>
+          {/* Compliance is optional: skipping only costs the badge, after a warning. */}
+          <button
+            type="button"
+            className="text-sm text-ink/60 hover:text-ink font-medium mt-4 block mx-auto"
+            onClick={() => (status === 'unverified' ? setConfirmingSkip(true) : goToDashboard())}
+          >
+            {status === 'unverified' ? 'Skip for now' : 'Back to dashboard'}
+          </button>
         </form>
+      )}
+
+      {stage === 'details' && confirmingSkip && (
+        <div>
+          <div className="w-12 h-12 rounded-xl bg-marigold-50 flex items-center justify-center mb-4">
+            <AlertTriangle className="w-6 h-6 text-marigold-500" />
+          </div>
+          <h1 className="text-2xl font-display font-semibold mb-1">Skip verification?</h1>
+          <p className="text-ink/50 text-sm mb-6">
+            Without your NIN and CAC details:
+          </p>
+          <ul className="text-sm text-ink/70 space-y-2 mb-6 list-disc pl-5">
+            <li>Your store won&apos;t get the Verified seller badge that tells customers you&apos;ve been checked by Bitvora.</li>
+            <li>
+              Your store will be disabled {daysLeft !== null && dueDate ? `in ${daysLeft} day${daysLeft === 1 ? '' : 's'} (${dueDate})` : `after ${COMPLIANCE_GRACE_DAYS} days`}{' '}
+              until you send them.
+            </li>
+          </ul>
+          <p className="text-ink/50 text-sm mb-6">You can finish this any time from your dashboard.</p>
+          <Button className="w-full" onClick={() => setConfirmingSkip(false)}>
+            Add my details now
+          </Button>
+          <button
+            type="button"
+            className="text-sm text-ink/60 hover:text-ink font-medium mt-4 block mx-auto"
+            onClick={goToDashboard}
+          >
+            Skip for now
+          </button>
+        </div>
       )}
 
       {stage === 'review' && (
@@ -179,11 +245,12 @@ export function VerifyWizard({
           </div>
           <h1 className="text-2xl font-display font-semibold mb-1">We&apos;re checking your details</h1>
           <p className="text-ink/50 text-sm mb-6">
-            Your phone is verified. Our team is reviewing your NIN and CAC details, and you&apos;ll be
-            able to create your store as soon as they&apos;re approved.
+            Your phone is verified. Our team is reviewing your NIN and CAC details, and your store
+            will get the Verified seller badge as soon as they&apos;re approved. You can set up your
+            store in the meantime.
           </p>
-          <Button className="w-full" onClick={() => router.refresh()}>
-            Check status
+          <Button className="w-full" onClick={goToDashboard}>
+            Go to dashboard
           </Button>
           <button
             type="button"

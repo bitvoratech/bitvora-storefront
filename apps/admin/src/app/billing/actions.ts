@@ -6,6 +6,7 @@ import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent } from '../../lib/plans'
 import { initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
+import { canOpenStore } from '../../lib/merchant-identity'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
 export type BillingState = { error?: string } | undefined
@@ -16,7 +17,7 @@ async function currentMerchant() {
   if (!user) redirect('/login')
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, full_name, phone, is_owner, is_admin, is_suspended, verification_status, subscription_status, current_period_end, paystack_customer_code, paystack_subscription_code')
+    .select('id, full_name, phone, is_owner, is_admin, is_suspended, verification_status, phone_verified_at, subscription_status, current_period_end, paystack_customer_code, paystack_subscription_code')
     .eq('user_id', user.id)
     .single()
   return { user, merchant }
@@ -29,7 +30,7 @@ export async function startCheckout(prevState: BillingState, formData: FormData)
   if (merchant.is_owner || merchant.is_admin) return { error: 'Staff accounts don’t have a plan.' }
   if (merchant.is_suspended) return { error: 'Your account is suspended.' }
   // Paying waits for the NIN/CAC review, so nobody pays and then gets rejected.
-  if (merchant.verification_status !== 'verified') return { error: 'You can pay once your NIN and CAC are approved.' }
+  if (!canOpenStore(merchant)) return { error: 'Verify your phone number before paying for your plan.' }
   if (hasActivePlan(merchant)) return { error: 'Your plan is already active.' }
 
   const plan = parsePlan(formData.get('plan'))

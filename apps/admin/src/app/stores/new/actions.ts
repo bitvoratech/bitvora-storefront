@@ -4,6 +4,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
 import { PLAN_STORE_LIMIT, hasActivePlan, parsePlan } from '../../../lib/plans'
+import { canOpenStore } from '../../../lib/merchant-identity'
 
 // Top-level storefront paths a store slug must never shadow.
 const RESERVED_SLUGS = new Set([
@@ -31,7 +32,7 @@ export async function createStore(prevState: { error?: string } | undefined, for
 
   const { data: merchant, error: merchantError } = await supabase
     .from('merchants')
-    .select('id, verification_status, is_suspended, is_owner, is_admin, plan, subscription_status, current_period_end')
+    .select('id, verification_status, phone_verified_at, is_suspended, is_owner, is_admin, plan, subscription_status, current_period_end')
     .eq('user_id', user.id)
     .single()
 
@@ -47,8 +48,8 @@ export async function createStore(prevState: { error?: string } | undefined, for
   if (merchant.is_suspended) {
     return { error: 'Your account is suspended.' }
   }
-  if (merchant.verification_status !== 'verified') {
-    return { error: 'Verify your account before creating a store.' }
+  if (!canOpenStore(merchant)) {
+    return { error: 'Verify your phone number before creating a store.' }
   }
   if (!hasActivePlan(merchant)) {
     return { error: 'Pay for your plan under Plan & billing before creating a store.' }
