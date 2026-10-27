@@ -29,7 +29,7 @@ const PRICING_FAQS: FaqItem[] = [
   },
   {
     q: "How do I pay for my plan?",
-    a: "By debit card through Paystack, once your NIN and CAC have been approved. Your plan renews automatically and you can cancel from your dashboard.",
+    a: "By debit card through Paystack, right after you sign up and verify your phone number. Your plan renews automatically and you can cancel from your dashboard.",
   },
   {
     q: "What payment methods can my customers use?",

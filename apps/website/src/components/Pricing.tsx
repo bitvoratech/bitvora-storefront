@@ -5,14 +5,16 @@ import Link from "next/link";
 import { motion } from "motion/react";
 import { IconCheck, IconLock } from "@tabler/icons-react";
 import { fadeUp, staggerContainer, viewport } from "../lib/motion";
-import { formatNaira, Interval, monthlyPrice, PLANS, planSignupUrl } from "@/lib/plans";
+import { discountedMonthly, formatNaira, Interval, monthlyPrice, planDiscountPercent, PLANS, planSignupUrl } from "@/lib/plans";
 import { PlanComparison } from "./PlanComparison";
 
-
+const DISCOUNT = planDiscountPercent();
 
 export function Pricing() {
   const [interval, setInterval] = useState<Interval>("monthly");
   const annual = interval === "annual";
+  // The beta discount only applies to the first month of a monthly plan.
+  const off = annual ? 0 : DISCOUNT;
 
   return (
     <section className="py-16 sm:py-24 md:py-32">
@@ -38,6 +40,18 @@ export function Pricing() {
             unlock more stores, more products and deeper customization — every limit is listed below.
           </motion.p>
         </motion.div>
+
+        {DISCOUNT > 0 && (
+          <motion.p
+            variants={fadeUp}
+            initial="hidden"
+            whileInView="show"
+            viewport={viewport}
+            className="mx-auto mb-6 w-fit max-w-full rounded-2xl bg-palm-50 sm:rounded-full px-4 py-1.5 text-center text-[13px] font-medium text-palm-600"
+          >
+            Beta offer: {DISCOUNT}% off your first month on any monthly plan
+          </motion.p>
+        )}
 
         {/* Billing toggle */}
         <motion.div
@@ -94,12 +108,24 @@ export function Pricing() {
                 <h3 className="mb-1.5 font-display text-xl font-bold">{plan.name}</h3>
                 <p className="mb-6 min-h-[38px] text-[13.5px] text-ink-soft">{plan.tagline}</p>
 
-                <div className="mb-1 flex items-baseline gap-1.5">
-                  <span className="font-display text-3xl font-bold sm:text-4xl">{formatNaira(price)}</span>
-                  <span className="text-sm text-ink-soft">/mo</span>
+                <div className="mb-1 flex flex-wrap items-baseline gap-x-1.5">
+                  {off > 0 && (
+                    <s className="text-lg font-semibold text-ink-soft/70 decoration-pepper-600 decoration-2">
+                      <span className="sr-only">Was </span>
+                      {formatNaira(price)}
+                    </s>
+                  )}
+                  <span className="font-display text-3xl font-bold sm:text-4xl">
+                    {formatNaira(off > 0 ? discountedMonthly(plan, off) : price)}
+                  </span>
+                  <span className="text-sm text-ink-soft">{off > 0 ? "first month" : "/mo"}</span>
                 </div>
                 <p className="mb-6 text-xs text-ink-soft">
-                  {annual ? `Billed ${formatNaira(price * 12)} annually` : "Billed monthly"}
+                  {annual
+                    ? `Billed ${formatNaira(price * 12)} annually`
+                    : off > 0
+                      ? `Then ${formatNaira(price)}/mo, billed monthly`
+                      : "Billed monthly"}
                 </p>
 
                 {/* Headline limits */}
