@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ANNUAL_MONTHS, PLAN_IDS, PLAN_MONTHLY, discountedPrice, firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel, planPrice } from './plans'
+import { ANNUAL_MONTHS, PLAN_IDS, PLAN_MONTHLY, discountedPrice, effectivePlan, underProductLimit, underStoreLimit, firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel, planPrice } from './plans'
 
 describe('parsePlan', () => {
   it('accepts known plan ids only', () => {
@@ -90,5 +90,27 @@ describe('plan discount', () => {
   it('applies to the first month of monthly plans only', () => {
     expect(firstPaymentDiscount('monthly', 50)).toBe(50)
     expect(firstPaymentDiscount('annual', 50)).toBe(0)
+  })
+})
+
+describe('plan limits', () => {
+  it('stops at the store limit', () => {
+    expect(underStoreLimit('starter', 0)).toBe(true)
+    expect(underStoreLimit('starter', 1)).toBe(false)
+    expect(underStoreLimit('growth', 1)).toBe(true)
+    expect(underStoreLimit('pro', 5)).toBe(false)
+  })
+
+  it('stops at the product limit, with none on Pro', () => {
+    expect(underProductLimit('starter', 29)).toBe(true)
+    expect(underProductLimit('starter', 30)).toBe(false)
+    expect(underProductLimit('growth', 150)).toBe(false)
+    expect(underProductLimit('pro', 10_000)).toBe(true)
+  })
+
+  it('holds a merchant with no plan to Starter', () => {
+    expect(effectivePlan(null)).toBe('starter')
+    expect(underStoreLimit(null, 1)).toBe(false)
+    expect(underProductLimit(undefined, 30)).toBe(false)
   })
 })

@@ -12,6 +12,7 @@ import { collectionTileHref, splitSections } from '../../lib/sections'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
 import { BrandIcon } from '../../components/BrandIcon'
+import { sectionAllowed } from '@bitvora/lib/plan-features'
 import { aboutParagraphs, isAboutEmpty, normalizeAbout } from '@bitvora/lib/about-section'
 
 type SearchParams = { q?: string; category?: string; sort?: string }
@@ -42,12 +43,16 @@ export default async function StorePage({
 
   const currentStore = store
   
-  const { data: allSections } = await supabase
+  const { data: sectionRows } = await supabase
   .from('sections')
-  .select('type, config, position')
+  .select('type, config, position, is_visible')
   .eq('store_id', store.id)
-  .eq('is_visible', true)
   .order('position')
+  // Starter stores show the hero only, at the top: the other sections and
+  // hiding/reordering are Growth features, even if saved earlier.
+  const allSections = (sectionRows ?? []).filter((s) =>
+    store.full_customization ? s.is_visible : sectionAllowed('starter', s.type)
+  ).map((s) => (store.full_customization ? s : { ...s, position: 0 }))
 
   // All categories in the store (also tells us if the store has any products).
   const { data: allProducts } = await supabase

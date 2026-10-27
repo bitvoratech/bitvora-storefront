@@ -8,7 +8,8 @@ import { IconChevronRight } from '@tabler/icons-react'
 import { StoresGrid } from './StoresGrid'
 import { VerificationStatusCard } from './VerificationStatusCard'
 import { PayForPlanCard } from './PayForPlanCard'
-import { hasActivePlan, planLabel } from '../lib/plans'
+import { hasActivePlan, planLabel, storeLimitMessage, underStoreLimit } from '../lib/plans'
+import { UpgradeGate } from '../components/UpgradeGate'
 import { canOpenStore, complianceOverdue } from '../lib/merchant-identity'
 
 
@@ -90,9 +91,15 @@ export default async function DashboardPage() {
           {merchant?.full_name ? `Welcome back, ${merchant.full_name.split(' ')[0]}` : 'Your stores'}
         </h1>
         {canCreateStore && (
-          <Link href="/stores/new" className="self-start sm:self-auto">
+          <UpgradeGate
+            href="/stores/new"
+            locked={!underStoreLimit(merchant?.plan, storeRows.length)}
+            title="Upgrade to add another store"
+            message={storeLimitMessage(merchant?.plan)}
+            className="self-start sm:self-auto"
+          >
             <Button>+ New store</Button>
-          </Link>
+          </UpgradeGate>
         )}
       </div>
 

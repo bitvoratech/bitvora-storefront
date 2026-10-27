@@ -9,6 +9,9 @@ import { KpiCard } from '@bitvora/ui/src/KpiCard'
 import { RevenueChart } from './RevenueChart'
 import { computeTrend } from '../../../lib/computeTrend'
 import { storefrontUrl } from '../../../lib/storefront-url'
+import { storePlan } from '../../../lib/store-plan'
+import { productLimitMessage, underProductLimit } from '../../../lib/plans'
+import { UpgradeGate } from '../../../components/UpgradeGate'
 import { ShareStoreCard } from './ShareStoreCard'
 import { PublishToggle } from './PublishToggle'
 import { NeedsAttention, type AttentionItem } from './NeedsAttention'
@@ -25,6 +28,8 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
     .from('products')
     .select('id', { count: 'exact', head: true })
     .eq('store_id', id)
+
+  const plan = await storePlan(supabase, id)
 
   const { data: heroSection } = await supabase
     .from('sections')
@@ -220,12 +225,15 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
           <span id="publish" className="scroll-mt-6">
             <PublishToggle storeId={store.id} isPublished={store.is_published} />
           </span>
-          <Link
+          <UpgradeGate
             href={`/stores/${store.id}/products/new`}
+            locked={!underProductLimit(plan, productCount ?? 0)}
+            title="Upgrade to add more products"
+            message={productLimitMessage(plan)}
             className="text-sm rounded-md px-3 py-1.5 font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
           >
             Add product
-          </Link>
+          </UpgradeGate>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2 mb-6">

@@ -1,6 +1,7 @@
 import { cache } from 'react'
 import { createClient } from './supabase/server'
 import { createAdminClient } from './supabase/admin'
+import { DEFAULT_GRID_DENSITY, DEFAULT_TYPOGRAPHY, hasFullCustomization } from '@bitvora/lib/plan-features'
 
 export type SocialLinks = { whatsapp?: string; instagram?: string; facebook?: string; tiktok?: string }
 
@@ -17,6 +18,8 @@ export type PublicStore = {
   pickup_address: string | null
   /** Seller passed Bitvora's NIN/CAC identity check. */
   is_verified: boolean
+  /** The seller's plan includes the Growth customizations (about, collections, banners, fonts, grid, section order). */
+  full_customization: boolean
 }
 
 /**
@@ -33,22 +36,29 @@ export const getPublishedStore = cache(async (slug: string): Promise<PublicStore
     .maybeSingle()
   if (!data) return null
 
-  const { merchant_id, ...store } = data as Omit<PublicStore, 'is_verified'> & { merchant_id: string }
-  return { ...store, is_verified: await isMerchantVerified(merchant_id) }
+  const { merchant_id, ...store } = data as Omit<PublicStore, 'is_verified' | 'full_customization'> & { merchant_id: string }
+  const merchant = await merchantFlags(merchant_id)
+  return {
+    ...store,
+    // A Starter store renders with the default fonts and grid, even if it
+    // saved others before (or has since moved down from Growth).
+    ...(merchant.full_customization ? {} : { typography: { ...DEFAULT_TYPOGRAPHY }, grid_density: DEFAULT_GRID_DENSITY }),
+    ...merchant,
+  }
 })
 
-// Customers can't read the merchants table (RLS), so this single boolean is
+// Customers can't read the merchants table (RLS), so these two booleans are
 // looked up with the service role. Never expose anything else from that row.
-async function isMerchantVerified(merchantId: string): Promise<boolean> {
+async function merchantFlags(merchantId: string): Promise<{ is_verified: boolean; full_customization: boolean }> {
   try {
     const { data } = await createAdminClient()
       .from('merchants')
-      .select('verification_status')
+      .select('verification_status, plan')
       .eq('id', merchantId)
       .maybeSingle()
-    return data?.verification_status === 'verified'
+    return { is_verified: data?.verification_status === 'verified', full_customization: hasFullCustomization(data?.plan) }
   } catch {
-    return false
+    return { is_verified: false, full_customization: false }
   }
 }
 
