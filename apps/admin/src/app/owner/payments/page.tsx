@@ -9,6 +9,7 @@ import { TransferButtons } from './TransferButtons'
 type Row = {
   id: string
   merchant_id: string
+  kind: string
   plan: string
   plan_interval: string
   amount: number
@@ -21,7 +22,7 @@ type Row = {
   merchants: { full_name: string | null; business_name: string | null; phone: string | null } | null
 }
 
-const COLUMNS = 'id, merchant_id, plan, plan_interval, amount, reference, sender_name, status, review_note, reviewed_at, created_at, merchants!plan_transfers_merchant_id_fkey(full_name, business_name, phone)'
+const COLUMNS = 'id, merchant_id, kind, plan, plan_interval, amount, reference, sender_name, status, review_note, reviewed_at, created_at, merchants!plan_transfers_merchant_id_fkey(full_name, business_name, phone)'
 
 function formatDate(iso: string | null) {
   return iso ? new Date(iso).toLocaleString('en-NG', { dateStyle: 'medium', timeStyle: 'short' }) : '—'
@@ -54,7 +55,7 @@ export default async function OwnerPlanPaymentsPage() {
         <h2 className="font-display text-sm font-semibold mb-1">Bank transfers to check ({queue.length})</h2>
         <p className="text-xs text-ink/50 mb-3">
           {account
-            ? `Look for each one in ${account.accountName}, ${account.accountNumber} (${account.bankName}) by reference and amount. Confirming switches the merchant’s plan on for the paid period.`
+            ? `Look for each one in ${account.accountName}, ${account.accountNumber} (${account.bankName}) by reference and amount. Confirming switches the merchant’s plan on for the paid period; an upgrade switches the plan and keeps their paid-until date.`
             : 'Bank transfer is switched off (no PLAN_TRANSFER_* settings), so merchants can’t send new ones. You can still handle any listed here.'}
         </p>
         {queue.length === 0 ? (
@@ -73,7 +74,7 @@ export default async function OwnerPlanPaymentsPage() {
                   <Detail label="Amount" value={formatNaira(t.amount)} />
                   <Detail label="Reference" value={t.reference} mono />
                   <Detail label="Paid from" value={t.sender_name} />
-                  <Detail label="Plan" value={planLabel(t.plan, t.plan_interval)} />
+                  <Detail label={t.kind === 'upgrade' ? 'Upgrade to' : 'Plan'} value={planLabel(t.plan, t.plan_interval)} />
                   <Detail label="Business" value={t.merchants?.business_name ?? null} />
                   <Detail label="Phone" value={t.merchants?.phone ?? null} mono />
                 </div>
@@ -93,7 +94,7 @@ export default async function OwnerPlanPaymentsPage() {
               <div className="min-w-0">
                 <Link href={`/owner/merchants/${t.merchant_id}`} className="text-sm font-medium hover:text-indigo-600">{t.merchants?.full_name || 'Unnamed'}</Link>
                 <p className="text-xs text-ink/50 truncate">
-                  {formatNaira(t.amount)} · {planLabel(t.plan, t.plan_interval)} · {formatDate(t.reviewed_at)}
+                  {formatNaira(t.amount)} · {t.kind === 'upgrade' ? 'upgrade to ' : ''}{planLabel(t.plan, t.plan_interval)} · {formatDate(t.reviewed_at)}
                   {t.status === 'rejected' && t.review_note ? ` · ${t.review_note}` : ''}
                 </p>
               </div>

@@ -8,7 +8,7 @@ import { createAdminClient } from '../../lib/supabase/admin'
 import { discountedPrice, firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent } from '../../lib/plans'
 import { initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
 import { canOpenStore } from '../../lib/merchant-identity'
-import { canPayByTransfer, cardPaymentsEnabled, isFirstPayment, transferAccount, transferReference } from '../../lib/bank-transfer'
+import { canPayByTransfer, canUpgradeByTransfer, cardPaymentsEnabled, higherPlans, isFirstPayment, transferAccount, transferReference, upgradePrice } from '../../lib/bank-transfer'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
 
 export type BillingState = { error?: string } | undefined
@@ -21,7 +21,7 @@ async function currentMerchant() {
   if (!user) redirect('/login')
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('id, full_name, phone, is_owner, is_admin, is_suspended, verification_status, phone_verified_at, subscription_status, current_period_end, paystack_customer_code, paystack_subscription_code')
+    .select('id, full_name, phone, is_owner, is_admin, is_suspended, verification_status, phone_verified_at, plan, plan_interval, subscription_status, current_period_end, paystack_customer_code, paystack_subscription_code')
     .eq('user_id', user.id)
     .single()
   return { user, merchant }
@@ -131,6 +131,48 @@ export async function submitTransfer(prevState: TransferState, formData: FormDat
   }
   // Keep the choice on record, as card checkout does.
   if (!hasActivePlan(merchant)) await admin.from('merchants').update({ plan, plan_interval: interval }).eq('id', merchant.id)
+
+  revalidatePath('/billing')
+  return { sent: true }
+}
+
+// The merchant has sent the difference to move up a plan for the rest of
+// their paid period. Staff confirm it like any transfer; confirming switches
+// the plan and keeps the paid-until date.
+export async function submitUpgrade(prevState: TransferState, formData: FormData): Promise<TransferState> {
+  const { merchant } = await currentMerchant()
+  if (!merchant) return { error: 'Could not find your account. Try logging in again.' }
+  if (merchant.is_owner || merchant.is_admin) return { error: 'Staff accounts don’t have a plan.' }
+  if (merchant.is_suspended) return { error: 'Your account is suspended.' }
+  if (!transferAccount()) return { error: 'Bank transfer isn’t available right now.' }
+  if (!canUpgradeByTransfer(merchant)) return { error: 'Your plan can’t be upgraded this way right now. Email help@bitvoratech.com and we’ll sort it out.' }
+
+  const from = parsePlan(merchant.plan)
+  const to = parsePlan(formData.get('plan'))
+  const interval = parseInterval(merchant.plan_interval) ?? 'monthly'
+  if (!from || !to || !higherPlans(from).includes(to)) return { error: 'Pick a plan above your current one.' }
+  const amount = upgradePrice(from, to, interval, merchant.current_period_end)
+  if (!amount) return { error: 'Your plan ends too soon to upgrade. Renew on the new plan instead.' }
+  const senderName = String(formData.get('sender_name') ?? '').trim().slice(0, 120)
+  if (!senderName) return { error: 'Enter the name on the account you paid from, so we can find your transfer.' }
+
+  const rl = await rateLimit('billing-transfer', await getClientIp(), 5, '10 m')
+  if (!rl.ok) return { error: 'Too many attempts. Try again in a few minutes.' }
+
+  const { error } = await createAdminClient().from('plan_transfers').insert({
+    merchant_id: merchant.id,
+    kind: 'upgrade',
+    plan: to,
+    plan_interval: interval,
+    amount,
+    reference: transferReference(merchant.id),
+    sender_name: senderName,
+  })
+  if (error) {
+    if (error.code === '23505') return { error: 'We’re already checking a transfer from you. We’ll update you once it’s confirmed.' }
+    console.error('billing: saving upgrade transfer failed', error)
+    return { error: 'We couldn’t save that. Try again in a moment.' }
+  }
 
   revalidatePath('/billing')
   return { sent: true }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canPayByTransfer, cardPaymentsEnabled, isFirstPayment, transferAccount, transferPeriodStart, transferReference } from './bank-transfer'
+import { canPayByTransfer, canUpgradeByTransfer, cardPaymentsEnabled, higherPlans, isFirstPayment, transferAccount, transferPeriodStart, transferReference, upgradePrice } from './bank-transfer'
 
 const DAY = 24 * 60 * 60 * 1000
 const now = Date.parse('2026-11-01T12:00:00Z')
@@ -57,5 +57,40 @@ describe('transferPeriodStart', () => {
     expect(transferPeriodStart({ subscription_status: 'active', current_period_end: inDays(5) }, at).toISOString()).toBe(inDays(5))
     expect(transferPeriodStart({ subscription_status: 'active', current_period_end: inDays(-10) }, at)).toEqual(at)
     expect(transferPeriodStart(null, at)).toEqual(at)
+  })
+})
+
+describe('higherPlans', () => {
+  it('lists only plans above the current one', () => {
+    expect(higherPlans('starter')).toEqual(['growth', 'pro'])
+    expect(higherPlans('pro')).toEqual([])
+    expect(higherPlans(null)).toEqual([])
+  })
+})
+
+describe('canUpgradeByTransfer', () => {
+  const base = { subscription_status: 'active', plan: 'starter', current_period_end: inDays(20) }
+  it('allows a transfer plan with time left and a bigger plan available', () => {
+    expect(canUpgradeByTransfer(base, now)).toBe(true)
+    expect(canUpgradeByTransfer({ ...base, plan: 'pro' }, now)).toBe(false)
+    expect(canUpgradeByTransfer({ ...base, current_period_end: inDays(0.5) }, now)).toBe(false)
+  })
+  it('leaves card subscriptions and comped plans alone', () => {
+    expect(canUpgradeByTransfer({ ...base, paystack_subscription_code: 'SUB_1' }, now)).toBe(false)
+    expect(canUpgradeByTransfer({ ...base, subscription_status: 'comped' }, now)).toBe(false)
+  })
+})
+
+describe('upgradePrice', () => {
+  it('charges the difference for the days left, rounded up to ₦100', () => {
+    // Starter → Growth is ₦7,000 a month; 15 of 30 days left.
+    expect(upgradePrice('starter', 'growth', 'monthly', inDays(15), now)).toBe(3500)
+    expect(upgradePrice('starter', 'pro', 'monthly', inDays(1), now)).toBe(700)
+    // Annual: ₦70,000 difference a year, 100 of 365 days left.
+    expect(upgradePrice('starter', 'growth', 'annual', inDays(100), now)).toBe(19200)
+  })
+  it('is 0 for a downgrade or a finished period', () => {
+    expect(upgradePrice('pro', 'starter', 'monthly', inDays(15), now)).toBe(0)
+    expect(upgradePrice('starter', 'growth', 'monthly', inDays(-1), now)).toBe(0)
   })
 })

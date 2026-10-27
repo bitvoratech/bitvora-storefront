@@ -6,7 +6,7 @@ import { sendSms } from '../../lib/termii'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { requireStaff } from '../../lib/auth/require-owner'
 import { maskNin } from '../../lib/merchant-identity'
-import { formatNaira, parseInterval } from '../../lib/plans'
+import { PLAN_NAMES, formatNaira, parseInterval, parsePlan } from '../../lib/plans'
 import { periodEnd } from '../../lib/paystack'
 import { transferPeriodStart } from '../../lib/bank-transfer'
 
@@ -150,7 +150,7 @@ export async function reviewPlanTransfer(transferId: string, decision: 'confirm'
     })
     .eq('id', transferId)
     .eq('status', 'pending')
-    .select('id, merchant_id, plan, plan_interval, amount')
+    .select('id, merchant_id, kind, plan, plan_interval, amount')
   if (error) return { error: error.message }
   const transfer = claimed?.[0]
   if (!transfer) return { error: 'This transfer has already been handled.' }
@@ -162,7 +162,15 @@ export async function reviewPlanTransfer(transferId: string, decision: 'confirm'
     .maybeSingle()
 
   let paidUntil: Date | null = null
-  if (decision === 'confirm') {
+  if (decision === 'confirm' && transfer.kind === 'upgrade') {
+    // The difference for the rest of the period is paid: switch the plan, keep the dates.
+    paidUntil = merchant?.current_period_end ? new Date(merchant.current_period_end) : now
+    const { error: planError } = await admin.from('merchants').update({ plan: transfer.plan }).eq('id', transfer.merchant_id)
+    if (planError) {
+      await admin.from('plan_transfers').update({ status: 'pending', reviewed_at: null, reviewed_by: null }).eq('id', transfer.id)
+      return { error: planError.message }
+    }
+  } else if (decision === 'confirm') {
     const interval = parseInterval(transfer.plan_interval) ?? 'monthly'
     paidUntil = periodEnd(transferPeriodStart(merchant, now), interval)
     const { error: planError } = await admin
@@ -186,7 +194,7 @@ export async function reviewPlanTransfer(transferId: string, decision: 'confirm'
   // Best-effort, like verification decisions: the merchant also sees it on /billing.
   if (merchant?.phone) {
     const message = paidUntil
-      ? `Bitvora: We got your transfer of ${formatNaira(transfer.amount)}. Your plan is active until ${paidUntil.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}.`
+      ? `Bitvora: We got your transfer of ${formatNaira(transfer.amount)}. ${transfer.kind === 'upgrade' ? `You're now on ${PLAN_NAMES[parsePlan(transfer.plan) ?? 'starter']}, paid` : 'Your plan is active'} until ${paidUntil.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}.`
       : `Bitvora: We couldn't confirm your transfer of ${formatNaira(transfer.amount)}: ${reason.slice(0, 200).replace(/([^.!?])$/, '$1.')}`
     try {
       await sendSms(merchant.phone, message)
