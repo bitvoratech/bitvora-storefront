@@ -4,6 +4,7 @@ import { Card } from '@bitvora/ui/src/Card'
 import { createClient } from '../../lib/supabase/server'
 import { hasActivePlan, parseInterval, parsePlan, planDiscountPercent, planLabel } from '../../lib/plans'
 import { CheckoutForm, ManageButton } from './CheckoutForm'
+import { canOpenStore } from '../../lib/merchant-identity'
 
 const PAYMENT_NOTE: Record<string, { text: string; tone: string }> = {
   success: { text: 'Payment received. Your plan is active.', tone: 'bg-palm-50 text-palm-600' },
@@ -29,7 +30,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
   const { data: merchant } = await supabase
     .from('merchants')
-    .select('is_owner, is_admin, verification_status, plan, plan_interval, subscription_status, current_period_end, paystack_subscription_code')
+    .select('is_owner, is_admin, verification_status, phone_verified_at, plan, plan_interval, subscription_status, current_period_end, paystack_subscription_code')
     .eq('user_id', user.id)
     .single()
 
@@ -37,7 +38,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
 
   const note = PAYMENT_NOTE[(await searchParams).payment ?? '']
   const active = hasActivePlan(merchant)
-  const isVerified = merchant?.verification_status === 'verified'
+  const phoneVerified = canOpenStore(merchant)
   const status = merchant?.subscription_status ?? ''
 
   return (
@@ -61,23 +62,23 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             To change plans, email <a href="mailto:help@bitvoratech.com" className="text-indigo-600">help@bitvoratech.com</a>.
           </p>
         </Card>
-      ) : !isVerified ? (
+      ) : !phoneVerified ? (
         <Card>
-          <p className="font-medium">Pay once your details are approved</p>
+          <p className="font-medium">Pay once your phone is verified</p>
           <p className="text-sm text-ink/50 mt-1">
             {planLabel(merchant?.plan, merchant?.plan_interval)
               ? `You picked ${planLabel(merchant?.plan, merchant?.plan_interval)}. `
               : ''}
-            We’ll ask you to pay for your plan after we’ve checked your NIN and CAC, so you never pay for a store you can’t open.
+            Confirm your phone number first, then you can pay for your plan and open your store.
           </p>
-          <Link href="/verify" className="inline-block mt-4 text-sm text-indigo-600 font-medium">Go to verification</Link>
+          <Link href="/verify" className="inline-block mt-4 text-sm text-indigo-600 font-medium">Verify my phone</Link>
         </Card>
       ) : (
         <Card>
           {status === 'cancelled' || status === 'past_due' ? (
             <p className="text-sm text-ink/60 mb-4">Your plan has ended. Pick a plan to keep creating and running stores.</p>
           ) : (
-            <p className="text-sm text-ink/60 mb-4">Your details are approved. Pay for your plan to create your first store.</p>
+            <p className="text-sm text-ink/60 mb-4">Pay for your plan to create your first store.</p>
           )}
           <CheckoutForm
             plan={parsePlan(merchant?.plan)}

@@ -9,6 +9,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeScript } from "@/components/ThemeScript";
+import { canOpenStore } from "../lib/merchant-identity";
 
 const spaceGroteskHeading = Space_Grotesk({subsets:['latin'],variable:'--font-heading'});
 
@@ -24,7 +25,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { data: { user } } = await supabase.auth.getUser();
 
     const { data: merchant } = user
-    ? await supabase.from('merchants').select('is_owner, is_admin, is_suspended, full_name, avatar_url, verification_status').eq('user_id', user.id).single()
+    ? await supabase.from('merchants').select('is_owner, is_admin, is_suspended, full_name, avatar_url, verification_status, phone_verified_at').eq('user_id', user.id).single()
     : { data: null };
 
   return (
@@ -40,7 +41,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         staffRole={merchant?.is_owner ? 'owner' : merchant?.is_admin ? 'admin' : null}
         merchantName={merchant?.full_name}
         avatarUrl={merchant?.avatar_url}
-        canCreateStore={merchant?.verification_status === 'verified'}
+        canCreateStore={canOpenStore(merchant)}
         sidebarCollapsed={(await cookies()).get(SIDEBAR_COOKIE)?.value === '1'}
           >
       {children}

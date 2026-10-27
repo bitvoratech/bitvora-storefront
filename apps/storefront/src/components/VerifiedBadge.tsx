@@ -1,7 +1,8 @@
 import { IconRosetteDiscountCheckFilled } from '@tabler/icons-react'
 
-// Trust signal: every seller is identity-checked (NIN or CAC) before they can
-// open a store. Customers paying a stranger by bank transfer should see that.
+// Trust signal: shown only for sellers whose NIN and CAC an owner approved.
+// That check is optional at signup, so the badge is what sets them apart for
+// customers paying a stranger by bank transfer.
 // `detail` is rendered inside the badge so the label and the sentence share one
 // line box: same size, same baseline, and the text wraps under itself on mobile
 // while the icon stays pinned to the first line.

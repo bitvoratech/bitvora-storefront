@@ -14,13 +14,19 @@ export async function GET(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.redirect(new URL('/login', origin))
-  const { data: merchant } = await supabase.from('merchants').select('id').eq('user_id', user.id).single()
+  const { data: merchant } = await supabase.from('merchants').select('id, verification_status').eq('user_id', user.id).single()
   if (!merchant) return back('payment=failed')
 
   try {
     const tx = await verifyTransaction(reference)
     const recorded = await recordPayment(tx, { expectMerchantId: merchant.id })
-    return back(recorded ? 'payment=success' : 'payment=failed')
+    if (!recorded) return back('payment=failed')
+    // Signup goes phone → payment → compliance: carry on to the NIN/CAC step
+    // if it hasn't been done yet.
+    if (merchant.verification_status === 'unverified' || merchant.verification_status === 'failed') {
+      return NextResponse.redirect(new URL('/verify?payment=success', origin))
+    }
+    return back('payment=success')
   } catch (error) {
     console.error('billing callback', reference, error)
     return back('payment=pending')
