@@ -7,7 +7,8 @@
     "./rate-limit": "./src/rate-limit.ts",
     "./cloudinary-image": "./src/cloudinary-image.ts",
     "./cloudinary-upload": "./src/cloudinary-upload.ts",
-    "./about-section": "./src/about-section.ts"
+    "./about-section": "./src/about-section.ts",
+    "./plan-features": "./src/plan-features.ts"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.2.0",

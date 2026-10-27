@@ -4,8 +4,18 @@
 import { revalidatePath } from 'next/cache'
 import { createClient } from '../../../../lib/supabase/server'
 import { normalizeAbout, type AboutConfig } from '@bitvora/lib/about-section'
+import { hasFullCustomization } from '@bitvora/lib/plan-features'
+import { storePlan } from '../../../../lib/store-plan'
 
 const HEX_COLOR_RE = /^#[0-9a-fA-F]{6}$/
+
+// Growth-only settings. The database refuses these on Starter too
+// (plan_features migration); checking here gives a clearer message.
+async function growthOnly(supabase: Awaited<ReturnType<typeof createClient>>, storeId: string) {
+  if (!hasFullCustomization(await storePlan(supabase, storeId))) {
+    return { error: 'This needs the Growth plan. Upgrade under Plan & billing.' }
+  }
+}
 
 export async function saveBrandColor(storeId: string, color: string) {
   if (!HEX_COLOR_RE.test(color)) return { error: 'Pick a valid colour.' }
@@ -36,6 +46,8 @@ export async function saveBannerGridSection(
   tiles: { heading: string; image_url: string; cta_text: string; category?: string }[]
 ) {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { data: existing } = await supabase.from('sections').select('id').eq('store_id', storeId).eq('type', 'banner_grid').maybeSingle()
   const config = { tiles }
   if (existing) {
@@ -53,6 +65,8 @@ export async function saveCtaBannerSection(
   config: { heading: string; image_url: string; cta_text: string }
 ) {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { data: existing } = await supabase.from('sections').select('id').eq('store_id', storeId).eq('type', 'cta_banner').maybeSingle()
   if (existing) {
     const { error } = await supabase.from('sections').update({ config }).eq('id', existing.id)
@@ -66,6 +80,8 @@ export async function saveCtaBannerSection(
 
 export async function saveTypography(storeId: string, pairing: string, scale: string) {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { error } = await supabase.from('stores').update({ typography: { pairing, scale } }).eq('id', storeId)
   if (error) return { error: error.message }
   revalidatePath(`/stores/${storeId}`)
@@ -80,6 +96,8 @@ export async function saveLogo(storeId: string, logoUrl: string) {
 
 export async function saveGridDensity(storeId: string, density: number) {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { error } = await supabase.from('stores').update({ grid_density: density }).eq('id', storeId)
   if (error) return { error: error.message }
   revalidatePath(`/stores/${storeId}`)
@@ -87,6 +105,8 @@ export async function saveGridDensity(storeId: string, density: number) {
 
 export async function saveAboutSection(storeId: string, about: AboutConfig) {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { data: existing } = await supabase.from('sections').select('id').eq('store_id', storeId).eq('type', 'about').maybeSingle()
   // Same trimming and limits the storefront reads with.
   const config = normalizeAbout(about)
@@ -109,6 +129,8 @@ export async function saveSocialLinks(storeId: string, links: { whatsapp?: strin
 
 export async function toggleSectionVisibility(storeId: string, sectionType: string, visible: boolean) {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { error } = await supabase.from('sections').update({ is_visible: visible }).eq('store_id', storeId).eq('type', sectionType)
   if (error) return { error: error.message }
   revalidatePath(`/stores/${storeId}`)
@@ -116,6 +138,8 @@ export async function toggleSectionVisibility(storeId: string, sectionType: stri
 
 export async function reorderSection(storeId: string, sectionType: string, direction: 'up' | 'down') {
   const supabase = await createClient()
+  const locked = await growthOnly(supabase, storeId)
+  if (locked) return locked
   const { data: sections } = await supabase.from('sections').select('id, store_id, type, position').eq('store_id', storeId).order('position')
   if (!sections) return { error: 'Could not load sections.' }
 

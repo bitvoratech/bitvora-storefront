@@ -3,6 +3,8 @@ import { notFound } from 'next/navigation'
 import { PublishToggle } from '../PublishToggle'
 import { CustomizeWorkspace } from './CustomizeWorkspace'
 import { normalizeAbout } from '@bitvora/lib/about-section'
+import { DEFAULT_GRID_DENSITY, DEFAULT_TYPOGRAPHY, hasFullCustomization } from '@bitvora/lib/plan-features'
+import { storePlan } from '../../../../lib/store-plan'
 
 const SECTION_LABELS: Record<string, string> = {
   hero: 'Homepage hero',
@@ -17,6 +19,8 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
 
   const { data: store, error } = await supabase.from('stores').select('*').eq('id', id).single()
   if (error || !store) notFound()
+
+  const fullCustomization = hasFullCustomization(await storePlan(supabase, id))
 
   const { data: allSections } = await supabase
     .from('sections').select('type, config, is_visible, position').eq('store_id', id).order('position')
@@ -72,11 +76,13 @@ export default async function CustomizePage({ params }: { params: Promise<{ id: 
           cta_text: ctaConfig.cta_text || '',
         }}
         initialLogo={store.logo_url || ''}
-        initialTypography={store.typography || { pairing: 'editorial', scale: 'standard' }}
-        initialGridDensity={store.grid_density || 3}
+        // Starter stores render with the defaults, whatever was saved before.
+        initialTypography={(fullCustomization && store.typography) || { ...DEFAULT_TYPOGRAPHY }}
+        initialGridDensity={(fullCustomization && store.grid_density) || DEFAULT_GRID_DENSITY}
         initialAbout={normalizeAbout(aboutSection?.config)}
         initialSocial={store.social_links || {}}
         sectionsMeta={sectionsMeta}
+        fullCustomization={fullCustomization}
       />
     </div>
   )

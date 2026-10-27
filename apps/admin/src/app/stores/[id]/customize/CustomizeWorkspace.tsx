@@ -7,7 +7,8 @@ import { Button } from '@bitvora/ui/src/Button'
 import { Label } from '@bitvora/ui/src/Label'
 import { Input } from '@bitvora/ui/src/Input'
 import { ImageField } from './ImageField'
-import { IconChevronLeft, IconChevronRight, IconEye, IconPencil } from '@tabler/icons-react'
+import { IconChevronLeft, IconChevronRight, IconEye, IconLock, IconPencil } from '@tabler/icons-react'
+import { UpgradeDialog } from '../../../../components/UpgradeGate'
 
 import {
   saveBrandColor, saveHeroSection, saveBannerGridSection, saveCtaBannerSection,
@@ -39,6 +40,38 @@ type Tab = typeof TABS[number]
 // 'sections' saves each change as it's made, so it never has unsaved edits.
 type EditableTab = Exclude<Tab, 'sections'>
 
+// Tabs that are Growth and Pro only, per the pricing page.
+const GROWTH_TABS: Tab[] = ['about', 'collections', 'banner', 'sections']
+
+const UPGRADE_TITLE = 'Upgrade to Growth to unlock this'
+const UPGRADE_MESSAGE =
+  'Your Starter plan includes your brand color, logo, homepage hero and social links. Growth adds the about section, featured collections, closing banner, font pairing, heading size, grid layout, and showing, hiding and reordering sections.'
+
+/** A padlocked panel in place of a Growth-only tab. */
+function LockedPanel({ feature, onUpgrade }: { feature: string; onUpgrade: () => void }) {
+  return (
+    <div className="rounded-xl border border-dashed border-sand-200 px-4 py-8 text-center">
+      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center mx-auto mb-3">
+        <IconLock className="w-5 h-5 text-indigo-600" stroke={1.75} />
+      </div>
+      <p className="font-medium text-sm mb-1">{feature} is a Growth feature</p>
+      <p className="text-xs text-ink/50 mb-4">Upgrade your plan to add it to your storefront.</p>
+      <Button onClick={onUpgrade}>See plans &amp; upgrade</Button>
+    </div>
+  )
+}
+
+/** A padlocked label for a Growth-only control inside an open tab. */
+function LockedLabel({ children, onUpgrade }: { children: React.ReactNode; onUpgrade: () => void }) {
+  return (
+    <button type="button" onClick={onUpgrade} className="flex items-center gap-1.5 text-sm font-medium text-ink hover:text-indigo-600">
+      {children}
+      <IconLock className="w-3.5 h-3.5 text-ink/40" stroke={1.75} aria-label="Growth plan" />
+      <span className="text-[11px] font-normal text-indigo-600">Growth</span>
+    </button>
+  )
+}
+
 const TAB_LABELS: Record<Tab, string> = {
   brand: 'Brand', design: 'Design', hero: 'Hero', about: 'About',
   collections: 'Collections', banner: 'Banner', sections: 'Sections', social: 'Social',
@@ -58,6 +91,7 @@ export function CustomizeWorkspace({
   initialAbout,
   initialSocial,
   sectionsMeta,
+  fullCustomization,
 }: {
   storeId: string
   storeName: string
@@ -72,7 +106,12 @@ export function CustomizeWorkspace({
   initialAbout: AboutConfig
   initialSocial: { whatsapp?: string; instagram?: string; facebook?: string; tiktok?: string }
   sectionsMeta: { type: string; label: string; is_visible: boolean; position: number }[]
+  /** Growth and Pro: everything. Starter: brand color, logo, hero and social only. */
+  fullCustomization: boolean
 }) {
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const openUpgrade = () => setUpgradeOpen(true)
+  const isLocked = (t: Tab) => !fullCustomization && GROWTH_TABS.includes(t)
   const [logo, setLogo] = useState(initialLogo)
   const [typography, setTypography] = useState(initialTypography)
   const [gridDensity, setGridDensity] = useState(initialGridDensity)
@@ -152,11 +191,15 @@ export function CustomizeWorkspace({
     startTransition(async () => {
       const savers: Record<EditableTab, () => Promise<({ error?: string } | void)[]>> = {
         brand: async () => [await saveBrandColor(storeId, color)],
-        design: async () => [
-          await saveTypography(storeId, typography.pairing, typography.scale),
-          await saveLogo(storeId, logo),
-          await saveGridDensity(storeId, gridDensity),
-        ],
+        // Starter can change the logo here, but not the fonts or grid.
+        design: async () =>
+          fullCustomization
+            ? [
+                await saveTypography(storeId, typography.pairing, typography.scale),
+                await saveLogo(storeId, logo),
+                await saveGridDensity(storeId, gridDensity),
+              ]
+            : [await saveLogo(storeId, logo)],
         hero: async () => [await saveHeroSection(storeId, hero)],
         about: async () => [await saveAboutSection(storeId, about)],
         collections: async () => [await saveBannerGridSection(storeId, tiles)],
@@ -243,6 +286,7 @@ export function CustomizeWorkspace({
                 }`}
               >
                 {TAB_LABELS[t]}
+                {isLocked(t) && <IconLock className="ml-1 inline-block w-3.5 h-3.5 -mt-0.5 text-ink/40" stroke={1.75} aria-label="Growth plan" />}
                 {t !== 'sections' && dirtyTabs.includes(t) && (
                   <span className="ml-1.5 inline-block w-1.5 h-1.5 rounded-full bg-marigold-500 align-middle" aria-label="unsaved changes" />
                 )}
@@ -330,7 +374,9 @@ export function CustomizeWorkspace({
           </div>
         )}
 
-        {tab === 'collections' && (
+        {tab === 'collections' && isLocked('collections') && <LockedPanel feature="Featured collections" onUpgrade={openUpgrade} />}
+
+        {tab === 'collections' && !isLocked('collections') && (
           <div className="space-y-5">
             {tiles.map((tile, i) => (
               <div key={i} className="border border-sand-200 rounded-lg p-3 space-y-2.5">
@@ -377,7 +423,9 @@ export function CustomizeWorkspace({
           </div>
         )}
 
-        {tab === 'banner' && (
+        {tab === 'banner' && isLocked('banner') && <LockedPanel feature="The closing banner" onUpgrade={openUpgrade} />}
+
+        {tab === 'banner' && !isLocked('banner') && (
           <div className="space-y-3">
             <div>
               <Label htmlFor="cta_heading">Heading</Label>
@@ -400,13 +448,19 @@ export function CustomizeWorkspace({
               <Label>Store logo</Label>
               <ImageField value={logo} onChange={setLogo} />
             </div>
+            {!fullCustomization && (
+              <p className="text-xs text-ink/50 rounded-lg bg-sand-100 px-3 py-2.5">
+                Font pairing, heading size and grid layout come with the Growth plan.{' '}
+                <button type="button" onClick={openUpgrade} className="underline hover:text-indigo-600">Upgrade</button>
+              </p>
+            )}
             <div>
-              <Label>Font pairing</Label>
-              <div className="grid grid-cols-2 gap-2 mt-1.5">
+              {fullCustomization ? <Label>Font pairing</Label> : <LockedLabel onUpgrade={openUpgrade}>Font pairing</LockedLabel>}
+              <div className={`grid grid-cols-2 gap-2 mt-1.5 ${fullCustomization ? '' : 'opacity-50'}`}>
                 {FONT_PAIRINGS.map((p) => (
                   <button
                     key={p.id}
-                    onClick={() => setTypography({ ...typography, pairing: p.id })}
+                    onClick={() => (fullCustomization ? setTypography({ ...typography, pairing: p.id }) : openUpgrade())}
                     className={`border rounded-lg p-2.5 text-left ${
                       typography.pairing === p.id ? 'border-indigo-600 bg-indigo-50' : 'border-sand-200'
                     }`}
@@ -418,12 +472,12 @@ export function CustomizeWorkspace({
               </div>
             </div>
             <div>
-              <Label>Heading size</Label>
-              <div className="flex gap-2 mt-1.5">
+              {fullCustomization ? <Label>Heading size</Label> : <LockedLabel onUpgrade={openUpgrade}>Heading size</LockedLabel>}
+              <div className={`flex gap-2 mt-1.5 ${fullCustomization ? '' : 'opacity-50'}`}>
                 {SCALES.map((s) => (
                   <button
                     key={s.id}
-                    onClick={() => setTypography({ ...typography, scale: s.id })}
+                    onClick={() => (fullCustomization ? setTypography({ ...typography, scale: s.id }) : openUpgrade())}
                     className={`flex-1 border rounded-lg py-2 text-sm ${
                       typography.scale === s.id ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-medium' : 'border-sand-200 text-ink/60'
                     }`}
@@ -434,12 +488,12 @@ export function CustomizeWorkspace({
               </div>
             </div>
             <div>
-              <Label>Product grid</Label>
-              <div className="flex gap-2 mt-1.5">
+              {fullCustomization ? <Label>Product grid</Label> : <LockedLabel onUpgrade={openUpgrade}>Product grid</LockedLabel>}
+              <div className={`flex gap-2 mt-1.5 ${fullCustomization ? '' : 'opacity-50'}`}>
                 {[2, 3].map((n) => (
                   <button
                     key={n}
-                    onClick={() => setGridDensity(n)}
+                    onClick={() => (fullCustomization ? setGridDensity(n) : openUpgrade())}
                     className={`flex-1 border rounded-lg py-2 text-sm ${
                       gridDensity === n ? 'border-indigo-600 bg-indigo-50 text-indigo-600 font-medium' : 'border-sand-200 text-ink/60'
                     }`}
@@ -452,7 +506,9 @@ export function CustomizeWorkspace({
           </div>
         )}
 
-        {tab === 'about' && (
+        {tab === 'about' && isLocked('about') && <LockedPanel feature="The about section" onUpgrade={openUpgrade} />}
+
+        {tab === 'about' && !isLocked('about') && (
           <div className="space-y-4">
             <p className="text-xs text-ink/50">
               Tell shoppers who&apos;s behind {storeName}. A short, personal story builds trust, especially with first-time buyers.
@@ -545,7 +601,9 @@ export function CustomizeWorkspace({
           </div>
         )}
 
-        {tab === 'sections' && (
+        {tab === 'sections' && isLocked('sections') && <LockedPanel feature="Showing, hiding and reordering sections" onUpgrade={openUpgrade} />}
+
+        {tab === 'sections' && !isLocked('sections') && (
           <div className="space-y-2">
             <p className="text-xs text-ink/50 mb-2">Show, hide, or reorder homepage sections.</p>
             {sections.map((s, i) => (
@@ -628,7 +686,7 @@ export function CustomizeWorkspace({
               </div>
             </div>
 
-            {tiles.some((t) => t.heading) && (
+            {fullCustomization && tiles.some((t) => t.heading) && (
               <div className="grid grid-cols-3 gap-1.5">
                 {tiles.map((tile, i) => (
                   <div key={i} className="relative h-16 rounded-lg overflow-hidden">
@@ -659,7 +717,7 @@ export function CustomizeWorkspace({
               </div>
             </div>
 
-            {(about.heading || about.body) && (
+            {fullCustomization && (about.heading || about.body) && (
               <div className={`rounded-xl px-3 py-4 flex gap-3 items-center ${about.image_url ? '' : 'text-center justify-center'}`} style={{ backgroundColor: `color-mix(in srgb, ${color} 8%, white)` }}>
                 {about.image_url && <img src={about.image_url} alt="" className="w-16 h-20 rounded-lg object-cover shrink-0" />}
                 <div className="min-w-0 text-[#171717]">
@@ -680,7 +738,7 @@ export function CustomizeWorkspace({
               </div>
             )}
 
-            {cta.heading && (
+            {fullCustomization && cta.heading && (
               <div className="relative h-20 rounded-xl overflow-hidden">
                 {cta.image_url ? (
                   <img src={cta.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -698,6 +756,8 @@ export function CustomizeWorkspace({
           </div>
         </div>
       </div>
+
+      <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} title={UPGRADE_TITLE} message={UPGRADE_MESSAGE} />
 
       {/* Mobile-only: sticky Edit/Preview toggle + Save, pinned to bottom */}
       <div

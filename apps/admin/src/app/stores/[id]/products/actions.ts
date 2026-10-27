@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../../lib/supabase/server'
 import { normalizeSizes } from '../../../../lib/product-sizes'
-import { PLAN_PRODUCT_LIMIT, parsePlan } from '../../../../lib/plans'
+import { productLimitMessage, underProductLimit } from '../../../../lib/plans'
+import { storePlan } from '../../../../lib/store-plan'
 
 function slugify(name: string) {
   return name
@@ -115,11 +116,9 @@ export async function createProduct(storeId: string, prevState: { error?: string
   }
 
   // The database enforces this too; checking first gives a clearer message.
-  const productLimit = await productLimitFor(supabase, storeId)
-  if (productLimit !== null) {
-    const { count } = await supabase.from('products').select('id', { count: 'exact', head: true }).eq('store_id', storeId)
-    if ((count ?? 0) >= productLimit) return { error: productLimitMessage(productLimit) }
-  }
+  const plan = await storePlan(supabase, storeId)
+  const { count } = await supabase.from('products').select('id', { count: 'exact', head: true }).eq('store_id', storeId)
+  if (!underProductLimit(plan, count ?? 0)) return { error: `${productLimitMessage(plan)} Upgrade under Plan & billing.` }
 
   const { error } = await supabase.from('products').insert({
     store_id: storeId,
@@ -135,30 +134,12 @@ export async function createProduct(storeId: string, prevState: { error?: string
   })
 
   if (error) {
-    const limit = error.message?.match(/plan_product_limit: this plan allows (\d+)/)
-    if (limit) return { error: productLimitMessage(Number(limit[1])) }
+    if (error.message?.includes('plan_product_limit')) return { error: `${productLimitMessage(plan)} Upgrade under Plan & billing.` }
     return { error: 'Could not save the product. Try again.' }
   }
 
   revalidatePath(`/stores/${storeId}/products`)
   redirect(`/stores/${storeId}/products`)
-}
-
-function productLimitMessage(limit: number) {
-  return `Your plan includes ${limit} products per store. Email help@bitvoratech.com to upgrade.`
-}
-
-// null when the plan has no product limit (or the store isn't found; RLS and
-// the database trigger still apply).
-async function productLimitFor(supabase: Awaited<ReturnType<typeof createClient>>, storeId: string) {
-  const { data } = await supabase
-    .from('stores')
-    .select('merchants(plan)')
-    .eq('id', storeId)
-    .maybeSingle()
-  const merchant = data?.merchants as { plan?: string | null } | { plan?: string | null }[] | null | undefined
-  const plan = parsePlan(Array.isArray(merchant) ? merchant[0]?.plan : merchant?.plan)
-  return plan ? PLAN_PRODUCT_LIMIT[plan] : null
 }
 
 export async function updateProduct(productId: string, storeId: string, prevState: { error?: string } | undefined, formData: FormData) {

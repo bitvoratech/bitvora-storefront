@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeScript } from "@/components/ThemeScript";
 import { canOpenStore } from "../lib/merchant-identity";
+import { hasActivePlan, storeLimitMessage, underStoreLimit } from "../lib/plans";
 
 const spaceGroteskHeading = Space_Grotesk({subsets:['latin'],variable:'--font-heading'});
 
@@ -25,8 +26,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const { data: { user } } = await supabase.auth.getUser();
 
     const { data: merchant } = user
-    ? await supabase.from('merchants').select('is_owner, is_admin, is_suspended, full_name, avatar_url, verification_status, phone_verified_at').eq('user_id', user.id).single()
+    ? await supabase.from('merchants').select('id, is_owner, is_admin, is_suspended, full_name, avatar_url, verification_status, phone_verified_at, plan, subscription_status, current_period_end').eq('user_id', user.id).single()
     : { data: null };
+
+  // At the plan's store limit, New store stays in the sidebar but opens the upgrade popup.
+  const isStaff = !!merchant?.is_owner || !!merchant?.is_admin;
+  const { count: storeCount } = merchant && !isStaff && hasActivePlan(merchant)
+    ? await supabase.from('stores').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id)
+    : { count: 0 };
+  const atStoreLimit = !!merchant && hasActivePlan(merchant) && !underStoreLimit(merchant.plan, storeCount ?? 0);
 
   return (
     // suppressHydrationWarning: ThemeScript mutates this element's class
@@ -42,6 +50,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         merchantName={merchant?.full_name}
         avatarUrl={merchant?.avatar_url}
         canCreateStore={canOpenStore(merchant)}
+        storeLimitMessage={atStoreLimit ? storeLimitMessage(merchant?.plan) : null}
         sidebarCollapsed={(await cookies()).get(SIDEBAR_COOKIE)?.value === '1'}
           >
       {children}

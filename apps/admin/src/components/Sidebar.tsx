@@ -6,11 +6,12 @@ import { usePathname } from 'next/navigation'
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Home, Plus, Grid, PackageBox, Storefront, Receipt, User, Users } from 'switch-icons'
-import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar, IconCreditCard, IconMessage2 } from '@tabler/icons-react'
+import { IconChevronRight, IconChevronDown, IconPalette, IconHelpCircle, IconLogout, IconTruckDelivery, IconShieldCheck, IconUserShield, IconChartBar, IconCreditCard, IconMessage2, IconLock } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase/client'
 import { ThemeToggle } from './ThemeToggle'
 import { SIDEBAR_COOKIE } from '../lib/sidebar'
+import { UpgradeGate } from './UpgradeGate'
 
 // Beta feedback form (e.g. a Tally link). The link is hidden when unset.
 const FEEDBACK_URL = process.env.NEXT_PUBLIC_FEEDBACK_URL
@@ -18,22 +19,28 @@ const HELP_URL = `https://wa.me/2349112449545?text=${encodeURIComponent('Hi Bitv
 
 type NavItem = { href: string; icon: React.ComponentType<{ className?: string }>; label: string }
 
-function SimpleLink({ item, active, collapsed, onClick }: { item: NavItem; active: boolean; collapsed: boolean; onClick?: () => void }) {
-  return (
-    <Link
-      href={item.href}
-      onClick={onClick}
-      className={`group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
-        collapsed ? 'justify-center' : ''
-      } ${active ? 'bg-white/10 text-white font-medium' : 'text-indigo-100/70 hover:bg-white/5 hover:text-white'}`}
-    >
+// locked: the plan doesn't allow it, so it's drawn with a padlock and the
+// wrapping UpgradeGate opens the upgrade popup instead of navigating.
+function SimpleLink({ item, active, collapsed, onClick, locked = false }: { item: NavItem; active: boolean; collapsed: boolean; onClick?: () => void; locked?: boolean }) {
+  const className = `group relative flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+    collapsed ? 'justify-center' : ''
+  } ${active ? 'bg-white/10 text-white font-medium' : 'text-indigo-100/70 hover:bg-white/5 hover:text-white'}`
+  const content = (
+    <>
       <item.icon className="w-4 h-4 shrink-0" />
       {!collapsed && item.label}
+      {!collapsed && locked && <IconLock className="w-3.5 h-3.5 ml-auto opacity-70" stroke={1.75} aria-label="Upgrade needed" />}
       {collapsed && (
         <span className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-md bg-white dark:bg-sand-100 px-2.5 py-1.5 text-xs font-medium text-indigo-950 dark:text-ink opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 z-50">
           {item.label}
         </span>
       )}
+    </>
+  )
+  if (locked) return <div className={className}>{content}</div>
+  return (
+    <Link href={item.href} onClick={onClick} className={className}>
+      {content}
     </Link>
   )
 }
@@ -156,6 +163,7 @@ export function Sidebar({
   avatarUrl,
   staffRole,
   canCreateStore = false,
+  storeLimitMessage = null,
   initialCollapsed = false,
   open,
   onClose,
@@ -165,6 +173,8 @@ export function Sidebar({
   avatarUrl?: string | null
   staffRole?: 'owner' | 'admin' | null
   canCreateStore?: boolean
+  /** Set when the merchant's plan has no stores left: New store opens the upgrade popup. */
+  storeLimitMessage?: string | null
   initialCollapsed?: boolean
   open: boolean
   onClose: () => void
@@ -296,9 +306,13 @@ export function Sidebar({
             <>
               <SimpleLink item={{ href: '/', icon: Home, label: 'Dashboard' }} active={isActive('/')} collapsed={collapsed} onClick={onClose} />
               {/* Unverified merchants can't create a store yet; the dashboard shows why. */}
-              {canCreateStore && (
+              {canCreateStore && (storeLimitMessage ? (
+                <UpgradeGate href="/stores/new" locked title="Upgrade to add another store" message={storeLimitMessage}>
+                  <SimpleLink item={{ href: '/stores/new', icon: Plus, label: 'New store' }} active={false} collapsed={collapsed} locked />
+                </UpgradeGate>
+              ) : (
                 <SimpleLink item={{ href: '/stores/new', icon: Plus, label: 'New store' }} active={isActive('/stores/new')} collapsed={collapsed} onClick={onClose} />
-              )}
+              ))}
             </>
           )}
 

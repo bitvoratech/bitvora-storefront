@@ -15,6 +15,49 @@ export const PLAN_MONTHLY: Record<PlanId, number> = { starter: 5000, growth: 120
 export const PLAN_STORE_LIMIT: Record<PlanId, number> = { starter: 1, growth: 2, pro: 5 }
 export const PLAN_PRODUCT_LIMIT: Record<PlanId, number | null> = { starter: 30, growth: 150, pro: null }
 
+/** The plan a merchant is held to: no plan on record counts as Starter, as in the database. */
+export function effectivePlan(plan: string | null | undefined): PlanId {
+  return parsePlan(plan) ?? 'starter'
+}
+
+/** Whether a merchant on this plan with this many stores can open another. */
+export function underStoreLimit(plan: string | null | undefined, storeCount: number): boolean {
+  return storeCount < PLAN_STORE_LIMIT[effectivePlan(plan)]
+}
+
+/** Whether a store on this plan with this many products can add another. */
+export function underProductLimit(plan: string | null | undefined, productCount: number): boolean {
+  const limit = PLAN_PRODUCT_LIMIT[effectivePlan(plan)]
+  return limit === null || productCount < limit
+}
+
+/** The next plan up, or null on Pro. */
+export function nextPlan(plan: string | null | undefined): PlanId | null {
+  const i = PLAN_IDS.indexOf(effectivePlan(plan))
+  return PLAN_IDS[i + 1] ?? null
+}
+
+/** What the upgrade popup says when a merchant is at their store limit. */
+export function storeLimitMessage(plan: string | null | undefined): string {
+  const id = effectivePlan(plan)
+  const limit = PLAN_STORE_LIMIT[id]
+  const next = nextPlan(id)
+  const has = `Your ${PLAN_NAMES[id]} plan includes ${limit} store${limit === 1 ? '' : 's'}, and you're using ${limit === 1 ? 'it' : 'them all'}.`
+  return next
+    ? `${has} Upgrade to ${PLAN_NAMES[next]} to open up to ${PLAN_STORE_LIMIT[next]}.`
+    : `${has} Email help@bitvoratech.com if you need more.`
+}
+
+/** What the upgrade popup says when a store is at its product limit. */
+export function productLimitMessage(plan: string | null | undefined): string {
+  const id = effectivePlan(plan)
+  const next = nextPlan(id)
+  const nextLimit = next ? PLAN_PRODUCT_LIMIT[next] : null
+  return `Your ${PLAN_NAMES[id]} plan includes ${PLAN_PRODUCT_LIMIT[id]} products per store, and this store has reached it.${
+    next ? ` Upgrade to ${PLAN_NAMES[next]} for ${nextLimit === null ? 'unlimited products' : `${nextLimit} products per store`}.` : ''
+  }`
+}
+
 /** Short summary for the signup plan picker. */
 export const PLAN_SUMMARY: Record<PlanId, string> = {
   starter: '1 store · 30 products per store',

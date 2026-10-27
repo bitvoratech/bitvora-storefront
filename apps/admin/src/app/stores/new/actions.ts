@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../lib/supabase/server'
-import { PLAN_STORE_LIMIT, hasActivePlan, parsePlan } from '../../../lib/plans'
+import { hasActivePlan, storeLimitMessage, underStoreLimit } from '../../../lib/plans'
 import { canOpenStore } from '../../../lib/merchant-identity'
 
 // Top-level storefront paths a store slug must never shadow.
@@ -54,10 +54,9 @@ export async function createStore(prevState: { error?: string } | undefined, for
   if (!hasActivePlan(merchant)) {
     return { error: 'Pay for your plan under Plan & billing before creating a store.' }
   }
-  const plan = parsePlan(merchant.plan)
   const { count } = await supabase.from('stores').select('id', { count: 'exact', head: true }).eq('merchant_id', merchant.id)
-  if (plan && (count ?? 0) >= PLAN_STORE_LIMIT[plan]) {
-    return { error: `Your plan includes ${PLAN_STORE_LIMIT[plan]} store${PLAN_STORE_LIMIT[plan] === 1 ? '' : 's'}. Email help@bitvoratech.com to upgrade.` }
+  if (!underStoreLimit(merchant.plan, count ?? 0)) {
+    return { error: `${storeLimitMessage(merchant.plan)} Upgrade under Plan & billing.` }
   }
 
   const name = ((formData.get('name') as string) || '').trim()

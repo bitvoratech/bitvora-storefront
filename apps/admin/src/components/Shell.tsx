@@ -18,6 +18,7 @@ export function Shell({
   merchantName,
   avatarUrl,
   canCreateStore = false,
+  storeLimitMessage = null,
   sidebarCollapsed = false,
 }: {
   children: React.ReactNode
@@ -27,6 +28,7 @@ export function Shell({
   merchantName?: string | null
   avatarUrl?: string | null
   canCreateStore?: boolean
+  storeLimitMessage?: string | null
   sidebarCollapsed?: boolean
 }) {
   const pathname = usePathname()
@@ -45,6 +47,7 @@ export function Shell({
         avatarUrl={avatarUrl}
         staffRole={staffRole}
         canCreateStore={canCreateStore}
+        storeLimitMessage={storeLimitMessage}
         initialCollapsed={sidebarCollapsed}
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
