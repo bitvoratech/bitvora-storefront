@@ -26,6 +26,7 @@ export default async function OwnerOverviewPage() {
     .eq('is_admin', false)
   const { data: stores } = await admin.from('stores').select('id, is_published, created_at')
   const { data: allOrders } = await admin.from('orders').select('id, total, status, created_at')
+  const { count: transfersToCheck } = await admin.from('plan_transfers').select('id', { count: 'exact', head: true }).eq('status', 'pending')
   const { count: adminCount } = role === 'owner'
     ? await admin.from('merchants').select('id', { count: 'exact', head: true }).eq('is_admin', true)
     : { count: null }
@@ -46,6 +47,7 @@ export default async function OwnerOverviewPage() {
 
   const attention = [
     { href: '/owner/verifications', label: 'Verifications to review', value: awaitingReview, urgent: awaitingReview > 0 },
+    { href: '/owner/payments', label: 'Bank transfers to check', value: transfersToCheck ?? 0, urgent: (transfersToCheck ?? 0) > 0 },
     { href: '/owner/merchants', label: 'Suspended merchants', value: suspendedCount, urgent: false },
     ...(role === 'owner' ? [{ href: '/owner/admins', label: 'Admins', value: adminCount ?? 0, urgent: false }] : []),
   ]
@@ -105,7 +107,7 @@ export default async function OwnerOverviewPage() {
 
   return (
     <div>
-      <div className={`grid grid-cols-1 gap-3 mb-8 ${attention.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+      <div className={`grid grid-cols-1 gap-3 mb-8 ${attention.length >= 4 ? 'sm:grid-cols-2 lg:grid-cols-4' : attention.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
         {attention.map((item) => (
           <Link key={item.href} href={item.href} className="block rounded-[var(--radius-card)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600">
             <Card className={`p-4 h-full transition-colors hover:bg-sand-100/60 ${item.urgent ? 'ring-1 ring-marigold-500' : ''}`}>

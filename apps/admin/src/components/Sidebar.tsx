@@ -283,6 +283,7 @@ export function Sidebar({
               {/* The owner and admins run the platform; they don't have stores. */}
               <SimpleLink item={{ href: '/owner', icon: Home, label: 'Dashboard' }} active={isActive('/owner')} collapsed={collapsed} onClick={onClose} />
               <SimpleLink item={{ href: '/owner/verifications', icon: IconShieldCheck, label: 'Verifications' }} active={isActive('/owner/verifications')} collapsed={collapsed} onClick={onClose} />
+              <SimpleLink item={{ href: '/owner/payments', icon: IconCreditCard, label: 'Plan payments' }} active={isActive('/owner/payments')} collapsed={collapsed} onClick={onClose} />
               <SimpleLink item={{ href: '/owner/merchants', icon: Users, label: 'Merchants' }} active={pathname.startsWith('/owner/merchants')} collapsed={collapsed} onClick={onClose} />
               <SimpleLink item={{ href: '/owner/stores', icon: Storefront, label: 'Stores' }} active={isActive('/owner/stores')} collapsed={collapsed} onClick={onClose} />
               <SimpleLink item={{ href: '/owner/orders', icon: Receipt, label: 'Orders' }} active={isActive('/owner/orders')} collapsed={collapsed} onClick={onClose} />

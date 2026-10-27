@@ -14,7 +14,7 @@ export function PayForPlanCard({ plan, lapsed }: { plan: string | null; lapsed: 
         <p className="text-sm text-ink/50 mt-0.5">
           {lapsed
             ? 'Renew your plan to create new stores.'
-            : `${plan ? `You picked ${plan}. ` : ''}Pay with Paystack, then create your first store.`}
+            : `${plan ? `You picked ${plan}. ` : ''}Pay for it, then create your first store.`}
         </p>
       </div>
       <Link

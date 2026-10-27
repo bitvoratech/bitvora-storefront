@@ -10,14 +10,18 @@ export function PlanOptions({
   defaultInterval = 'monthly',
   hrefFor,
   discountPercent = 0,
+  onChange,
 }: {
   discountPercent?: number
+  onChange?: (plan: PlanId, interval: PlanInterval) => void
   defaultPlan?: PlanId | null
   defaultInterval?: PlanInterval
   hrefFor?: (plan: PlanId, interval: PlanInterval) => string
 }) {
-  const [interval, setInterval] = useState<PlanInterval>(defaultInterval)
-  const [plan, setPlan] = useState<PlanId>(defaultPlan ?? 'growth')
+  const [interval, setIntervalState] = useState<PlanInterval>(defaultInterval)
+  const [plan, setPlanState] = useState<PlanId>(defaultPlan ?? 'growth')
+  const setInterval = (i: PlanInterval) => { setIntervalState(i); onChange?.(plan, i) }
+  const setPlan = (p: PlanId) => { setPlanState(p); onChange?.(p, interval) }
   const off = firstPaymentDiscount(interval, discountPercent)
 
   return (
