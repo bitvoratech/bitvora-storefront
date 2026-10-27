@@ -3,7 +3,7 @@
 // says they've paid on /billing, and staff confirm it in Owner console → Plan
 // payments, which activates the plan for the paid period. Server-only.
 
-import { hasActivePlan } from './plans'
+import { PLAN_IDS, PLAN_MONTHLY, hasActivePlan, parsePlan, planPrice, type PlanId, type PlanInterval } from './plans'
 
 export type TransferAccount = { bankName: string; accountNumber: string; accountName: string }
 
@@ -55,4 +55,47 @@ export function isFirstPayment(merchant: PlanState | null | undefined): boolean 
 export function transferPeriodStart(merchant: PlanState | null | undefined, now = new Date()): Date {
   const end = merchant?.current_period_end ? new Date(merchant.current_period_end) : null
   return end && end > now && hasActivePlan(merchant, now.getTime()) ? end : now
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+// A billing period's length when pricing an upgrade, so a period already
+// extended by a renewal is charged for all of its remaining days.
+const PERIOD_DAYS: Record<PlanInterval, number> = { monthly: 30, annual: 365 }
+
+type UpgradeState = PlanState & { plan?: string | null }
+
+/** Plans above the merchant's current one, cheapest first. */
+export function higherPlans(plan: string | null | undefined): PlanId[] {
+  const current = parsePlan(plan)
+  if (!current) return []
+  return PLAN_IDS.filter((id) => PLAN_MONTHLY[id] > PLAN_MONTHLY[current])
+}
+
+/**
+ * Whether a merchant can upgrade mid-period by transfer: a plan paid by
+ * transfer with at least a day left and somewhere to go. Card subscriptions
+ * change plan through Paystack; comped plans through staff.
+ */
+export function canUpgradeByTransfer(merchant: UpgradeState | null | undefined, now = Date.now()): boolean {
+  if (merchant?.subscription_status !== 'active' || merchant.paystack_subscription_code) return false
+  if (higherPlans(merchant.plan).length === 0) return false
+  return Date.parse(merchant.current_period_end ?? '') - now >= DAY_MS
+}
+
+/**
+ * ₦ to move from one plan to a higher one for the rest of the paid period:
+ * the price difference for the days left, rounded up to the next ₦100.
+ * 0 when it isn't an upgrade or nothing is left.
+ */
+export function upgradePrice(
+  from: PlanId,
+  to: PlanId,
+  interval: PlanInterval,
+  periodEnd: string | null | undefined,
+  now = Date.now(),
+): number {
+  const diff = planPrice(to, interval) - planPrice(from, interval)
+  const daysLeft = Math.ceil((Date.parse(periodEnd ?? '') - now) / DAY_MS)
+  if (!(diff > 0) || !(daysLeft > 0)) return 0
+  return Math.ceil((diff * daysLeft) / PERIOD_DAYS[interval] / 100) * 100
 }
