@@ -6,6 +6,9 @@ import { sendSms } from '../../lib/termii'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { requireStaff } from '../../lib/auth/require-owner'
 import { maskNin } from '../../lib/merchant-identity'
+import { formatNaira, parseInterval } from '../../lib/plans'
+import { periodEnd } from '../../lib/paystack'
+import { transferPeriodStart } from '../../lib/bank-transfer'
 
 export async function toggleMerchantSuspension(merchantId: string, suspend: boolean) {
   const auth = await requireStaff()
@@ -117,4 +120,82 @@ export async function reviewMerchantVerification(merchantId: string, decision: '
   revalidatePath('/owner/verifications')
   revalidatePath('/owner/merchants')
   revalidatePath(`/owner/merchants/${merchantId}`)
+}
+
+// A merchant said they paid for their plan by bank transfer. Staff check the
+// bank account outside the app, then confirm (plan switches on for the paid
+// period) or reject (the merchant sees why and can try again).
+export async function reviewPlanTransfer(transferId: string, decision: 'confirm' | 'reject', note?: string) {
+  const auth = await requireStaff()
+  if (!auth.ok) return { error: auth.error }
+
+  if (typeof transferId !== 'string' || (decision !== 'confirm' && decision !== 'reject')) {
+    return { error: 'Invalid request' }
+  }
+  const reason = (note ?? '').trim().slice(0, 500)
+  if (decision === 'reject' && !reason) {
+    return { error: 'Say why, so the merchant knows what to fix.' }
+  }
+
+  const admin = createAdminClient()
+  const now = new Date()
+  // Claiming the pending row first stops two staff confirming one transfer twice.
+  const { data: claimed, error } = await admin
+    .from('plan_transfers')
+    .update({
+      status: decision === 'confirm' ? 'confirmed' : 'rejected',
+      review_note: reason || null,
+      reviewed_at: now.toISOString(),
+      reviewed_by: auth.merchantId,
+    })
+    .eq('id', transferId)
+    .eq('status', 'pending')
+    .select('id, merchant_id, plan, plan_interval, amount')
+  if (error) return { error: error.message }
+  const transfer = claimed?.[0]
+  if (!transfer) return { error: 'This transfer has already been handled.' }
+
+  const { data: merchant } = await admin
+    .from('merchants')
+    .select('phone, subscription_status, current_period_end, paystack_subscription_code')
+    .eq('id', transfer.merchant_id)
+    .maybeSingle()
+
+  let paidUntil: Date | null = null
+  if (decision === 'confirm') {
+    const interval = parseInterval(transfer.plan_interval) ?? 'monthly'
+    paidUntil = periodEnd(transferPeriodStart(merchant, now), interval)
+    const { error: planError } = await admin
+      .from('merchants')
+      .update({
+        plan: transfer.plan,
+        plan_interval: interval,
+        // A comped merchant stays comped; their paid period is still recorded.
+        ...(merchant?.subscription_status === 'comped' ? {} : { subscription_status: 'active' }),
+        current_period_end: paidUntil.toISOString(),
+        // Any old card subscription has lapsed; its events mustn't touch this plan.
+        paystack_subscription_code: null,
+      })
+      .eq('id', transfer.merchant_id)
+    if (planError) {
+      await admin.from('plan_transfers').update({ status: 'pending', reviewed_at: null, reviewed_by: null }).eq('id', transfer.id)
+      return { error: planError.message }
+    }
+  }
+
+  // Best-effort, like verification decisions: the merchant also sees it on /billing.
+  if (merchant?.phone) {
+    const message = paidUntil
+      ? `Bitvora: We got your transfer of ${formatNaira(transfer.amount)}. Your plan is active until ${paidUntil.toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}.`
+      : `Bitvora: We couldn't confirm your transfer of ${formatNaira(transfer.amount)}: ${reason.slice(0, 200).replace(/([^.!?])$/, '$1.')}`
+    try {
+      await sendSms(merchant.phone, message)
+    } catch (e) {
+      console.error('plan transfer SMS failed', e)
+    }
+  }
+
+  revalidatePath('/owner/payments')
+  revalidatePath('/owner')
+  revalidatePath(`/owner/merchants/${transfer.merchant_id}`)
 }
