@@ -35,6 +35,16 @@ describe('prices', () => {
     expect(ANNUAL_MONTHS).toBe(site.ANNUAL_MONTHS)
     expect(PLAN_IDS).toEqual(site.PLANS.map((p) => p.id))
   })
+
+  it('show the same beta discount the checkout charges', async () => {
+    const site = await import('../../../website/src/lib/plans')
+    for (const v of ['50', '0', '', 'abc', '100', '12.5']) {
+      expect(site.planDiscountPercent(v)).toBe(planDiscountPercent(v))
+    }
+    for (const p of site.PLANS) {
+      expect(site.discountedMonthly(p, 50)).toBe(discountedPrice(p.id, 'monthly', 50))
+    }
+  })
 })
 
 describe('hasActivePlan', () => {

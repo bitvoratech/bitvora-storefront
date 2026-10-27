@@ -80,6 +80,22 @@ export const ANNUAL_MONTHS = 10
 
 export const ADMIN_URL = process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://app.bitvoratech.com'
 
+/**
+ * Beta offer shown on the pricing page: percent off the first month of a
+ * monthly plan. Baked in at build time from NEXT_PUBLIC_PLAN_DISCOUNT_PERCENT,
+ * which should match PLAN_DISCOUNT_PERCENT in the admin app (what Paystack
+ * actually charges). 0 when unset or invalid, which hides the offer.
+ */
+export function planDiscountPercent(value = process.env.NEXT_PUBLIC_PLAN_DISCOUNT_PERCENT): number {
+  const n = Number(value)
+  return Number.isInteger(n) && n > 0 && n < 100 ? n : 0
+}
+
+/** First-month price after a percent discount, rounded to the naira. */
+export function discountedMonthly(plan: Plan, percent: number) {
+  return Math.round((plan.monthly * (100 - percent)) / 100)
+}
+
 export function formatNaira(amount: number) {
   return `₦${amount.toLocaleString()}`
 }
