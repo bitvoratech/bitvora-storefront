@@ -9,6 +9,7 @@ import { lineKey, useCart } from '../../../lib/cart-store'
 import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 import { CopyButton } from '../../../components/CopyButton'
 import { VerifiedBadge } from '../../../components/VerifiedBadge'
+import { CheckoutOptionsSkeleton, CheckoutSkeleton } from '../../../components/Skeleton'
 
 type DeliveryMethod = 'pickup' | 'delivery'
 type PaymentMethod = 'bank_transfer' | 'pay_on_delivery'
@@ -163,7 +164,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
     router.push(`/${slug}/order/${result.orderId}`)
   }
 
-  if (!mounted) return null
+  if (!mounted) return <CheckoutSkeleton />
 
   if (items.length === 0) {
     return (
@@ -211,6 +212,10 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
             <label htmlFor="checkout-email" className="block text-sm font-medium mb-1.5">Email <span className="font-normal text-[#737373]">(optional)</span></label>
             <input id="checkout-email" type="email" autoComplete="email" maxLength={200} value={email} onChange={(e) => setEmail(e.target.value)} className={inputClass} />
           </div>
+
+          {/* The store's delivery and payment settings arrive after the page
+              does; hold their place instead of showing nothing. */}
+          {!store && !error && <CheckoutOptionsSkeleton />}
 
           {(offersDelivery || offersPickup) && (
             <div>
