@@ -6,6 +6,7 @@ import { PackageBox, ArrowLeft } from 'switch-icons'
 import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
 import { lineKey, lineLimit, useCart } from '../../../lib/cart-store'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
+import { CartSkeleton } from '../../../components/Skeleton'
 
 export default function CartPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = use(params)
@@ -17,7 +18,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
     () => true,
     () => false,
   )
-  if (!mounted) return <div className="min-h-[40vh]" aria-busy="true" />
+  if (!mounted) return <CartSkeleton />
 
   return (
     <div>
