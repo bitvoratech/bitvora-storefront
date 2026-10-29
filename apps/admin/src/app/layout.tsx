@@ -46,6 +46,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <body className="antialiased bg-paper text-ink">
         <Shell
         userEmail={user?.email ?? null}
+        merchantId={merchant?.id ?? null}
         staffRole={merchant?.is_owner ? 'owner' : merchant?.is_admin ? 'admin' : null}
         merchantName={merchant?.full_name}
         avatarUrl={merchant?.avatar_url}
