@@ -40,11 +40,31 @@ export function StatusSelector({
   return (
     <div>
       {next && (
-        <Button onClick={() => handleChange(next.status)} disabled={isPending} className="mb-3">
-          {isPending ? 'Updating...' : next.label}
-        </Button>
+        <>
+          <div className="hidden sm:block mb-3">
+            <Button onClick={() => handleChange(next.status)} disabled={isPending} className="w-full">
+              {isPending ? 'Updating...' : next.label}
+            </Button>
+          </div>
+          {/* On a phone the next step also stays pinned to the bottom of the
+              screen, so it's in reach after scrolling through the items. */}
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-10 border-t border-sand-200 bg-white/95 dark:bg-sand-100/95 backdrop-blur px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <Button onClick={() => handleChange(next.status)} disabled={isPending} className="w-full py-3">
+              {isPending ? 'Updating...' : next.label}
+            </Button>
+          </div>
+        </>
       )}
-      <p className="text-xs text-ink/50 mb-1.5">{next ? 'Or set the status directly:' : 'Status'}</p>
+      <p className="text-xs text-ink/50 mb-1.5">
+        {next ? (
+          <>
+            <span className="sm:hidden">Tap a status to change it:</span>
+            <span className="hidden sm:inline">Or set the status directly:</span>
+          </>
+        ) : (
+          'Tap a status to change it:'
+        )}
+      </p>
       <div className="flex flex-wrap gap-2">
         {STATUSES.map((status) => (
           <button

@@ -33,18 +33,18 @@ export function ProductForm({ storeId }: { storeId: string }) {
       <div className="grid grid-cols-2 gap-3">
         <div>
           <Label htmlFor="price">Price (₦)</Label>
-          <Input id="price" name="price" type="number" step="0.01" min="0" required className="font-mono" />
+          <Input id="price" name="price" type="number" inputMode="decimal" step="0.01" min="0" required className="font-mono" />
         </div>
         <div>
           <Label htmlFor="stock_quantity">Stock</Label>
           {/* Starting at 0 marked every new product sold out; make the count a deliberate choice. */}
-          <Input id="stock_quantity" name="stock_quantity" type="number" min="0" step="1" required placeholder="How many?" className="font-mono" />
+          <Input id="stock_quantity" name="stock_quantity" type="number" inputMode="numeric" min="0" step="1" required placeholder="How many?" className="font-mono" />
         </div>
       </div>
       <SizesInput />
       <div>
         <Label htmlFor="compare_at_price">Was price (₦) <span className="font-normal text-ink/40">— optional</span></Label>
-        <Input id="compare_at_price" name="compare_at_price" type="number" step="0.01" min="0" placeholder="Shows the price as a discount" className="font-mono" />
+        <Input id="compare_at_price" name="compare_at_price" type="number" inputMode="decimal" step="0.01" min="0" placeholder="Shows the price as a discount" className="font-mono" />
       </div>
       <div>
         <Label htmlFor="category">Category</Label>
