@@ -29,6 +29,8 @@ export default async function ProductsPage({ params }: { params: Promise<{ id: s
   const waitingByProduct: Record<string, number> = {}
   for (const w of waiting ?? []) waitingByProduct[w.product_id] = (waitingByProduct[w.product_id] ?? 0) + 1
 
+  const soldOut = (products ?? []).filter((p) => p.stock_quantity <= 0).length
+
   return (
     <div className="max-w-5xl">
       <div className="flex flex-wrap justify-between items-center gap-3 mb-1">
@@ -45,8 +47,9 @@ export default async function ProductsPage({ params }: { params: Promise<{ id: s
           </Button>
         </UpgradeGate>
       </div>
-      <p className="text-ink/50 text-sm mb-6">
+      <p className="text-ink/50 text-sm mb-4 sm:mb-6">
         {products?.length ?? 0} product{products?.length === 1 ? '' : 's'}
+        {soldOut > 0 && <span className="text-pepper-600"> · {soldOut} sold out</span>}
       </p>
 
       <ProductsTable
