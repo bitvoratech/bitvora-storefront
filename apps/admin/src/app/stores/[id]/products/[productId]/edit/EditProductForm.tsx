@@ -4,6 +4,7 @@ import { useActionState } from 'react'
 import { updateProduct } from '../../actions'
 import { ImageUploader } from '../../ImageUploader'
 import { SizesInput } from '../../SizesInput'
+import { StockInput } from '../../StockInput'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Textarea } from '@bitvora/ui/src/Textarea'
@@ -21,6 +22,8 @@ type Product = {
   is_active: boolean
   images: string[] | null
   sizes: string[] | null
+  track_stock?: boolean | null
+  size_prices?: Record<string, number> | null
 }
 
 export function EditProductForm({ product, storeId }: { product: Product; storeId: string }) {
@@ -43,17 +46,14 @@ export function EditProductForm({ product, storeId }: { product: Product; storeI
         <Label htmlFor="description">Description</Label>
         <Textarea id="description" name="description" rows={3} defaultValue={product.description ?? ''} />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 items-start">
         <div>
           <Label htmlFor="price">Price (₦)</Label>
           <Input id="price" name="price" type="number" inputMode="decimal" step="0.01" min="0" required defaultValue={product.price} className="font-mono" />
         </div>
-        <div>
-          <Label htmlFor="stock_quantity">Stock</Label>
-          <Input id="stock_quantity" name="stock_quantity" type="number" inputMode="numeric" min="0" defaultValue={product.stock_quantity} className="font-mono" />
-        </div>
+        <StockInput initialStock={product.stock_quantity} initialTrackStock={product.track_stock ?? true} />
       </div>
-      <SizesInput initialSizes={product.sizes ?? []} />
+      <SizesInput initialSizes={product.sizes ?? []} initialSizePrices={product.size_prices} />
       <div>
         <Label htmlFor="compare_at_price">Was price (₦) <span className="font-normal text-ink/40">— optional</span></Label>
         <Input id="compare_at_price" name="compare_at_price" type="number" inputMode="decimal" step="0.01" min="0" placeholder="Shows the price as a discount" className="font-mono" defaultValue={product.compare_at_price ?? ''} />

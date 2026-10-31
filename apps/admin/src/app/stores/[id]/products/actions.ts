@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '../../../../lib/supabase/server'
-import { normalizeSizes } from '../../../../lib/product-sizes'
+import { normalizeSizePrices, normalizeSizes } from '../../../../lib/product-sizes'
 import { productLimitMessage, underProductLimit } from '../../../../lib/plans'
 import { storePlan } from '../../../../lib/store-plan'
 
@@ -20,7 +20,7 @@ function slugify(name: string) {
 const MAX_IMAGES = 8
 
 type ParsedProduct =
-  | { ok: true; name: string; description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number; category: string | null; images: string[]; sizes: string[] }
+  | { ok: true; name: string; description: string | null; price: number; compareAtPrice: number | null; stockQuantity: number; trackStock: boolean; category: string | null; images: string[]; sizes: string[]; sizePrices: Record<string, number> }
   | { ok: false; error: string }
 
 // Server actions are public endpoints: never trust the form, even though the
@@ -31,7 +31,9 @@ function parseProductForm(formData: FormData): ParsedProduct {
   const price = Number(formData.get('price'))
   const compareRaw = ((formData.get('compare_at_price') as string) || '').trim()
   const compareAtPrice = compareRaw ? Number(compareRaw) : null
-  const stockRaw = Number(formData.get('stock_quantity') || 0)
+  // Unticked "Track stock" means made to order / always available.
+  const trackStock = formData.get('track_stock') !== 'off'
+  const stockRaw = trackStock ? Number(formData.get('stock_quantity') || 0) : 0
   const category = ((formData.get('category') as string) || '').trim() || null
 
   if (name.length < 2 || name.length > 120) {
@@ -76,6 +78,15 @@ function parseProductForm(formData: FormData): ParsedProduct {
   const sizes = normalizeSizes(sizesRaw)
   if (!sizes.ok) return { ok: false, error: sizes.error }
 
+  let sizePricesRaw: unknown = {}
+  try {
+    sizePricesRaw = JSON.parse((formData.get('size_prices') as string | null) || '{}')
+  } catch {
+    return { ok: false, error: 'Invalid size prices.' }
+  }
+  const sizePrices = normalizeSizePrices(sizePricesRaw, sizes.sizes)
+  if (!sizePrices.ok) return { ok: false, error: sizePrices.error }
+
   return {
     ok: true,
     name,
@@ -83,9 +94,11 @@ function parseProductForm(formData: FormData): ParsedProduct {
     price: Math.round(price * 100) / 100,
     compareAtPrice: compareAtPrice === null ? null : Math.round(compareAtPrice * 100) / 100,
     stockQuantity: stockRaw,
+    trackStock,
     category,
     images,
     sizes: sizes.sizes,
+    sizePrices: sizePrices.sizePrices,
   }
 }
 
@@ -94,7 +107,7 @@ export async function createProduct(storeId: string, prevState: { error?: string
 
   const parsed = parseProductForm(formData)
   if (!parsed.ok) return { error: parsed.error }
-  const { name, description, price, compareAtPrice, stockQuantity, category, images, sizes } = parsed
+  const { name, description, price, compareAtPrice, stockQuantity, trackStock, category, images, sizes, sizePrices } = parsed
 
   const baseSlug = slugify(name).replace(/^-+|-+$/g, '').slice(0, 80) || 'product'
   let slug = baseSlug
@@ -128,9 +141,11 @@ export async function createProduct(storeId: string, prevState: { error?: string
     price,
     compare_at_price: compareAtPrice,
     stock_quantity: stockQuantity,
+    track_stock: trackStock,
     category,
     images,
     sizes,
+    size_prices: sizePrices,
   })
 
   if (error) {
@@ -147,7 +162,7 @@ export async function updateProduct(productId: string, storeId: string, prevStat
 
   const parsed = parseProductForm(formData)
   if (!parsed.ok) return { error: parsed.error }
-  const { name, description, price, compareAtPrice, stockQuantity, category, images, sizes } = parsed
+  const { name, description, price, compareAtPrice, stockQuantity, trackStock, category, images, sizes, sizePrices } = parsed
   const isActive = formData.get('is_active') === 'on'
 
   const { error } = await supabase
@@ -158,10 +173,12 @@ export async function updateProduct(productId: string, storeId: string, prevStat
       price,
       compare_at_price: compareAtPrice,
       stock_quantity: stockQuantity,
+      track_stock: trackStock,
       category,
       is_active: isActive,
       images,
       sizes,
+      size_prices: sizePrices,
     })
     .eq('id', productId)
     .eq('store_id', storeId)

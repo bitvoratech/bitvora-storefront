@@ -8,8 +8,19 @@ import { MAX_SIZES, MAX_SIZE_LENGTH, splitSizes } from '../../../../lib/product-
 
 // Free-form on purpose: a doll seller, a hair seller and a shoe seller all
 // measure differently, so the merchant types whatever their sizes are.
-export function SizesInput({ initialSizes = [] }: { initialSizes?: string[] }) {
+// Each size can have its own price (a bigger door costs more); a blank
+// price means the size sells at the product's main price.
+export function SizesInput({
+  initialSizes = [],
+  initialSizePrices = {},
+}: {
+  initialSizes?: string[]
+  initialSizePrices?: Record<string, number> | null
+}) {
   const [sizes, setSizes] = useState<string[]>(initialSizes)
+  const [prices, setPrices] = useState<Record<string, string>>(() =>
+    Object.fromEntries(Object.entries(initialSizePrices ?? {}).map(([size, price]) => [size, String(price)])),
+  )
   const [draft, setDraft] = useState('')
 
   function add() {
@@ -25,6 +36,11 @@ export function SizesInput({ initialSizes = [] }: { initialSizes?: string[] }) {
   return (
     <div>
       <input type="hidden" name="sizes" value={JSON.stringify(sizes)} />
+      <input
+        type="hidden"
+        name="size_prices"
+        value={JSON.stringify(Object.fromEntries(sizes.filter((s) => prices[s]?.trim()).map((s) => [s, prices[s].trim()])))}
+      />
       <Label htmlFor="size-draft">Sizes <span className="font-normal text-ink/40">— optional</span></Label>
       <div className="flex gap-2">
         <Input
@@ -58,21 +74,37 @@ export function SizesInput({ initialSizes = [] }: { initialSizes?: string[] }) {
       </p>
 
       {sizes.length > 0 && (
-        <ul className="flex flex-wrap gap-2 mt-3" aria-label="Sizes added">
-          {sizes.map((size) => (
-            <li key={size} className="inline-flex items-center gap-1 rounded-full bg-sand-100 pl-3 pr-1 py-1 text-sm">
-              {size}
-              <button
-                type="button"
-                onClick={() => setSizes((prev) => prev.filter((s) => s !== size))}
-                aria-label={`Remove size ${size}`}
-                className="w-6 h-6 rounded-full flex items-center justify-center text-ink/50 hover:bg-pepper-50 hover:text-pepper-600"
-              >
-                <IconX className="w-3 h-3" />
-              </button>
-            </li>
-          ))}
-        </ul>
+        <>
+          <p className="text-xs text-ink/50 mt-3 mb-1.5">
+            Different price for a size? Type it in. Leave blank to use the main price.
+          </p>
+          <ul className="space-y-2" aria-label="Sizes added">
+            {sizes.map((size) => (
+              <li key={size} className="flex items-center gap-2">
+                <span className="flex-1 min-w-0 truncate rounded-full bg-sand-100 px-3 py-1.5 text-sm">{size}</span>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  step="0.01"
+                  min="0"
+                  aria-label={`Price for size ${size} (₦)`}
+                  placeholder="Main price"
+                  value={prices[size] ?? ''}
+                  onChange={(e) => setPrices((prev) => ({ ...prev, [size]: e.target.value }))}
+                  className="font-mono !w-32 shrink-0"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSizes((prev) => prev.filter((s) => s !== size))}
+                  aria-label={`Remove size ${size}`}
+                  className="w-8 h-8 shrink-0 rounded-full flex items-center justify-center text-ink/50 hover:bg-pepper-50 hover:text-pepper-600"
+                >
+                  <IconX className="w-4 h-4" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        </>
       )}
     </div>
   )

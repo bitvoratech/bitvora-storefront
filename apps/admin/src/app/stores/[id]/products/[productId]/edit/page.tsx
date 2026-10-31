@@ -41,7 +41,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         productName={product.name}
         storeName={store?.name ?? 'our store'}
         productUrl={storeUrl ? `${storeUrl}/product/${product.slug}` : null}
-        inStock={(product.stock_quantity ?? 0) > 0}
+        inStock={product.track_stock === false || (product.stock_quantity ?? 0) > 0}
         requests={restockRequests ?? []}
       />
     </div>

@@ -9,7 +9,8 @@ export function AddToCartButton({
   slug,
   productId,
   name,
-  price,
+  price: basePrice,
+  sizePrices = {},
   image,
   stock,
   sizes,
@@ -21,8 +22,11 @@ export function AddToCartButton({
   productId: string
   name: string
   price: number
+  /** Prices the merchant set for some sizes; other sizes use `price`. */
+  sizePrices?: Record<string, number>
   image: string | null
-  stock: number
+  /** Units left, or null when the merchant doesn't count stock (made to order). */
+  stock: number | null
   /** The merchant's own sizes for this product; empty when it has none. */
   sizes: string[]
   accent: string
@@ -37,7 +41,13 @@ export function AddToCartButton({
   const [sizeMissing, setSizeMissing] = useState(false)
   const sizesRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
-  const maxQuantity = Math.max(1, Math.min(stock, MAX_ITEM_QUANTITY))
+  const maxQuantity = Math.max(1, Math.min(stock ?? MAX_ITEM_QUANTITY, MAX_ITEM_QUANTITY))
+  const priceOf = (s: string | null) => {
+    const own = s ? Number(sizePrices[s]) : NaN
+    return Number.isFinite(own) && own > 0 ? own : basePrice
+  }
+  const price = priceOf(size)
+  const pricesVary = sizes.some((s) => priceOf(s) !== basePrice)
 
   // Phones: once the main buttons scroll out of view, a sticky bottom bar
   // keeps price + Buy now within thumb reach.
@@ -50,7 +60,7 @@ export function AddToCartButton({
     observer.observe(el)
     return () => observer.disconnect()
   }, [])
-  const item = { productId, name, price, image, maxQuantity: stock, size: size ?? undefined }
+  const item = { productId, name, price, image, maxQuantity: stock ?? undefined, size: size ?? undefined }
 
   // A product with sizes can't go in the cart until one is picked.
   function sizeReady() {
@@ -73,7 +83,7 @@ export function AddToCartButton({
     router.push(`/${slug}/checkout`)
   }
 
-  if (stock <= 0) {
+  if (stock !== null && stock <= 0) {
     return (
       <button disabled className="w-full rounded-lg px-4 py-3.5 text-sm font-medium bg-[#f5f5f5] text-[#737373] cursor-not-allowed">
         Sold out
@@ -112,6 +122,7 @@ export function AddToCartButton({
         <div ref={sizesRef} className="mb-3">
           <p className="text-sm text-[#525252] mb-2" id="size-label">
             Size{size && <span className="text-[#171717] font-medium">: {size}</span>}
+            {size && pricesVary && <span className="font-mono text-[#171717] font-medium"> · ₦{price.toLocaleString()}</span>}
           </p>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="size-label">
             {sizes.map((s) => {
@@ -132,6 +143,9 @@ export function AddToCartButton({
                   style={selected ? { borderColor: accent, boxShadow: `inset 0 0 0 1px ${accent}` } : undefined}
                 >
                   {s}
+                  {pricesVary && (
+                    <span className="block font-mono text-xs text-[#737373]">₦{priceOf(s).toLocaleString()}</span>
+                  )}
                 </button>
               )
             })}

@@ -27,13 +27,15 @@ type Product = {
   images: string[] | null
   stock_quantity: number | null
   sizes: string[] | null
+  track_stock: boolean | null
+  size_prices: Record<string, number> | null
 }
 
 const getProduct = cache(async (storeId: string, productSlug: string) => {
   const supabase = await createClient()
   const { data } = await supabase
     .from('products')
-    .select('id, name, description, price, compare_at_price, images, stock_quantity, sizes')
+    .select('id, name, description, price, compare_at_price, images, stock_quantity, sizes, track_stock, size_prices')
     .eq('store_id', storeId)
     .eq('slug', productSlug)
     .eq('is_active', true)
@@ -85,7 +87,18 @@ export default async function ProductPage({
   if (!product) notFound()
 
   const accent = store.palette?.primary || '#171717'
+  // Made-to-order products never sell out.
+  const tracked = product.track_stock !== false
   const stock = product.stock_quantity ?? 0
+  const soldOut = tracked && stock <= 0
+  // With a price per size, the headline shows the cheapest one as "From".
+  const sizePrices = product.size_prices ?? {}
+  const sizeAmounts = (product.sizes ?? []).map((s) => {
+    const own = Number(sizePrices[s])
+    return Number.isFinite(own) && own > 0 ? own : Number(product.price)
+  })
+  const fromPrice = sizeAmounts.length ? Math.min(...sizeAmounts) : Number(product.price)
+  const pricesVary = sizeAmounts.some((p) => p !== Number(product.price))
 
   // Real units sold in the last 7 days (cancelled orders excluded).
   const supabase = await createClient()
@@ -121,10 +134,21 @@ export default async function ProductPage({
 
         <div>
           <h1 className="text-2xl sm:text-3xl font-semibold mb-2 leading-tight">{product.name}</h1>
-          <PriceTag price={product.price} compareAt={product.compare_at_price} size="lg" className="mb-4" />
+          {pricesVary ? (
+            <p className="mb-4 flex items-baseline gap-2">
+              <span className="text-sm text-[#737373]">From</span>
+              <span className="font-mono font-semibold text-2xl text-[#171717]">₦{fromPrice.toLocaleString()}</span>
+            </p>
+          ) : (
+            <PriceTag price={product.price} compareAt={product.compare_at_price} size="lg" className="mb-4" />
+          )}
 
           <div className="mb-5 flex flex-wrap items-center gap-2">
-            {stock <= 0 ? (
+            {!tracked ? (
+              <span className="inline-flex items-center gap-1.5 text-sm text-green-700 bg-green-50 rounded-full px-3 py-1">
+                Available to order
+              </span>
+            ) : stock <= 0 ? (
               <span className="inline-flex items-center gap-1.5 text-sm text-red-700 bg-red-50 rounded-full px-3 py-1">
                 Sold out
               </span>
@@ -154,14 +178,15 @@ export default async function ProductPage({
             name={product.name}
             price={Number(product.price)}
             image={product.images?.[0] ?? null}
-            stock={stock}
+            stock={tracked ? stock : null}
             sizes={product.sizes ?? []}
+            sizePrices={sizePrices}
             accent={accent}
             storeName={store.name}
             whatsappNumber={whatsappNumber}
           />
 
-          {stock <= 0 && <RestockForm slug={slug} productId={product.id} storeName={store.name} accent={accent} />}
+          {soldOut && <RestockForm slug={slug} productId={product.id} storeName={store.name} accent={accent} />}
 
           {store.is_verified && (
             <div className="mt-6 rounded-lg bg-[#fafafa] px-3 py-2.5">
