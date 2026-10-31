@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
-import { IconPlus, IconTrash, IconTruckDelivery, IconBuildingStore, IconCash } from '@tabler/icons-react'
+import { IconBuildingStore, IconCash, IconCheck, IconPlus, IconTrash, IconTruckDelivery } from '@tabler/icons-react'
 import { Card } from '@bitvora/ui/src/Card'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
@@ -284,7 +284,7 @@ export function DeliverySettingsForm({
 
       <div className="flex items-center gap-3">
         <Button onClick={save} disabled={isPending} className="min-w-36">
-          {isPending ? 'Saving…' : saved ? 'Saved ✓' : 'Save changes'}
+          {isPending ? 'Saving…' : saved ? <span className="inline-flex items-center gap-1">Saved <IconCheck className="w-4 h-4" /></span> : 'Save changes'}
         </Button>
         {saved && <span className="text-sm text-palm-600" aria-live="polite">Your checkout is updated.</span>}
       </div>

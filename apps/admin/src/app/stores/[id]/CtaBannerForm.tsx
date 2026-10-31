@@ -1,5 +1,6 @@
 'use client'
 
+import { IconCheck } from '@tabler/icons-react'
 import { useTransition, useState } from 'react'
 
 import { Label } from '@bitvora/ui/src/Label'
@@ -45,7 +46,7 @@ export function CtaBannerForm({
         <HeroImageUploader initialUrl={initialImageUrl} />
       </div>
       <Button type="submit" disabled={isPending} variant="secondary">
-        {isPending ? 'Saving...' : saved ? 'Saved ✓' : 'Save'}
+        {isPending ? 'Saving...' : saved ? <span className="inline-flex items-center gap-1">Saved <IconCheck className="w-4 h-4" /></span> : 'Save'}
       </Button>
     </form>
   )

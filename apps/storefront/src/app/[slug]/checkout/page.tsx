@@ -3,7 +3,7 @@
 import { use, useEffect, useState, useSyncExternalStore } from 'react'
 import { useRouter } from 'next/navigation'
 import { createOrder } from './actions'
-import { ArrowLeft, AlertTriangle, Upload, Check } from 'switch-icons'
+import { IconAlertTriangle, IconArrowLeft, IconCheck, IconUpload } from '@tabler/icons-react'
 import Link from 'next/link'
 import { lineKey, useCart } from '../../../lib/cart-store'
 import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
@@ -178,7 +178,7 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
   return (
     <div>
       <Link href={`/${slug}/cart`} className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717] mb-6">
-        <ArrowLeft className="w-4 h-4" />
+        <IconArrowLeft className="w-4 h-4" />
         Back to cart
       </Link>
 
@@ -188,14 +188,14 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
         <form onSubmit={handleSubmit} className="sm:col-span-2 space-y-5">
           {error && (
             <div role="alert" className="flex items-start gap-2 bg-red-50 text-red-700 text-sm rounded-lg px-3 py-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               {error}
             </div>
           )}
 
           {store && !canCheckout && (
             <div role="alert" className="flex items-start gap-2 bg-amber-50 text-amber-900 text-sm rounded-lg px-3 py-2">
-              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+              <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               This store hasn&apos;t finished setting up checkout yet. Please contact the seller to order.
             </div>
           )}
@@ -318,12 +318,12 @@ export default function CheckoutPage({ params }: { params: Promise<{ slug: strin
               <div className="pt-2">
                 {proofUrl ? (
                   <div className="flex items-center gap-2 bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2.5">
-                    <Check className="w-4 h-4 shrink-0" />
+                    <IconCheck className="w-4 h-4 shrink-0" />
                     Payment proof uploaded
                   </div>
                 ) : (
                   <label className="flex items-center justify-center gap-2 border border-dashed border-[#e5e5e5] rounded-lg px-3 py-3 text-sm text-[#737373] cursor-pointer hover:border-[#171717] hover:text-[#171717] transition-colors">
-                    <Upload className="w-4 h-4" />
+                    <IconUpload className="w-4 h-4" />
                     {uploadingProof ? 'Uploading…' : 'Upload a screenshot of your transfer (required)'}
                     <input type="file" accept="image/*" onChange={handleProofUpload} disabled={uploadingProof} className="hidden" />
                   </label>

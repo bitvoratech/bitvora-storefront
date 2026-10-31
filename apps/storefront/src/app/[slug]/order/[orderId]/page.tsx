@@ -1,11 +1,10 @@
 import { notFound } from 'next/navigation'
-import { Check } from 'switch-icons'
+import { IconBrandWhatsapp, IconCheck } from '@tabler/icons-react'
 import Link from 'next/link'
 import { createClient } from '../../../../lib/supabase/server';
 import { PaymentProofUpload } from './PaymentProofUpload'
 import { getPublishedStore, whatsappLink } from '../../../../lib/store'
 import { CopyButton } from '../../../../components/CopyButton'
-import { BrandIcon } from '../../../../components/BrandIcon'
 
 export const metadata = { title: 'Order placed', robots: { index: false } }
 
@@ -43,7 +42,7 @@ export default async function OrderConfirmationPage({
   return (
     <div className="max-w-lg mx-auto text-center py-10">
       <div className="w-14 h-14 rounded-full bg-green-50 flex items-center justify-center mx-auto mb-5">
-        <Check className="w-7 h-7 text-green-600" />
+        <IconCheck className="w-7 h-7 text-green-600" />
       </div>
       <h1 className="text-2xl font-semibold mb-2">Order placed!</h1>
       <p className="text-[#737373] mb-8">
@@ -103,7 +102,7 @@ export default async function OrderConfirmationPage({
           rel="noopener noreferrer"
           className="mt-5 flex items-center justify-center gap-2 w-full rounded-lg border border-[#e5e5e5] px-4 py-3 text-sm font-medium hover:bg-[#fafafa] transition-colors"
         >
-          <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+          <IconBrandWhatsapp className="w-4 h-4" />
           Message the seller on WhatsApp
         </a>
       )}

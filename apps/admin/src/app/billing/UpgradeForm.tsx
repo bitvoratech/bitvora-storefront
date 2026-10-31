@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { Button } from '@bitvora/ui/src/Button'
-import { AlertTriangle } from 'switch-icons'
+import { IconAlertTriangle } from '@tabler/icons-react'
 import { submitUpgrade } from './actions'
 import { PLAN_NAMES, PLAN_SUMMARY, formatNaira, type PlanId } from '../../lib/plans'
 import type { TransferOption } from './CheckoutForm'
@@ -20,7 +20,7 @@ export function UpgradeForm({ choices, transfer, paidUntil }: { choices: Upgrade
     <form action={action} className="space-y-4">
       {state?.error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {state.error}
         </div>
       )}

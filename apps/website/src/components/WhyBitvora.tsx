@@ -1,9 +1,8 @@
 "use client";
 
-import { IconCheck, IconX, IconPalette, IconBolt, IconShieldCheck } from '@tabler/icons-react'
+import { IconCheck, IconX, IconPalette, IconBolt, IconShieldCheck, IconBrandWhatsapp } from '@tabler/icons-react'
 import Image from 'next/image'
 import { motion } from 'motion/react'
-import { BrandIcon } from './BrandIcon'
 import { fadeUp, slideInLeft, slideInRight, staggerContainer, viewport } from '../lib/motion'
 
 const PILLARS = [
@@ -15,8 +14,7 @@ const PILLARS = [
     body: 'Most store builders in Nigeria give every merchant the same layout with a different logo pasted on top. We built Bitvora Stores the other way around: pick your accent color, your font pairing, your hero image, your homepage sections — and the platform disappears behind your brand. Customers see your business. They never see ours.',
   },
   {
-    icon: null,
-    brandIcon: 'Whatsapp',
+    icon: IconBrandWhatsapp,
     image: '/feature/whatsapp.webp',
     tag: 'Sell where you already sell',
     title: 'WhatsApp isn\'t an afterthought — it\'s the default.',
@@ -90,11 +88,7 @@ export function WhyBitvora() {
               >
                 <motion.div variants={textVariant}>
                   <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-900 text-marigold-500">
-                    {pillar.brandIcon ? (
-                      <BrandIcon icon={pillar.brandIcon} className="h-5 w-5" color="currentColor" />
-                    ) : pillar.icon ? (
-                      <pillar.icon size={20} />
-                    ) : null}
+                    <pillar.icon size={20} />
                   </div>
                   <span className="mb-2 block text-[12px] font-bold uppercase tracking-widest text-pepper-600">
                     {pillar.tag}

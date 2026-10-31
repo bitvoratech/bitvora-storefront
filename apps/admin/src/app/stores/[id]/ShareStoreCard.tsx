@@ -13,7 +13,7 @@ export function ShareStoreCard({ url, storeName, isPublished }: { url: string; s
   const qrRef = useRef<HTMLDivElement>(null)
 
   const displayUrl = url.replace(/^https?:\/\//, '')
-  const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`Shop ${storeName} here 👉 ${url}`)}`
+  const whatsappShare = `https://wa.me/?text=${encodeURIComponent(`Shop ${storeName} here: ${url}`)}`
 
   async function copy() {
     try {

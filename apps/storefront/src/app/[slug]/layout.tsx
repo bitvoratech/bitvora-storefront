@@ -2,9 +2,8 @@ import { readableTextOn } from '../../lib/color'
 import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
-import { Storefront } from 'switch-icons'
+import { IconBrandFacebook, IconBrandInstagram, IconBrandTiktok, IconBrandWhatsapp, IconBuildingStore } from '@tabler/icons-react'
 import { CartIcon } from '../../components/CartIcon'
-import { BrandIcon } from '../../components/BrandIcon'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
 import { cldImage, cldJpeg } from '@bitvora/lib/cloudinary-image'
 import { StoreSearch } from '../../components/StoreSearch'
@@ -65,7 +64,7 @@ export default async function StoreLayout({
               />
             ) : (
               <>
-                <Storefront className="w-5 h-5 shrink-0" style={{ color: accent }} />
+                <IconBuildingStore className="w-5 h-5 shrink-0" style={{ color: accent }} />
                 <span className="truncate">{store.name}</span>
               </>
             )}
@@ -98,7 +97,7 @@ export default async function StoreLayout({
                 aria-label={`${store.name} on WhatsApp`}
                 className="p-2 rounded-full text-[#525252] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
               >
-                <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+                <IconBrandWhatsapp className="w-4 h-4" />
               </a>
             )}
             {social.instagram && (
@@ -109,7 +108,7 @@ export default async function StoreLayout({
                 aria-label={`${store.name} on Instagram`}
                 className="p-2 rounded-full text-[#525252] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
               >
-                <BrandIcon icon="Instagram" className="w-4 h-4" />
+                <IconBrandInstagram className="w-4 h-4" />
               </a>
             )}
             {social.facebook && (
@@ -120,7 +119,7 @@ export default async function StoreLayout({
                 aria-label={`${store.name} on Facebook`}
                 className="p-2 rounded-full text-[#525252] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
               >
-                <BrandIcon icon="Facebook" className="w-4 h-4" />
+                <IconBrandFacebook className="w-4 h-4" />
               </a>
             )}
             {social.tiktok && (
@@ -131,7 +130,7 @@ export default async function StoreLayout({
                 aria-label={`${store.name} on TikTok`}
                 className="p-2 rounded-full text-[#525252] hover:text-[#171717] hover:bg-[#f5f5f5] transition-colors"
               >
-                <BrandIcon icon="Tiktok" className="w-4 h-4" />
+                <IconBrandTiktok className="w-4 h-4" />
               </a>
             )}
           </div>

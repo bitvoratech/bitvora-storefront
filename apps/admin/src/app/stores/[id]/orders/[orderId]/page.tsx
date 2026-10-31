@@ -1,8 +1,7 @@
 import { notFound } from 'next/navigation'
 import { Card } from '@bitvora/ui/src/Card'
 import Link from 'next/link'
-import { ArrowLeft, PackageBox } from 'switch-icons'
-import { IconPhone, IconBrandWhatsapp } from '@tabler/icons-react'
+import { IconArrowLeft, IconBrandWhatsapp, IconExternalLink, IconPackage, IconPhone } from '@tabler/icons-react'
 import { StatusBadge } from '../StatusBadge'
 import { createClient } from '../../../../../lib/supabase/server'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
@@ -63,7 +62,7 @@ export default async function OrderDetailPage({
   return (
     <div className={hasNextStep ? 'pb-20 sm:pb-0' : ''}>
       <Link href={`/stores/${storeId}/orders`} className="inline-flex items-center gap-1.5 text-sm text-ink/50 hover:text-ink mb-4">
-        <ArrowLeft className="w-4 h-4" />
+        <IconArrowLeft className="w-4 h-4" />
         Back to orders
       </Link>
       <div className="max-w-5xl">
@@ -96,7 +95,7 @@ export default async function OrderDetailPage({
                         <img src={cldImage(image, 120)} alt="" loading="lazy" className="w-11 h-11 rounded-lg object-cover shrink-0" />
                       ) : (
                         <div className="w-11 h-11 rounded-lg bg-sand-100 flex items-center justify-center shrink-0">
-                          <PackageBox className="w-4 h-4 text-ink/20" />
+                          <IconPackage className="w-4 h-4 text-ink/20" />
                         </div>
                       )}
                       <div className="min-w-0 flex-1">
@@ -160,7 +159,7 @@ export default async function OrderDetailPage({
                       loading="lazy"
                       className="max-h-80 max-w-full w-auto rounded-lg border border-sand-200 group-hover:border-indigo-600 transition-colors"
                     />
-                    <span className="text-xs text-indigo-600 mt-1.5 inline-block">Open full size ↗</span>
+                    <span className="text-xs text-indigo-600 mt-1.5 inline-flex items-center gap-1">Open full size <IconExternalLink className="w-3.5 h-3.5" /></span>
                   </a>
                 ) : (
                   <p className="text-sm text-marigold-500 mt-3">No payment proof uploaded yet.</p>

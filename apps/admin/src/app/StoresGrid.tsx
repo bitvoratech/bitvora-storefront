@@ -3,8 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
-import { PackageBox, Receipt } from 'switch-icons'
-import { IconSearch, IconPalette } from '@tabler/icons-react'
+import { IconArrowRight, IconPackage, IconPalette, IconReceipt, IconSearch } from '@tabler/icons-react'
 
 type Store = {
   id: string
@@ -74,7 +73,7 @@ export function StoresGrid({ stores }: { stores: Store[] }) {
                     <span className="font-mono">{store.pendingOrders}</span>{' '}
                     {store.pendingOrders === 1 ? 'order needs' : 'orders need'} your attention
                   </span>
-                  <span aria-hidden="true">→</span>
+                  <IconArrowRight className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 </Link>
               )}
 
@@ -94,14 +93,14 @@ export function StoresGrid({ stores }: { stores: Store[] }) {
                   href={`/stores/${store.id}/products`}
                   className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-ink/60 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg py-1.5 transition-colors"
                 >
-                  <PackageBox className="w-3.5 h-3.5" />
+                  <IconPackage className="w-3.5 h-3.5" />
                   Products
                 </Link>
                 <Link
                   href={`/stores/${store.id}/orders`}
                   className="flex-1 flex items-center justify-center gap-1.5 text-xs font-medium text-ink/60 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg py-1.5 transition-colors"
                 >
-                  <Receipt className="w-3.5 h-3.5" />
+                  <IconReceipt className="w-3.5 h-3.5" />
                   Orders
                 </Link>
                 <Link

@@ -4,7 +4,7 @@ import { Card } from '@bitvora/ui/src/Card'
 import { KpiCard } from '@bitvora/ui/src/KpiCard'
 import { Button } from '@bitvora/ui/src/Button'
 import { createClient } from '../lib/supabase/server'
-import { IconChevronRight } from '@tabler/icons-react'
+import { IconChevronRight, IconPlus } from '@tabler/icons-react'
 import { StoresGrid } from './StoresGrid'
 import { VerificationStatusCard } from './VerificationStatusCard'
 import { PayForPlanCard } from './PayForPlanCard'
@@ -86,8 +86,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="w-full">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-8">
-        <h1 className="text-2xl sm:text-3xl font-display font-semibold tracking-tight">
+      <div className="flex items-center justify-between gap-3 mb-6 sm:mb-8">
+        <h1 className="min-w-0 truncate text-xl sm:text-3xl font-display font-semibold tracking-tight">
           {merchant?.full_name ? `Welcome back, ${merchant.full_name.split(' ')[0]}` : 'Your stores'}
         </h1>
         {canCreateStore && (
@@ -96,9 +96,12 @@ export default async function DashboardPage() {
             locked={!underStoreLimit(merchant?.plan, storeRows.length)}
             title="Upgrade to add another store"
             message={storeLimitMessage(merchant?.plan)}
-            className="self-start sm:self-auto"
+            className="shrink-0"
           >
-            <Button>+ New store</Button>
+            <Button className="gap-1.5">
+              <IconPlus className="w-4 h-4" />
+              New store
+            </Button>
           </UpgradeGate>
         )}
       </div>
@@ -132,7 +135,7 @@ export default async function DashboardPage() {
         </Card>
       ) : (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
             <KpiCard label="Total stores" value={storeRows.length.toLocaleString()} />
             <KpiCard label="Live" value={liveCount.toLocaleString()} />
             <KpiCard label="Revenue · this week" value={`₦${combinedRevenueThisWeek.toLocaleString()}`} />

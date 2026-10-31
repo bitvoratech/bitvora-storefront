@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Check } from 'switch-icons'
+import { IconCheck } from '@tabler/icons-react'
 
 type ChecklistItem = { label: string; done: boolean; href?: string }
 
@@ -21,7 +21,7 @@ export function OnboardingChecklist({ items }: { items: ChecklistItem[] }) {
                   item.done ? 'bg-palm-600' : 'bg-white dark:bg-sand-100 border border-sand-200'
                 }`}
               >
-                {item.done && <Check className="w-3 h-3 text-white" />}
+                {item.done && <IconCheck className="w-3 h-3 text-white" />}
               </div>
               <span className={`text-sm ${item.done ? 'text-ink/40 line-through' : 'text-ink'}`}>
                 {item.label}

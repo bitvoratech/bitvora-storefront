@@ -5,8 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { BrandColorPicker } from '../BrandColorPicker'
 import { Button } from '@bitvora/ui/src/Button'
-import { Storefront, Check } from 'switch-icons'
-import { IconThumbUpFilled } from '@tabler/icons-react'
+import { IconBuildingStore, IconCheck, IconThumbUpFilled } from '@tabler/icons-react'
 
 export function SetupWizard({
   storeId,
@@ -36,7 +35,7 @@ export function SetupWizard({
       {step === 1 && (
         <div>
           <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center mb-4">
-            <Storefront className="w-6 h-6 text-indigo-600" />
+            <IconBuildingStore className="w-6 h-6 text-indigo-600" />
           </div>
           <h1 className="text-2xl font-display font-semibold mb-1 flex items-center gap-2">
             {storeName} is ready
@@ -55,7 +54,7 @@ export function SetupWizard({
       {step === 2 && (
         <div>
           <div className="w-12 h-12 rounded-xl bg-palm-50 flex items-center justify-center mb-4">
-            <Check className="w-6 h-6 text-palm-600" />
+            <IconCheck className="w-6 h-6 text-palm-600" />
           </div>
           <h1 className="text-2xl font-display font-semibold mb-1">Almost there</h1>
           <p className="text-ink/50 text-sm mb-6">

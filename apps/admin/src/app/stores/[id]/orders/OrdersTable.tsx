@@ -4,8 +4,7 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
 import { StatusBadge } from './StatusBadge'
-import { Receipt } from 'switch-icons'
-import { IconSearch, IconReceiptRefund } from '@tabler/icons-react'
+import { IconArrowRight, IconReceipt, IconReceiptRefund, IconSearch } from '@tabler/icons-react'
 
 type Order = {
   id: string
@@ -62,12 +61,12 @@ export function OrdersTable({ storeId, orders, initialStatus = 'all' }: { storeI
     return (
       <Card className="text-center py-14 px-6">
         <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-          <Receipt className="w-6 h-6 text-indigo-600" />
+          <IconReceipt className="w-6 h-6 text-indigo-600" />
         </div>
         <p className="font-display font-semibold mb-1">No orders yet</p>
         <p className="text-sm text-ink/50 max-w-xs mx-auto mb-5">When a customer orders from your store, it shows up here. Share your store link to get the first one.</p>
-        <Link href={`/stores/${storeId}`} className="text-sm font-medium text-indigo-600 hover:underline">
-          Get your store link →
+        <Link href={`/stores/${storeId}`} className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:underline">
+          Get your store link <IconArrowRight className="w-4 h-4" />
         </Link>
       </Card>
     )

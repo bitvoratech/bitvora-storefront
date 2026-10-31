@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle, Check } from 'switch-icons'
+import { IconAlertTriangle, IconCheck } from '@tabler/icons-react'
 import Link from 'next/link'
 import { createClient } from '../../lib/supabase/client'
 import { AuthLayout } from '../../components/AuthLayout'
@@ -72,7 +72,7 @@ export default function LoginPage() {
       {error && (
         <div role="alert" className="bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
           <p className="flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+            <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
             {error}
           </p>
           {unconfirmed && (
@@ -84,7 +84,7 @@ export default function LoginPage() {
       )}
       {resent && (
         <div role="status" className="flex items-start gap-2 bg-palm-50 text-palm-600 text-sm rounded-lg px-3 py-2 mb-4">
-          <Check className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconCheck className="w-4 h-4 shrink-0 mt-0.5" />
           Sent. Check your inbox (and spam) for the confirmation link.
         </div>
       )}

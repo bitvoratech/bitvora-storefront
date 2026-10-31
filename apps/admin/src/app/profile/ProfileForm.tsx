@@ -5,7 +5,7 @@ import { useActionState } from 'react'
 import { Label } from '@bitvora/ui/src/Label'
 import { Input } from '@bitvora/ui/src/Input'
 import { Button } from '@bitvora/ui/src/Button'
-import { AlertTriangle, Check } from 'switch-icons'
+import { IconAlertTriangle, IconCheck } from '@tabler/icons-react'
 import { updateProfile } from './action'
 
 export function ProfileForm({
@@ -31,7 +31,7 @@ export function ProfileForm({
     <form action={formAction} className="space-y-4">
       {state?.error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {state.error}
         </div>
       )}
@@ -60,7 +60,7 @@ export function ProfileForm({
         </Button>
         {state?.saved && !pending && (
           <p role="status" className="flex items-center justify-center gap-1.5 text-sm text-palm-600">
-            <Check className="w-4 h-4" /> Saved
+            <IconCheck className="w-4 h-4" /> Saved
           </p>
         )}
       </div>

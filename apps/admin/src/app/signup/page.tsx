@@ -6,7 +6,7 @@ import { AuthLayout } from '../../components/AuthLayout'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle, Check } from 'switch-icons'
+import { IconAlertTriangle, IconCheck } from '@tabler/icons-react'
 import { signUp } from './actions'
 import { PasswordInput } from '../../components/PasswordInput'
 import { MIN_PASSWORD_LENGTH } from '../../lib/password'
@@ -26,7 +26,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
     return (
       <AuthLayout>
         <div className="w-12 h-12 rounded-xl bg-palm-50 flex items-center justify-center mb-4">
-          <Check className="w-6 h-6 text-palm-600" />
+          <IconCheck className="w-6 h-6 text-palm-600" />
         </div>
         <h1 className="text-2xl font-display font-semibold mb-1">Check your email</h1>
         <p className="text-sm text-ink/50 mb-6">
@@ -70,7 +70,7 @@ export default function SignupPage({ searchParams }: { searchParams: Promise<{ p
 
       {state?.error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {state.error}
         </div>
       )}

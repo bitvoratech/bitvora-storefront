@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { IconBrandInstagram, IconBrandTiktok, IconBrandX, IconBrandWhatsapp } from '@tabler/icons-react'
+import { IconArrowRight, IconBrandInstagram, IconBrandTiktok, IconBrandWhatsapp, IconBrandX } from '@tabler/icons-react'
 import { motion } from 'motion/react'
 import { AdireStrip } from './AdireStrip'
 import { fadeUp, staggerContainer, viewport } from '../lib/motion'
@@ -47,7 +47,7 @@ export function PremiumFooter() {
               href="/pricing"
               className="inline-flex items-center gap-2 rounded-lg bg-marigold-500 px-5 py-3 text-[14.5px] font-semibold text-indigo-950 transition hover:-translate-y-px"
             >
-              Get started →
+              Get started <IconArrowRight size={16} />
             </Link>
           </motion.div>
 

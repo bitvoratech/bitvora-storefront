@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { Trash } from 'switch-icons'
+import { IconTrash } from '@tabler/icons-react'
 import { deleteProduct } from './actions'
 
 // Two-step delete: the first click asks, the second deletes. Deleting is
@@ -20,7 +20,7 @@ export function DeleteProductButton({ productId, storeId, productName }: { produ
         title="Delete"
         className="p-2 text-ink/40 hover:text-pepper-600 hover:bg-pepper-50 rounded-lg transition-colors"
       >
-        <Trash className="w-4 h-4" />
+        <IconTrash className="w-4 h-4" />
       </button>
     )
   }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { LogOut } from 'switch-icons'
+import { IconLogout } from '@tabler/icons-react'
 import { createClient } from '../lib/supabase/client'
 
 export function LogoutButton({ collapsed }: { collapsed?: boolean }) {
@@ -21,7 +21,7 @@ export function LogoutButton({ collapsed }: { collapsed?: boolean }) {
         collapsed ? 'justify-center' : ''
       }`}
     >
-      <LogOut className="w-4 h-4 shrink-0" />
+      <IconLogout className="w-4 h-4 shrink-0" />
       {!collapsed && 'Log out'}
     </button>
   )

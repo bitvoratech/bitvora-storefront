@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { IconBuildingBank } from '@tabler/icons-react'
+import { IconBuildingBank, IconCheck } from '@tabler/icons-react'
 import { Card } from '@bitvora/ui/src/Card'
 import { Button } from '@bitvora/ui/src/Button'
 import { BankFields } from '../../../../components/BankFields'
@@ -49,7 +49,7 @@ export function BankDetailsCard({
         {error && <p role="alert" className="text-sm text-pepper-600">{error}</p>}
         <div className="flex items-center gap-3">
           <Button type="submit" disabled={isPending} className="min-w-36">
-            {isPending ? 'Saving…' : saved ? 'Saved ✓' : 'Save bank details'}
+            {isPending ? 'Saving…' : saved ? <span className="inline-flex items-center gap-1">Saved <IconCheck className="w-4 h-4" /></span> : 'Save bank details'}
           </Button>
         </div>
       </form>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { BrandIcon } from './BrandIcon'
+import { IconBrandWhatsapp } from '@tabler/icons-react'
 
 // "Post to Status": shares a ready-made 1080×1920 product image (photo,
 // price, store link) straight into the phone's share sheet, so it can go
@@ -50,7 +50,7 @@ export function StatusShareButton({ slug, productSlug, text }: { slug: string; p
       disabled={busy}
       className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e5e5] px-3 py-1.5 text-xs font-medium text-[#525252] hover:text-[#171717] hover:border-[#a3a3a3] transition-colors disabled:opacity-50"
     >
-      <BrandIcon icon="Whatsapp" className="w-3.5 h-3.5" />
+      <IconBrandWhatsapp className="w-3.5 h-3.5" />
       <span aria-live="polite">{busy ? 'Preparing…' : failed ? 'Try again' : 'Post to Status'}</span>
     </button>
   )

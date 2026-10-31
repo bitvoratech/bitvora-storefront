@@ -4,7 +4,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { PackageBox } from 'switch-icons'
+import { IconCheck, IconPackage } from '@tabler/icons-react'
 import { useCart } from '../../lib/cart-store'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { PriceTag } from '../../components/PriceTag'
@@ -86,7 +86,7 @@ export function ProductCard({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <PackageBox className="w-8 h-8 text-[#d4d4d4]" />
+              <IconPackage className="w-8 h-8 text-[#d4d4d4]" />
             </div>
           )}
         </div>
@@ -113,7 +113,7 @@ export function ProductCard({
             disabled={!inStock}
             className="rounded-full border border-[#e5e5e5] text-xs font-medium py-2 hover:bg-[#fafafa] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <span aria-live="polite">{added ? 'Added ✓' : 'Add to cart'}</span>
+            <span aria-live="polite" className="inline-flex items-center justify-center gap-1">{added ? <>Added <IconCheck className="w-3.5 h-3.5" /></> : 'Add to cart'}</span>
           </button>
           <button
             onClick={handleBuyNow}
