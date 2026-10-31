@@ -14,6 +14,8 @@ type Product = {
   name: string
   price: number
   stock_quantity: number
+  /** false: made to order, never sells out. */
+  track_stock?: boolean | null
   category: string | null
   is_active: boolean
   images: string[] | null
@@ -22,7 +24,11 @@ type Product = {
 
 const LOW_STOCK = 5
 
-function stockBadge(stock: number) {
+const tracked = (p: Product) => p.track_stock !== false
+
+function stockBadge(p: Product) {
+  if (!tracked(p)) return null
+  const stock = p.stock_quantity
   if (stock <= 0) return { label: 'Out of stock', className: 'bg-pepper-50 text-pepper-600' }
   if (stock < LOW_STOCK) return { label: 'Low stock', className: 'bg-marigold-50 text-marigold-500' }
   return null
@@ -30,19 +36,22 @@ function stockBadge(stock: number) {
 
 const STOCK_FILTERS = [
   { key: 'all', label: 'All', test: () => true },
-  { key: 'low', label: 'Low stock', test: (p: Product) => p.stock_quantity > 0 && p.stock_quantity < LOW_STOCK },
-  { key: 'out', label: 'Out of stock', test: (p: Product) => p.stock_quantity <= 0 },
+  { key: 'low', label: 'Low stock', test: (p: Product) => tracked(p) && p.stock_quantity > 0 && p.stock_quantity < LOW_STOCK },
+  { key: 'out', label: 'Out of stock', test: (p: Product) => tracked(p) && p.stock_quantity <= 0 },
   { key: 'hidden', label: 'Hidden', test: (p: Product) => !p.is_active },
 ] as const
 
 type StockFilter = (typeof STOCK_FILTERS)[number]['key']
+
+// Untracked products never run out, so they sort after every counted one.
+const stockRank = (p: Product) => (tracked(p) ? p.stock_quantity : Number.POSITIVE_INFINITY)
 
 const SORTS = {
   newest: { label: 'Newest first', compare: () => 0 },
   name: { label: 'Name A–Z', compare: (a: Product, b: Product) => a.name.localeCompare(b.name) },
   price_asc: { label: 'Price: low to high', compare: (a: Product, b: Product) => a.price - b.price },
   price_desc: { label: 'Price: high to low', compare: (a: Product, b: Product) => b.price - a.price },
-  stock: { label: 'Stock: lowest first', compare: (a: Product, b: Product) => a.stock_quantity - b.stock_quantity },
+  stock: { label: 'Stock: lowest first', compare: (a: Product, b: Product) => stockRank(a) - stockRank(b) },
 } as const
 
 type SortKey = keyof typeof SORTS
@@ -200,7 +209,7 @@ export function ProductsTable({
             <span className="sr-only">Actions</span>
           </div>
           {filtered.map((product, i) => {
-            const badge = stockBadge(product.stock_quantity)
+            const badge = stockBadge(product)
             const editHref = `/stores/${storeId}/products/${product.id}/edit`
             const waiting = waitingByProduct[product.id] ?? 0
             return (
@@ -239,7 +248,7 @@ export function ProductsTable({
                           {product.stock_quantity > 0 ? `${product.stock_quantity} left` : badge.label}
                         </span>
                       ) : (
-                        <span>{product.stock_quantity} in stock</span>
+                        <span>{tracked(product) ? `${product.stock_quantity} in stock` : 'Always available'}</span>
                       )}
                     </p>
                     {(!product.is_active || waiting > 0 || product.category) && (
@@ -266,7 +275,11 @@ export function ProductsTable({
                 <p className="font-mono text-sm hidden sm:block">{naira(product.price)}</p>
 
                 <div className="hidden sm:flex items-center gap-2">
-                  <span className="font-mono text-sm text-ink/60 w-6 text-right">{product.stock_quantity}</span>
+                  {tracked(product) ? (
+                    <span className="font-mono text-sm text-ink/60 w-6 text-right">{product.stock_quantity}</span>
+                  ) : (
+                    <span className="text-xs text-ink/50">Always available</span>
+                  )}
                   {badge && (
                     <span className={`text-[11px] font-medium rounded-full px-2 py-0.5 whitespace-nowrap ${badge.className}`}>
                       {badge.label}

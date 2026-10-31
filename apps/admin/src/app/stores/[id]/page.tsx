@@ -55,13 +55,14 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
     .select('name, stock_quantity')
     .eq('store_id', id)
     .eq('is_active', true)
+    .eq('track_stock', true)
     .lte('stock_quantity', LOW_STOCK)
     .order('stock_quantity', { ascending: true })
 
   // Shoppers waiting on restocks, with the product's current stock.
   const { data: restockRows } = await supabase
     .from('restock_requests')
-    .select('product_id, products(name, stock_quantity)')
+    .select('product_id, products(name, stock_quantity, track_stock)')
     .eq('store_id', id)
     .is('notified_at', null)
 
@@ -107,9 +108,9 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
   const names = (list: { customer_name: string }[]) =>
     list.slice(0, 3).map((o) => o.customer_name.split(' ')[0]).join(', ') + (list.length > 3 ? '…' : '')
 
-  type RestockRow = { product_id: string; products: { name: string; stock_quantity: number | null } | null }
+  type RestockRow = { product_id: string; products: { name: string; stock_quantity: number | null; track_stock: boolean | null } | null }
   const restock = (restockRows ?? []) as unknown as RestockRow[]
-  const backInStock = restock.filter((r) => (r.products?.stock_quantity ?? 0) > 0)
+  const backInStock = restock.filter((r) => r.products?.track_stock === false || (r.products?.stock_quantity ?? 0) > 0)
   const backInStockProducts = [...new Map(backInStock.map((r) => [r.product_id, r.products?.name ?? 'Product'])).entries()]
 
   const attention: AttentionItem[] = [

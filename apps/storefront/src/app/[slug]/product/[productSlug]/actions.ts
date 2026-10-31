@@ -24,13 +24,13 @@ export async function requestRestockAlert(slug: string, productId: string, name:
   const supabase = createAdminClient()
   const { data: product } = await supabase
     .from('products')
-    .select('id, stock_quantity')
+    .select('id, stock_quantity, track_stock')
     .eq('id', productId)
     .eq('store_id', store.id)
     .eq('is_active', true)
     .maybeSingle()
   if (!product) return { error: 'Product not found.' }
-  if ((product.stock_quantity ?? 0) > 0) return { error: 'Good news — this is back in stock. Refresh the page to order.' }
+  if (product.track_stock === false || (product.stock_quantity ?? 0) > 0) return { error: 'Good news — this is back in stock. Refresh the page to order.' }
 
   const { error } = await supabase.from('restock_requests').insert({
     store_id: store.id,

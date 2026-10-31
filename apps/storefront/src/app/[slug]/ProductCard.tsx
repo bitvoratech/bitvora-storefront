@@ -19,6 +19,8 @@ type Product = {
   images: string[] | null
   stock_quantity: number
   sizes?: string[] | null
+  track_stock?: boolean | null
+  size_prices?: Record<string, number> | null
 }
 
 export function ProductCard({
@@ -36,11 +38,20 @@ export function ProductCard({
   const { addItem } = useCart(storeSlug)
   const router = useRouter()
   const [added, setAdded] = useState(false)
-  const inStock = product.stock_quantity > 0
+  // Made-to-order products (stock not counted) never sell out.
+  const tracked = product.track_stock !== false
+  const inStock = !tracked || product.stock_quantity > 0
   // Sized products need a size picked on the product page first.
   const hasSizes = (product.sizes?.length ?? 0) > 0
   const productHref = `/${storeSlug}/product/${product.slug}`
-  const cartItem = { productId: product.id, name: product.name, price: Number(product.price), image: product.images?.[0] ?? null, maxQuantity: product.stock_quantity }
+  const cartItem = { productId: product.id, name: product.name, price: Number(product.price), image: product.images?.[0] ?? null, maxQuantity: tracked ? product.stock_quantity : undefined }
+
+  // A price per size shows as "From" the cheapest one.
+  const sizeAmounts = (product.sizes ?? []).map((s) => {
+    const own = Number(product.size_prices?.[s])
+    return Number.isFinite(own) && own > 0 ? own : Number(product.price)
+  })
+  const pricesVary = sizeAmounts.some((p) => p !== Number(product.price))
 
   function handleAdd(e: React.MouseEvent) {
     e.preventDefault()
@@ -92,7 +103,14 @@ export function ProductCard({
         </div>
         <div className="p-3 sm:p-4 pb-2">
           <p className="text-sm font-medium text-[#171717] leading-snug line-clamp-2">{product.name}</p>
-          <PriceTag price={product.price} compareAt={product.compare_at_price} className="mt-1" />
+          {pricesVary ? (
+            <p className="mt-1 flex items-baseline gap-1.5">
+              <span className="text-xs text-[#737373]">From</span>
+              <span className="font-mono font-semibold text-base text-[#171717]">₦{Math.min(...sizeAmounts).toLocaleString()}</span>
+            </p>
+          ) : (
+            <PriceTag price={product.price} compareAt={product.compare_at_price} className="mt-1" />
+          )}
         </div>
       </Link>
 

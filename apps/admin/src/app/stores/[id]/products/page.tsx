@@ -29,7 +29,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ id: s
   const waitingByProduct: Record<string, number> = {}
   for (const w of waiting ?? []) waitingByProduct[w.product_id] = (waitingByProduct[w.product_id] ?? 0) + 1
 
-  const soldOut = (products ?? []).filter((p) => p.stock_quantity <= 0).length
+  const soldOut = (products ?? []).filter((p) => p.track_stock !== false && p.stock_quantity <= 0).length
 
   return (
     <div className="max-w-5xl">
