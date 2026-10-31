@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { cache } from 'react'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'switch-icons'
+import { IconArrowLeft, IconFlame } from '@tabler/icons-react'
 import Link from 'next/link'
 import { createClient } from '../../../../lib/supabase/server'
 import { getPublishedStore, whatsappLink } from '../../../../lib/store'
@@ -100,7 +100,7 @@ export default async function ProductPage({
     <div>
       <div className="flex items-center justify-between gap-3 mb-6">
         <Link href={`/${slug}`} className="inline-flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717]">
-          <ArrowLeft className="w-4 h-4" />
+          <IconArrowLeft className="w-4 h-4" />
           Back to store
         </Link>
         <div className="flex items-center gap-2">
@@ -139,7 +139,7 @@ export default async function ProductPage({
             )}
             {soldThisWeek >= MIN_SALES_TO_SHOW && (
               <span className="inline-flex items-center gap-1.5 text-sm text-orange-800 bg-orange-50 rounded-full px-3 py-1">
-                🔥 {soldThisWeek} sold this week
+                <IconFlame className="w-4 h-4" stroke={1.75} /> {soldThisWeek} sold this week
               </span>
             )}
           </div>

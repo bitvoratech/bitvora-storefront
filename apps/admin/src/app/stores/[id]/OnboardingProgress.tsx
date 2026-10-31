@@ -1,3 +1,4 @@
+import { IconArrowRight } from '@tabler/icons-react'
 import Link from 'next/link'
 
 type ChecklistItem = { label: string; done: boolean; href?: string }
@@ -43,7 +44,7 @@ export function OnboardingProgress({
           {remaining} step{remaining === 1 ? '' : 's'} left — {nextStep?.label.toLowerCase()}
         </p>
       </div>
-      <span className="text-xs font-medium text-indigo-600 shrink-0">Continue →</span>
+      <span className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 shrink-0">Continue <IconArrowRight className="w-3.5 h-3.5" /></span>
     </Link>
   )
 }

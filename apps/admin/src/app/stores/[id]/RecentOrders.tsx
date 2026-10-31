@@ -12,7 +12,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from './orders/StatusBadge'
-import { ArrowRight, Receipt } from 'switch-icons'
+import { IconArrowRight, IconReceipt } from '@tabler/icons-react'
 
 type Order = {
   id: string
@@ -29,13 +29,13 @@ export function RecentOrders({ storeId, orders }: { storeId: string; orders: Ord
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-display text-sm font-semibold">Recent orders</h2>
         <Link href={`/stores/${storeId}/orders`} className="text-xs font-medium text-indigo-600">
-          View all <ArrowRight className="w-3 h-3 inline-block ml-1" />
+          View all <IconArrowRight className="w-3 h-3 inline-block ml-1" />
         </Link>
       </div>
 
       {orders.length === 0 ? (
         <Card className="text-center py-10">
-          <Receipt className="w-7 h-7 text-ink/20 mx-auto mb-2" />
+          <IconReceipt className="w-7 h-7 text-ink/20 mx-auto mb-2" />
           <p className="text-sm text-ink/50">No orders yet.</p>
         </Card>
       ) : (

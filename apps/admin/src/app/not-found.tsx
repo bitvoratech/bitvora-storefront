@@ -1,3 +1,4 @@
+import { IconArrowRight } from '@tabler/icons-react'
 import Link from 'next/link'
 
 export default function NotFound() {
@@ -7,8 +8,8 @@ export default function NotFound() {
       <p className="text-sm text-ink/50 mb-6">
         This page doesn&apos;t exist, or it belongs to a store you don&apos;t have access to.
       </p>
-      <Link href="/" className="text-sm font-medium text-indigo-600">
-        Back to dashboard →
+      <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-indigo-600">
+        Back to dashboard <IconArrowRight className="w-4 h-4" />
       </Link>
     </div>
   )

@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle, Check } from 'switch-icons'
+import { IconAlertTriangle, IconCheck } from '@tabler/icons-react'
 import { createClient } from '../../lib/supabase/client'
 import { AuthLayout } from '../../components/AuthLayout'
 
@@ -48,7 +48,7 @@ function ForgotPasswordForm() {
     return (
       <AuthLayout>
         <div className="w-12 h-12 rounded-xl bg-palm-50 flex items-center justify-center mb-4">
-          <Check className="w-6 h-6 text-palm-600" />
+          <IconCheck className="w-6 h-6 text-palm-600" />
         </div>
         <h1 className="text-2xl font-display font-semibold mb-1">Check your email</h1>
         <p className="text-sm text-ink/50 mb-6">
@@ -67,7 +67,7 @@ function ForgotPasswordForm() {
 
       {(error || expired) && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {error ?? 'That reset link has expired or was already used. Request a new one.'}
         </div>
       )}

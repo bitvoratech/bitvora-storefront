@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { Label } from '@bitvora/ui/src/Label'
 import { PasswordInput } from '../../components/PasswordInput'
 import { Button } from '@bitvora/ui/src/Button'
-import { AlertTriangle } from 'switch-icons'
+import { IconAlertTriangle } from '@tabler/icons-react'
 import { createClient } from '../../lib/supabase/client'
 
 export function PasswordForm() {
@@ -38,7 +38,7 @@ export function PasswordForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       {error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {error}
         </div>
       )}

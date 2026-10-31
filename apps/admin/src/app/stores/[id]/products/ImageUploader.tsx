@@ -4,7 +4,7 @@
 import { useState } from 'react'
 
 import { Label } from '@bitvora/ui/src/Label'
-import { Upload, Close } from 'switch-icons'
+import { IconUpload, IconX } from '@tabler/icons-react'
 import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 
 export function ImageUploader({ initialImages = [] }: { initialImages?: string[] }) {
@@ -43,7 +43,7 @@ export function ImageUploader({ initialImages = [] }: { initialImages?: string[]
       <Label>Product images</Label>
 
       <label className="flex items-center gap-2 border border-dashed border-sand-200 rounded-lg px-3 py-3 text-sm text-ink/50 cursor-pointer hover:border-indigo-600 hover:text-indigo-600 transition-colors">
-        <Upload className="w-4 h-4" />
+        <IconUpload className="w-4 h-4" />
         {uploading ? 'Uploading...' : 'Click to upload images'}
         <input type="file" accept="image/*" multiple onChange={handleFileChange} disabled={uploading} className="hidden" />
       </label>
@@ -62,7 +62,7 @@ export function ImageUploader({ initialImages = [] }: { initialImages?: string[]
                 // Always visible on touch screens, which have no hover.
                 className="absolute -top-1.5 -right-1.5 bg-pepper-600 text-white rounded-full w-6 h-6 sm:w-5 sm:h-5 flex items-center justify-center sm:opacity-0 sm:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity"
               >
-                <Close className="w-3 h-3" />
+                <IconX className="w-3 h-3" />
               </button>
             </div>
           ))}

@@ -2,7 +2,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
-import { ArrowLeft } from 'switch-icons'
+import { IconArrowLeft, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react'
 import { SuspendButton } from './SuspendButton'
 import { ReviewButtons } from '../../verifications/ReviewButtons'
 import { Sparkline } from '../../SparkLine'
@@ -79,7 +79,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
   return (
     <div>
       <Link href="/owner/merchants" className="flex items-center gap-1.5 text-sm text-ink/50 hover:text-ink mb-4">
-        <ArrowLeft className="w-4 h-4" />
+        <IconArrowLeft className="w-4 h-4" />
         Back to merchants
       </Link>
 
@@ -127,7 +127,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
               <p className="text-xs text-ink/50 font-medium">Total revenue</p>
               {revenueTrend.label && (
                 <span
-                  className={`text-xs font-medium ${
+                  className={`inline-flex items-center gap-1 text-xs font-medium ${
                     revenueTrend.trend === 'up'
                       ? 'text-palm-600'
                       : revenueTrend.trend === 'down'
@@ -135,7 +135,7 @@ export default async function MerchantDetailPage({ params }: { params: Promise<{
                         : 'text-ink/40'
                   }`}
                 >
-                  {revenueTrend.trend === 'up' ? '↑ ' : revenueTrend.trend === 'down' ? '↓ ' : ''}
+                  {revenueTrend.trend === 'up' ? <IconTrendingUp className="w-3.5 h-3.5" /> : revenueTrend.trend === 'down' ? <IconTrendingDown className="w-3.5 h-3.5" /> : null}
                   {revenueTrend.label}
                 </span>
               )}

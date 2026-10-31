@@ -8,7 +8,7 @@ import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Textarea } from '@bitvora/ui/src/Textarea'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle } from 'switch-icons'
+import { IconAlertTriangle } from '@tabler/icons-react'
 
 export function ProductForm({ storeId }: { storeId: string }) {
   const boundAction = createProduct.bind(null, storeId)
@@ -18,7 +18,7 @@ export function ProductForm({ storeId }: { storeId: string }) {
     <form action={formAction} className="space-y-4">
       {state?.error && (
         <div className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {state.error}
         </div>
       )}

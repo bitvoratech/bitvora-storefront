@@ -15,7 +15,7 @@ import { UpgradeGate } from '../../../components/UpgradeGate'
 import { ShareStoreCard } from './ShareStoreCard'
 import { PublishToggle } from './PublishToggle'
 import { NeedsAttention, type AttentionItem } from './NeedsAttention'
-import { IconTruckDelivery, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronRight, IconExternalLink, IconPlus, IconTrendingDown, IconTrendingUp, IconTruckDelivery } from '@tabler/icons-react'
 
 export default async function StoreDashboardPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -209,43 +209,58 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
 
   return (
     <div className="max-w-5xl">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-1">
-        <h1 className="text-2xl font-display font-semibold">{store.name}</h1>
-        <div className="flex flex-wrap items-center gap-2">
+      {/* Phones get one compact block: name, a meta line whose slug opens the
+          store, then the two main actions side by side. */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-display font-semibold truncate">{store.name}</h1>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink/60">
+            {storeUrl ? (
+              <a
+                href={storeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-mono hover:text-indigo-600 transition-colors"
+              >
+                /{store.slug}
+                <IconExternalLink className="w-3.5 h-3.5" />
+              </a>
+            ) : (
+              <span className="font-mono">/{store.slug}</span>
+            )}
+            {store.industry && <span className="capitalize">{store.industry}</span>}
+            {store.is_published && (
+              <span className="flex items-center gap-1.5 font-medium text-palm-600">
+                <span className="w-1.5 h-1.5 rounded-full bg-palm-600" /> Live
+              </span>
+            )}
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:shrink-0">
           {storeUrl && (
             <a
               href={storeUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm rounded-md px-3 py-1.5 font-medium bg-sand-100 text-ink/70 hover:bg-sand-200 transition-colors"
+              className="hidden sm:inline-flex items-center gap-1 text-sm rounded-md px-3 py-1.5 font-medium bg-sand-100 text-ink/70 hover:bg-sand-200 transition-colors"
             >
-              View store ↗
+              View store <IconExternalLink className="w-3.5 h-3.5" />
             </a>
           )}
           <span id="publish" className="scroll-mt-6">
-            <PublishToggle storeId={store.id} isPublished={store.is_published} />
+            <PublishToggle storeId={store.id} isPublished={store.is_published} className="w-full py-2 sm:w-auto sm:py-1.5" />
           </span>
           <UpgradeGate
             href={`/stores/${store.id}/products/new`}
             locked={!underProductLimit(plan, productCount ?? 0)}
             title="Upgrade to add more products"
             message={productLimitMessage(plan)}
-            className="text-sm rounded-md px-3 py-1.5 font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+            className="inline-flex items-center justify-center gap-1.5 text-sm rounded-md px-3 py-2 sm:py-1.5 font-medium bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
           >
+            <IconPlus className="w-4 h-4" />
             Add product
           </UpgradeGate>
         </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-2 mb-6">
-        <span className="text-xs font-mono text-ink/60 bg-sand-100 rounded-full px-2.5 py-1">/{store.slug}</span>
-        {store.industry && (
-          <span className="text-xs font-medium text-ink/60 bg-sand-100 rounded-full px-2.5 py-1 capitalize">{store.industry}</span>
-        )}
-        {store.is_published && (
-          <span className="flex items-center gap-1.5 text-xs font-medium text-palm-600">
-            <span className="w-1.5 h-1.5 rounded-full bg-palm-600" /> Live
-          </span>
-        )}
       </div>
 
       <OnboardingProgress storeId={store.id} items={checklistItems} />
@@ -281,7 +296,7 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
           <p className="font-mono text-3xl font-semibold mb-1">₦{revenueThisWeek.toLocaleString()}</p>
           {revenueTrend.label && (
               <span
-                className={`text-xs font-medium ${
+                className={`inline-flex items-center gap-1 text-xs font-medium ${
                   revenueTrend.trend === 'up'
                     ? 'text-palm-600'
                     : revenueTrend.trend === 'down'
@@ -289,7 +304,7 @@ export default async function StoreDashboardPage({ params }: { params: Promise<{
                       : 'text-ink/40'
                 }`}
               >
-                {revenueTrend.trend === 'up' ? '↑ ' : revenueTrend.trend === 'down' ? '↓ ' : ''}
+                {revenueTrend.trend === 'up' ? <IconTrendingUp className="w-3.5 h-3.5" /> : revenueTrend.trend === 'down' ? <IconTrendingDown className="w-3.5 h-3.5" /> : null}
                 {revenueTrend.label}
               </span>
             )}

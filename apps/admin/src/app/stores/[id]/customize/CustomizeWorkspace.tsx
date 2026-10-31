@@ -2,12 +2,11 @@
 /* eslint-disable @next/next/no-img-element -- small previews of merchant-uploaded Cloudinary images; next/image has no remote patterns configured in the admin */
 
 import { useEffect, useRef, useState, useTransition } from 'react'
-import { Storefront } from 'switch-icons'
 import { Button } from '@bitvora/ui/src/Button'
 import { Label } from '@bitvora/ui/src/Label'
 import { Input } from '@bitvora/ui/src/Input'
 import { ImageField } from './ImageField'
-import { IconChevronLeft, IconChevronRight, IconEye, IconLock, IconPencil } from '@tabler/icons-react'
+import { IconArrowDown, IconArrowUp, IconBuildingStore, IconCheck, IconChevronLeft, IconChevronRight, IconEye, IconLock, IconPencil } from '@tabler/icons-react'
 import { UpgradeDialog } from '../../../../components/UpgradeGate'
 
 import {
@@ -235,7 +234,7 @@ export function CustomizeWorkspace({
     ? 'Saving...'
     : hasUnsaved
       ? dirtyTabs.length > 1 ? `Save changes (${dirtyTabs.length} tabs)` : 'Save changes'
-      : justSaved ? 'Saved ✓' : 'No unsaved changes'
+      : justSaved ? <span className="inline-flex items-center gap-1">Saved <IconCheck className="w-4 h-4" /></span> : 'No unsaved changes'
 
   async function handleToggleVisibility(sectionType: string, visible: boolean) {
     setSections((prev) => prev.map((s) => (s.type === sectionType ? { ...s, is_visible: visible } : s)))
@@ -610,8 +609,8 @@ export function CustomizeWorkspace({
               <div key={s.type} className="flex items-center justify-between border border-sand-200 rounded-lg px-3 py-2.5">
                 <span className="text-sm">{s.label}</span>
                 <div className="flex items-center gap-1.5">
-                  <button onClick={() => handleReorder(s.type, 'up')} disabled={i === 0} aria-label={`Move ${s.type.replace('_', ' ')} up`} className="text-xs text-ink/40 disabled:opacity-30 px-1.5">↑</button>
-                  <button onClick={() => handleReorder(s.type, 'down')} disabled={i === sections.length - 1} aria-label={`Move ${s.type.replace('_', ' ')} down`} className="text-xs text-ink/40 disabled:opacity-30 px-1.5">↓</button>
+                  <button onClick={() => handleReorder(s.type, 'up')} disabled={i === 0} aria-label={`Move ${s.type.replace('_', ' ')} up`} className="text-ink/40 disabled:opacity-30 p-1"><IconArrowUp className="w-4 h-4" /></button>
+                  <button onClick={() => handleReorder(s.type, 'down')} disabled={i === sections.length - 1} aria-label={`Move ${s.type.replace('_', ' ')} down`} className="text-ink/40 disabled:opacity-30 p-1"><IconArrowDown className="w-4 h-4" /></button>
                   <button
                     onClick={() => handleToggleVisibility(s.type, !s.is_visible)}
                     className={`w-9 h-5 rounded-full relative transition-colors ${s.is_visible ? 'bg-indigo-600' : 'bg-sand-200'}`}
@@ -663,7 +662,7 @@ export function CustomizeWorkspace({
         <p className="text-xs font-medium text-ink/50 uppercase tracking-wide mb-2">Live preview</p>
         <div className="border border-sand-200 rounded-2xl overflow-hidden bg-white dark:bg-sand-100">
           <div className="border-b border-sand-100 px-4 py-2.5 flex items-center gap-1.5">
-            <Storefront className="w-3.5 h-3.5" style={{ color }} />
+            <IconBuildingStore className="w-3.5 h-3.5" style={{ color }} />
             <span className="text-xs font-medium">{storeName}</span>
           </div>
 
@@ -783,7 +782,7 @@ export function CustomizeWorkspace({
           </button>
         </div>
         <Button onClick={save} disabled={isPending || !hasUnsaved} className="shrink-0 px-4">
-          {isPending ? 'Saving...' : hasUnsaved ? 'Save' : justSaved ? 'Saved ✓' : 'Saved'}
+          {isPending ? 'Saving...' : hasUnsaved ? 'Save' : justSaved ? <span className="inline-flex items-center gap-1">Saved <IconCheck className="w-4 h-4" /></span> : 'Saved'}
         </Button>
       </div>
     </div>

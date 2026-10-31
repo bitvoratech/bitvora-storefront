@@ -1,8 +1,7 @@
 import { ProductForm } from './ProductForm'
 import { Card } from '@bitvora/ui/src/Card'
 import Link from 'next/link'
-import { ArrowLeft } from 'switch-icons'
-import { IconLock } from '@tabler/icons-react'
+import { IconArrowLeft, IconLock } from '@tabler/icons-react'
 import { Button } from '@bitvora/ui/src/Button'
 import { createClient } from '../../../../../lib/supabase/server'
 import { storePlan } from '../../../../../lib/store-plan'
@@ -18,7 +17,7 @@ export default async function NewProductPage({ params }: { params: Promise<{ id:
   return (
     <div className="max-w-md">
       <Link href={`/stores/${storeId}/products`} className="flex items-center gap-1.5 text-sm text-ink/50 hover:text-ink mb-4">
-        <ArrowLeft className="w-4 h-4" />
+        <IconArrowLeft className="w-4 h-4" />
         Back to products
       </Link>
       <h1 className="text-2xl font-display font-semibold mb-6">Add product</h1>

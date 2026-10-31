@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element -- Cloudinary-resized images via cldImage() */
 import { useState } from 'react'
-import { PackageBox } from 'switch-icons'
+import { IconPackage } from '@tabler/icons-react'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 
 export function ProductGallery({ images, name }: { images: string[]; name: string }) {
@@ -16,7 +16,7 @@ export function ProductGallery({ images, name }: { images: string[]; name: strin
           <img src={cldImage(current, 1000)} alt={name} fetchPriority="high" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
-            <PackageBox className="w-10 h-10 text-[#d4d4d4]" />
+            <IconPackage className="w-10 h-10 text-[#d4d4d4]" />
           </div>
         )}
       </div>

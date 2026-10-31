@@ -1,3 +1,4 @@
+import { IconTrendingDown, IconTrendingUp } from '@tabler/icons-react'
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
 import { KpiCard } from '@bitvora/ui/src/KpiCard'
@@ -124,7 +125,7 @@ export default async function OwnerOverviewPage() {
             <p className="text-xs text-ink/50 font-medium">Total GMV</p>
             {gmvTrend.label && (
               <span
-                className={`text-xs font-medium ${
+                className={`inline-flex items-center gap-1 text-xs font-medium ${
                   gmvTrend.trend === 'up'
                     ? 'text-palm-600'
                     : gmvTrend.trend === 'down'
@@ -132,7 +133,7 @@ export default async function OwnerOverviewPage() {
                       : 'text-ink/40'
                 }`}
               >
-                {gmvTrend.trend === 'up' ? '↑ ' : gmvTrend.trend === 'down' ? '↓ ' : ''}
+                {gmvTrend.trend === 'up' ? <IconTrendingUp className="w-3.5 h-3.5" /> : gmvTrend.trend === 'down' ? <IconTrendingDown className="w-3.5 h-3.5" /> : null}
                 {gmvTrend.label}
               </span>
             )}

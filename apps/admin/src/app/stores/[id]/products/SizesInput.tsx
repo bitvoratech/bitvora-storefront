@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Label } from '@bitvora/ui/src/Label'
 import { Input } from '@bitvora/ui/src/Input'
-import { Close } from 'switch-icons'
+import { IconX } from '@tabler/icons-react'
 import { MAX_SIZES, MAX_SIZE_LENGTH, splitSizes } from '../../../../lib/product-sizes'
 
 // Free-form on purpose: a doll seller, a hair seller and a shoe seller all
@@ -68,7 +68,7 @@ export function SizesInput({ initialSizes = [] }: { initialSizes?: string[] }) {
                 aria-label={`Remove size ${size}`}
                 className="w-6 h-6 rounded-full flex items-center justify-center text-ink/50 hover:bg-pepper-50 hover:text-pepper-600"
               >
-                <Close className="w-3 h-3" />
+                <IconX className="w-3 h-3" />
               </button>
             </li>
           ))}

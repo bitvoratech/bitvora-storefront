@@ -6,7 +6,7 @@ import { requestPhoneOtp, confirmPhoneOtp, submitIdentityDetails } from './actio
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle, Check } from 'switch-icons'
+import { IconAlertTriangle, IconCheck } from '@tabler/icons-react'
 import { COMPLIANCE_GRACE_DAYS, complianceDaysLeft, type VerificationStatus } from '../../lib/merchant-identity'
 import { createClient } from '../../lib/supabase/client'
 
@@ -24,7 +24,7 @@ function ErrorBox({ message }: { message?: string | null }) {
   if (!message) return null
   return (
     <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
-      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+      <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
       {message}
     </div>
   )
@@ -211,7 +211,7 @@ export function VerifyWizard({
       {stage === 'details' && confirmingSkip && (
         <div>
           <div className="w-12 h-12 rounded-xl bg-marigold-50 flex items-center justify-center mb-4">
-            <AlertTriangle className="w-6 h-6 text-marigold-500" />
+            <IconAlertTriangle className="w-6 h-6 text-marigold-500" />
           </div>
           <h1 className="text-2xl font-display font-semibold mb-1">Skip verification?</h1>
           <p className="text-ink/50 text-sm mb-6">
@@ -241,7 +241,7 @@ export function VerifyWizard({
       {stage === 'review' && (
         <div>
           <div className="w-12 h-12 rounded-xl bg-palm-50 flex items-center justify-center mb-4">
-            <Check className="w-6 h-6 text-palm-600" />
+            <IconCheck className="w-6 h-6 text-palm-600" />
           </div>
           <h1 className="text-2xl font-display font-semibold mb-1">We&apos;re checking your details</h1>
           <p className="text-ink/50 text-sm mb-6">

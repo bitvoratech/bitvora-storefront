@@ -1,5 +1,5 @@
 import { Button } from '@bitvora/ui/src/Button'
-import { Plus } from 'switch-icons'
+import { IconPlus } from '@tabler/icons-react'
 import { createClient } from '../../../../lib/supabase/server'
 import { ProductsTable } from './Productstable'
 import { storefrontUrl } from '../../../../lib/storefront-url'
@@ -42,7 +42,7 @@ export default async function ProductsPage({ params }: { params: Promise<{ id: s
           message={productLimitMessage(plan)}
         >
           <Button className="gap-1.5">
-            <Plus className="w-4 h-4" />
+            <IconPlus className="w-4 h-4" />
             Add product
           </Button>
         </UpgradeGate>

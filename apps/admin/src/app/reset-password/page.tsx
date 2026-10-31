@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@bitvora/ui/src/Button'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle } from 'switch-icons'
+import { IconAlertTriangle } from '@tabler/icons-react'
 import { createClient } from '../../lib/supabase/client'
 import { AuthLayout } from '../../components/AuthLayout'
 import { PasswordInput } from '../../components/PasswordInput'
@@ -45,7 +45,7 @@ export default function ResetPasswordPage() {
 
       {error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2 mb-4">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {error}
         </div>
       )}

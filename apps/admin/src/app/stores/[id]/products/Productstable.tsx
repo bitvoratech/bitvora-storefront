@@ -3,8 +3,7 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Card } from '@bitvora/ui/src/Card'
-import { Edit, PackageBox } from 'switch-icons'
-import { IconBell, IconPhotoDown, IconEyeOff } from '@tabler/icons-react'
+import { IconBell, IconEdit, IconEyeOff, IconPackage, IconPhotoDown } from '@tabler/icons-react'
 import { DeleteProductButton } from './DeleteProductButton'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { IconSearch } from '@tabler/icons-react'
@@ -96,7 +95,7 @@ export function ProductsTable({
     return (
       <Card className="text-center py-14 px-6">
         <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
-          <PackageBox className="w-6 h-6 text-indigo-600" />
+          <IconPackage className="w-6 h-6 text-indigo-600" />
         </div>
         <p className="font-display font-semibold mb-1">Add your first product</p>
         <p className="text-sm text-ink/50 mb-5 max-w-xs mx-auto">Add a photo, a price and how many you have. It shows on your store straight away.</p>
@@ -223,7 +222,7 @@ export function ProductsTable({
                       />
                     ) : (
                       <div className="w-14 h-14 sm:w-11 sm:h-11 rounded-lg bg-sand-100 flex items-center justify-center">
-                        <PackageBox className="w-4 h-4 text-ink/20" />
+                        <IconPackage className="w-4 h-4 text-ink/20" />
                       </div>
                     )}
                   </Link>
@@ -293,7 +292,7 @@ export function ProductsTable({
                     title="Edit"
                     className="p-2 text-ink/40 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
                   >
-                    <Edit className="w-4 h-4" />
+                    <IconEdit className="w-4 h-4" />
                   </Link>
                   <DeleteProductButton productId={product.id} storeId={storeId} productName={product.name} />
                 </div>

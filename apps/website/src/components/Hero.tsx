@@ -1,5 +1,6 @@
 "use client";
 
+import { IconPointFilled } from '@tabler/icons-react'
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
@@ -61,7 +62,7 @@ export function Hero() {
             transition={COLOR_TRANSITION}
             className="mb-6 inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[12.5px] font-semibold tracking-wide"
           >
-            ● A Bitvoratech product
+            <IconPointFilled size={12} /> A Bitvoratech product
           </motion.span>
 
           <motion.h1

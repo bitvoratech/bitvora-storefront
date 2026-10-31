@@ -2,8 +2,7 @@
 
 import { use, useSyncExternalStore } from 'react'
 import Link from 'next/link'
-import { PackageBox, ArrowLeft } from 'switch-icons'
-import { IconMinus, IconPlus, IconTrash } from '@tabler/icons-react'
+import { IconArrowLeft, IconMinus, IconPackage, IconPlus, IconTrash } from '@tabler/icons-react'
 import { lineKey, lineLimit, useCart } from '../../../lib/cart-store'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { CartSkeleton } from '../../../components/Skeleton'
@@ -23,7 +22,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
   return (
     <div>
       <Link href={`/${slug}`} className="flex items-center gap-1.5 text-sm text-[#737373] hover:text-[#171717] mb-6">
-        <ArrowLeft className="w-4 h-4" />
+        <IconArrowLeft className="w-4 h-4" />
         Continue shopping
       </Link>
 
@@ -31,7 +30,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
 
       {items.length === 0 ? (
         <div className="text-center py-20">
-          <PackageBox className="w-8 h-8 text-[#d4d4d4] mx-auto mb-3" />
+          <IconPackage className="w-8 h-8 text-[#d4d4d4] mx-auto mb-3" />
           <p className="text-[#737373]">Your cart is empty.</p>
           <Link href={`/${slug}`} className="text-sm mt-2 inline-block underline">
             Browse products
@@ -48,7 +47,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
               <img src={cldImage(item.image, 200)} alt={item.name} loading="lazy" className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <PackageBox className="w-6 h-6 text-[#d4d4d4]" />
+                <IconPackage className="w-6 h-6 text-[#d4d4d4]" />
               </div>
             )}
           </div>

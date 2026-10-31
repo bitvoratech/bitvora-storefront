@@ -2,9 +2,8 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { IconMinus, IconPlus, IconShoppingBag } from '@tabler/icons-react'
+import { IconBrandWhatsapp, IconCheck, IconMinus, IconPlus, IconShoppingBag } from '@tabler/icons-react'
 import { useCart, MAX_ITEM_QUANTITY } from '../../../../lib/cart-store'
-import { BrandIcon } from '../../../../components/BrandIcon'
 
 export function AddToCartButton({
   slug,
@@ -84,7 +83,7 @@ export function AddToCartButton({
 
   const whatsappHref = whatsappNumber
     ? `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(
-        `Hi ${storeName} 👋\nI'd like to order:\n\n*${name}* — ₦${price.toLocaleString()}${size ? `\nSize: ${size}` : ''}\nQuantity: ${quantity}`
+        `Hi ${storeName},\nI'd like to order:\n\n*${name}* — ₦${price.toLocaleString()}${size ? `\nSize: ${size}` : ''}\nQuantity: ${quantity}`
       )}`
     : null
 
@@ -179,7 +178,7 @@ export function AddToCartButton({
         className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3.5 text-sm font-medium border border-[#e5e5e5] hover:bg-[#fafafa] transition-colors"
       >
         <IconShoppingBag className="w-4 h-4" stroke={1.75} />
-        <span aria-live="polite">{added ? 'Added to cart ✓' : 'Add to cart'}</span>
+        <span aria-live="polite">{added ? <span className="inline-flex items-center gap-1">Added to cart <IconCheck className="w-4 h-4" /></span> : 'Add to cart'}</span>
       </button>
 
       {whatsappHref && (
@@ -189,7 +188,7 @@ export function AddToCartButton({
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-2 w-full rounded-lg px-4 py-3 text-sm text-[#525252] hover:text-[#171717] transition-colors"
         >
-          <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+          <IconBrandWhatsapp className="w-4 h-4" />
           Or order via WhatsApp
         </a>
       )}

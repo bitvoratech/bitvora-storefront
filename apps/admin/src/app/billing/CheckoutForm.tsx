@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from 'react'
 import { Button } from '@bitvora/ui/src/Button'
-import { AlertTriangle } from 'switch-icons'
+import { IconAlertTriangle } from '@tabler/icons-react'
 import { PlanOptions } from '../../components/PlanOptions'
 import { openManageLink, startCheckout, submitTransfer } from './actions'
 import { discountedPrice, firstPaymentDiscount, formatNaira, type PlanId, type PlanInterval } from '../../lib/plans'
@@ -11,7 +11,7 @@ function ErrorNote({ error }: { error?: string }) {
   if (!error) return null
   return (
     <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
-      <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+      <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
       {error}
     </div>
   )

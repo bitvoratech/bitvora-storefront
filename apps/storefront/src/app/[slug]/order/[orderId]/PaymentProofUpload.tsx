@@ -3,8 +3,7 @@
 import { useState } from 'react'
 
 import { savePaymentProof } from './actions'
-import { Check } from 'switch-icons'
-import { IconUpload } from '@tabler/icons-react'
+import { IconCheck, IconUpload } from '@tabler/icons-react'
 import { uploadToCloudinary } from '@bitvora/lib/cloudinary-upload'
 
 export function PaymentProofUpload({
@@ -45,7 +44,7 @@ export function PaymentProofUpload({
   if (proofUrl) {
     return (
       <div className="flex items-center gap-2 bg-green-50 text-green-700 text-sm rounded-lg px-3 py-2.5">
-        <Check className="w-4 h-4 shrink-0" />
+        <IconCheck className="w-4 h-4 shrink-0" />
         Payment proof uploaded
       </div>
     )

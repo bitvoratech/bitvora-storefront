@@ -5,8 +5,7 @@ import { ProfileForm } from './ProfileForm'
 import { AvatarUploader } from './AvatarUploader'
 import { PasswordForm } from './PasswordForm'
 import { Card } from '@bitvora/ui/src/Card'
-import { PackageBox, Receipt, Calendar } from 'switch-icons'
-import { IconLock, IconUserCircle } from '@tabler/icons-react'
+import { IconCalendar, IconLock, IconPackage, IconReceipt, IconUserCircle } from '@tabler/icons-react'
 
 export default async function ProfilePage() {
   const supabase = await createClient()
@@ -35,9 +34,9 @@ export default async function ProfilePage() {
   const initial = merchant?.full_name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || '?'
 
   const stats = [
-    { icon: PackageBox, value: storeIds.length, label: storeIds.length === 1 ? 'Store' : 'Stores', href: '/' },
-    { icon: Receipt, value: orderCount ?? 0, label: orderCount === 1 ? 'Order' : 'Orders', href: null },
-    { icon: Calendar, value: memberSince, label: 'Joined', href: null },
+    { icon: IconPackage, value: storeIds.length, label: storeIds.length === 1 ? 'Store' : 'Stores', href: '/' },
+    { icon: IconReceipt, value: orderCount ?? 0, label: orderCount === 1 ? 'Order' : 'Orders', href: null },
+    { icon: IconCalendar, value: memberSince, label: 'Joined', href: null },
   ]
 
   return (

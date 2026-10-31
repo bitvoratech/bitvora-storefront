@@ -1,33 +1,33 @@
-import { Storefront, MobileMoney, Waybill, AiSpark, Wallet, Users } from 'switch-icons'
+import { IconBuildingStore, IconDeviceMobileDollar, IconSparkles, IconTruckDelivery, IconUsers, IconWallet } from '@tabler/icons-react'
 
 const FEATURES = [
   {
-    icon: Storefront,
+    icon: IconBuildingStore,
     title: 'Your brand, not a template',
     description: 'Pick your own colors and hero sections — customers see your store, not a generic layout.',
   },
   {
-    icon: MobileMoney,
+    icon: IconDeviceMobileDollar,
     title: 'WhatsApp-native ordering',
     description: 'Customers can order straight to WhatsApp with the cart and details pre-filled.',
   },
   {
-    icon: Waybill,
+    icon: IconTruckDelivery,
     title: 'Nigeria-first checkout',
     description: 'Bank transfer, pay on delivery, and delivery fees you set for every area you serve.',
   },
   {
-    icon: AiSpark,
+    icon: IconSparkles,
     title: 'Fast by default',
     description: 'Built on modern web tech so your store loads quickly, even on a budget phone.',
   },
   {
-    icon: Wallet,
+    icon: IconWallet,
     title: 'Real order management',
     description: 'See every order, update status, and track payment proof — all from one dashboard.',
   },
   {
-    icon: Users,
+    icon: IconUsers,
     title: 'Built for how you sell',
     description: 'Designed around Nigerian small businesses — not adapted from a Western template.',
   },

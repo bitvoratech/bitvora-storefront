@@ -4,7 +4,7 @@ import { useActionState } from 'react'
 import { Button } from '@bitvora/ui/src/Button'
 import { Input } from '@bitvora/ui/src/Input'
 import { Label } from '@bitvora/ui/src/Label'
-import { AlertTriangle } from 'switch-icons'
+import { IconAlertTriangle } from '@tabler/icons-react'
 import { addAdmin, type AddAdminResult } from './actions'
 
 export function AddAdminForm() {
@@ -14,7 +14,7 @@ export function AddAdminForm() {
     <form action={formAction} className="space-y-4">
       {state && 'error' in state && (
         <div className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+          <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
           {state.error}
         </div>
       )}

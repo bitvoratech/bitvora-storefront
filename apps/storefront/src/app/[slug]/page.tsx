@@ -3,15 +3,13 @@ import { Suspense } from 'react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
-import { PackageBox } from 'switch-icons'
-import { IconCheck, IconSearchOff } from '@tabler/icons-react'
+import { IconBrandWhatsapp, IconCheck, IconPackage, IconSearchOff } from '@tabler/icons-react'
 import { ProductCard } from './ProductCard'
 import { DISPLAY_FONTS, SCALE_CLASSES } from '../../lib/font-pairings'
 import { getPublishedStore, whatsappLink } from '../../lib/store'
 import { collectionTileHref, splitSections } from '../../lib/sections'
 import { cldImage } from '@bitvora/lib/cloudinary-image'
 import { ProductFilters } from '../../components/ProductFilters'
-import { BrandIcon } from '../../components/BrandIcon'
 import { sectionAllowed } from '@bitvora/lib/plan-features'
 import { aboutParagraphs, isAboutEmpty, normalizeAbout } from '@bitvora/lib/about-section'
 
@@ -264,7 +262,7 @@ function renderSection(section: { type: string; config: unknown }) {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-full border border-[#d4d4d4] bg-white px-5 py-3 text-sm font-medium hover:bg-[#fafafa] transition-colors"
                 >
-                  <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+                  <IconBrandWhatsapp className="w-4 h-4" />
                   Chat with us
                 </a>
               )}
@@ -345,7 +343,7 @@ return (
 
     {totalProducts === 0 && (
       <div className="text-center py-20">
-        <PackageBox className="w-8 h-8 text-[#d4d4d4] mx-auto mb-3" />
+        <IconPackage className="w-8 h-8 text-[#d4d4d4] mx-auto mb-3" />
         <p className="text-[#737373]">No products available yet. Check back soon.</p>
       </div>
     )}
@@ -372,7 +370,7 @@ return (
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-[#e5e5e5] px-5 py-2.5 text-sm font-medium hover:bg-[#fafafa] transition-colors"
             >
-              <BrandIcon icon="Whatsapp" className="w-4 h-4" />
+              <IconBrandWhatsapp className="w-4 h-4" />
               Ask {store.name} if they have it
             </a>
           )}
