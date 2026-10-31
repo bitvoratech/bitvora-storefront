@@ -15,6 +15,8 @@ const INDUSTRIES = [
   { value: 'food', label: 'Food & Beverage' },
   { value: 'electronics', label: 'Electronics & Gadgets' },
   { value: 'beauty', label: 'Beauty & Cosmetics' },
+  { value: 'building materials', label: 'Building Materials' },
+  { value: 'real estate', label: 'Real Estate' },
   { value: 'services', label: 'Services' },
   { value: 'general', label: 'General / Other' },
 ]
