@@ -19,6 +19,8 @@ const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 export const metadata: Metadata = {
   title: "Bitvora Stores",
   description: "Storefronts that look like your brand.",
+  // The dashboard is private; next.config.ts also sends X-Robots-Tag.
+  robots: { index: false, follow: false, nocache: true },
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
