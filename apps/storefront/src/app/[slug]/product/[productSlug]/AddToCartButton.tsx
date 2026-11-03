@@ -179,6 +179,10 @@ export function AddToCartButton({
           </button>
         </div>
       </div>
+      {stock !== null && quantity >= stock && stock < MAX_ITEM_QUANTITY && (
+        // Shoppers don't see the stock count, just that they've hit it.
+        <p className="text-xs text-[#737373] mb-1">That&apos;s all we have right now.</p>
+      )}
 
       <button
         onClick={handleBuyNow}

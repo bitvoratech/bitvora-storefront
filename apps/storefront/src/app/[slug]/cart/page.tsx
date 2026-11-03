@@ -75,7 +75,7 @@ export default function CartPage({ params }: { params: Promise<{ slug: string }>
                   </button>
                 </div>
                 {item.maxQuantity != null && item.quantity >= item.maxQuantity && (
-                  <p className="text-[11px] text-[#737373] mt-1 text-center">Only {item.maxQuantity} in stock</p>
+                  <p className="text-[11px] text-[#737373] mt-1 text-center">That&apos;s all we have right now</p>
                 )}
               </div>
               <button onClick={() => removeItem(item.productId, item.size)} aria-label={`Remove ${item.name} from cart`} className="text-[#737373] hover:text-red-600 w-10 h-10 flex items-center justify-center">

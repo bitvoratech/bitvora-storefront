@@ -14,7 +14,6 @@ import { RestockForm } from './RestockForm'
 import { cldJpeg } from '@bitvora/lib/cloudinary-image'
 import { VerifiedBadge } from '../../../../components/VerifiedBadge'
 
-const LOW_STOCK_THRESHOLD = 5
 // Below this, "1 sold this week" reads as weak rather than reassuring.
 const MIN_SALES_TO_SHOW = 2
 
@@ -151,10 +150,6 @@ export default async function ProductPage({
             ) : stock <= 0 ? (
               <span className="inline-flex items-center gap-1.5 text-sm text-red-700 bg-red-50 rounded-full px-3 py-1">
                 Sold out
-              </span>
-            ) : stock <= LOW_STOCK_THRESHOLD ? (
-              <span className="inline-flex items-center gap-1.5 text-sm text-amber-800 bg-amber-50 rounded-full px-3 py-1">
-                Only {stock} left
               </span>
             ) : (
               <span className="inline-flex items-center gap-1.5 text-sm text-green-700 bg-green-50 rounded-full px-3 py-1">

@@ -127,6 +127,12 @@ export async function createOrder(input: CheckoutInput) {
   if (error || !data) {
     const message = error?.message ?? ''
     if (CUSTOMER_FACING_DB_ERRORS.some((m) => message.includes(m))) {
+      // Shoppers never see stock counts, so drop the number from
+      // "Only N of "X" left in stock" before it reaches them.
+      const leftInStock = message.match(/^Only \d+ of (".*") left in stock$/)
+      if (leftInStock) {
+        return { error: `We don't have that many of ${leftInStock[1]} right now. Lower the quantity and try again.` }
+      }
       return { error: message }
     }
     console.error('create_order failed', error)
