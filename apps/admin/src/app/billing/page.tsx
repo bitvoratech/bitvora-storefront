@@ -128,6 +128,9 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
         discountPercent: isFirstPayment(merchant) ? planDiscountPercent() : 0,
       }
     : null
+  // A plan without a card subscription is renewed by paying again: by
+  // transfer, or one-off through Paystack.
+  const canRenew = !!merchant && canPayByTransfer(merchant) && !pendingTransfer && (!!transfer || card)
   // A transfer-paid plan doesn't renew on its own.
   const paidByTransfer = status === 'active' && !merchant?.paystack_subscription_code
   const plan = parsePlan(merchant?.plan)
@@ -178,7 +181,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                   {status === 'comped'
                     ? STATUS_TEXT.comped
                     : plan
-                      ? `${formatNaira(planPrice(plan, interval))} / ${interval === 'annual' ? 'year' : 'month'}, ${paidByTransfer ? 'paid by bank transfer' : 'paid by card'}`
+                      ? `${formatNaira(planPrice(plan, interval))} / ${interval === 'annual' ? 'year' : 'month'}, ${paidByTransfer ? 'you renew it yourself' : 'renews by card'}`
                       : null}
                 </p>
               </div>
@@ -234,7 +237,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             </Card>
           )}
 
-          {transfer && (
+          {canRenew && (
             <Card>
               <p className="font-medium">{pastEnd ? 'Renew your plan' : 'Your plan ends soon'}</p>
               <p className="text-sm text-ink/50 mt-1 mb-4">
@@ -242,11 +245,11 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
                   ? 'Pay for the next period to keep your stores running.'
                   : 'Pay for the next period now and it starts when this one ends. You can switch plans for the next period here too.'}
               </p>
-              <CheckoutForm plan={plan} interval={interval} discountPercent={0} card={false} transfer={transfer} />
+              <CheckoutForm plan={plan} interval={interval} discountPercent={0} card={false} oneOff={card} transfer={transfer} />
             </Card>
           )}
 
-          {upgrades.length > 0 && transfer && (
+          {upgrades.length > 0 && transfer && canRenew && (
             <p className="text-xs text-ink/40 px-1">
               Want more right now? Renew on a bigger plan above and it switches on as soon as we confirm your transfer.
             </p>

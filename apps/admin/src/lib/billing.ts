@@ -5,16 +5,18 @@
 import { createAdminClient } from './supabase/admin'
 import { discountedPrice, firstPaymentDiscount, parseInterval, parsePlan, planDiscountPercent, type SubscriptionStatus } from './plans'
 import { createSubscription, periodEnd, readMetadata, type PaystackTransaction } from './paystack'
+import { transferPeriodStart } from './bank-transfer'
 
 type MerchantBilling = {
   id: string
   plan: string | null
   plan_interval: string | null
   current_period_end: string | null
+  subscription_status: string | null
   last_payment_reference: string | null
 }
 
-const BILLING_COLUMNS = 'id, plan, plan_interval, current_period_end, last_payment_reference'
+const BILLING_COLUMNS = 'id, plan, plan_interval, current_period_end, subscription_status, last_payment_reference'
 
 /**
  * Marks a successful plan payment: the first one (carrying our metadata) or a
@@ -50,8 +52,11 @@ export async function recordPayment(tx: PaystackTransaction, opts: { expectMerch
   const discount = firstPaymentDiscount(interval, planDiscountPercent())
   if (meta.plan && tx.amount < discountedPrice(plan, interval, discount) * 100) return null
 
+  const oneOff = meta.one_off === true || String(meta.one_off) === 'true'
   const paidAt = tx.paid_at ? new Date(tx.paid_at) : new Date()
-  const end = periodEnd(paidAt, interval)
+  // A one-off payment (bank, USSD, transfer) can renew a plan early, like a
+  // manual transfer: the new period starts when the current one ends.
+  const end = periodEnd(oneOff ? transferPeriodStart(merchant, paidAt) : paidAt, interval)
   const current = merchant.current_period_end ? new Date(merchant.current_period_end) : null
   const periodEndsAt = current && current > end ? current : end
 
@@ -75,7 +80,7 @@ export async function recordPayment(tx: PaystackTransaction, opts: { expectMerch
 
   // A discounted first month is a plain charge, so the card still needs
   // subscribing to the full-price plan, starting when the paid month ends.
-  if (claimed?.length && meta.discount_percent) {
+  if (claimed?.length && meta.discount_percent && !oneOff) {
     try {
       const customerCode = tx.customer?.customer_code
       const authorizationCode = tx.authorization?.reusable ? tx.authorization.authorization_code : undefined
