@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { discountedPrice, firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent } from '../../lib/plans'
-import { initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
+import { initializeOneOffPayment, initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
 import { canOpenStore } from '../../lib/merchant-identity'
 import { canPayByTransfer, canUpgradeByTransfer, cardPaymentsEnabled, higherPlans, isFirstPayment, transferAccount, transferReference, upgradePrice } from '../../lib/bank-transfer'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
@@ -27,7 +27,9 @@ async function currentMerchant() {
   return { user, merchant }
 }
 
-// Sends the merchant to Paystack to pay for (and subscribe to) a plan.
+// Sends the merchant to Paystack to pay for a plan: by card, which subscribes
+// and renews itself, or one-off by bank, USSD or transfer, which the merchant
+// renews by paying again (from TRANSFER_RENEW_DAYS before it ends).
 export async function startCheckout(prevState: BillingState, formData: FormData): Promise<BillingState> {
   const { user, merchant } = await currentMerchant()
   if (!merchant || !user.email) return { error: 'Could not find your account. Try logging in again.' }
@@ -36,7 +38,8 @@ export async function startCheckout(prevState: BillingState, formData: FormData)
   if (!cardPaymentsEnabled()) return { error: 'Card payments aren’t available right now. Pay by bank transfer instead.' }
   // Paying waits for the NIN/CAC review, so nobody pays and then gets rejected.
   if (!canOpenStore(merchant)) return { error: 'Verify your phone number before paying for your plan.' }
-  if (hasActivePlan(merchant)) return { error: 'Your plan is already active.' }
+  const oneOff = formData.get('method') === 'one_off'
+  if (oneOff ? !canPayByTransfer(merchant) : hasActivePlan(merchant)) return { error: 'Your plan is already active.' }
 
   const plan = parsePlan(formData.get('plan'))
   const interval = parseInterval(formData.get('interval'))
@@ -59,17 +62,23 @@ export async function startCheckout(prevState: BillingState, formData: FormData)
       // Linked up front so renewals and subscription events can find this merchant.
       await admin.from('merchants').update({ paystack_customer_code: customerCode }).eq('id', merchant.id)
     }
-    // Keep the choice on record even if they don't finish paying.
-    await admin.from('merchants').update({ plan, plan_interval: interval }).eq('id', merchant.id)
+    // Keep the choice on record even if they don't finish paying (but don't
+    // switch a running plan before a renewal is paid).
+    if (!hasActivePlan(merchant)) await admin.from('merchants').update({ plan, plan_interval: interval }).eq('id', merchant.id)
 
-    const tx = await initializeSubscription({
+    const checkout = {
       email: user.email,
       merchantId: merchant.id,
       plan,
       interval,
-      discountPercent: firstPaymentDiscount(interval, planDiscountPercent()),
       callbackUrl: `${origin}/billing/callback`,
-    })
+    }
+    const tx = oneOff
+      ? await initializeOneOffPayment({
+          ...checkout,
+          discountPercent: isFirstPayment(merchant) ? firstPaymentDiscount(interval, planDiscountPercent()) : 0,
+        })
+      : await initializeSubscription({ ...checkout, discountPercent: firstPaymentDiscount(interval, planDiscountPercent()) })
     authorizationUrl = tx.authorization_url
   } catch (error) {
     console.error('billing: starting checkout failed', error)

@@ -112,6 +112,40 @@ export async function initializeSubscription(input: {
   return data
 }
 
+/** Paystack channels for a one-off plan payment that doesn't renew by itself. */
+export const ONE_OFF_CHANNELS = ['bank', 'ussd', 'bank_transfer'] as const
+
+/**
+ * Starts a one-off payment for one period of a plan, by bank, USSD or bank
+ * transfer. Nothing renews it: the merchant pays again when it runs out, the
+ * same as a manual bank transfer.
+ */
+export async function initializeOneOffPayment(input: {
+  email: string
+  merchantId: string
+  plan: PlanId
+  interval: PlanInterval
+  discountPercent: number
+  callbackUrl: string
+}) {
+  return paystack<{ authorization_url: string; reference: string }>('/transaction/initialize', {
+    method: 'POST',
+    body: {
+      email: input.email,
+      amount: discountedPrice(input.plan, input.interval, input.discountPercent) * 100,
+      channels: [...ONE_OFF_CHANNELS],
+      callback_url: input.callbackUrl,
+      metadata: {
+        merchant_id: input.merchantId,
+        plan: input.plan,
+        interval: input.interval,
+        discount_percent: input.discountPercent > 0 ? input.discountPercent : undefined,
+        one_off: true,
+      },
+    },
+  })
+}
+
 /** Subscribes a saved card to the full-price plan, first charged at `startDate`. */
 export async function createSubscription(input: {
   customerCode: string
@@ -131,7 +165,7 @@ export async function createSubscription(input: {
   })
 }
 
-type TransactionMetadata = { merchant_id?: string; plan?: string; interval?: string; discount_percent?: number }
+type TransactionMetadata = { merchant_id?: string; plan?: string; interval?: string; discount_percent?: number; one_off?: boolean }
 
 export type PaystackTransaction = {
   reference: string
