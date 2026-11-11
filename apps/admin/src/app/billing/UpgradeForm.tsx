@@ -3,25 +3,41 @@
 import { useActionState, useState } from 'react'
 import { Button } from '@bitvora/ui/src/Button'
 import { IconAlertTriangle } from '@tabler/icons-react'
-import { submitUpgrade } from './actions'
+import { startUpgradeCheckout, submitUpgrade } from './actions'
 import { PLAN_NAMES, PLAN_SUMMARY, formatNaira, type PlanId } from '../../lib/plans'
 import type { TransferOption } from './CheckoutForm'
 
 export type UpgradeChoice = { plan: PlanId; amount: number }
 
-// Moving up a plan mid-period by bank transfer. Amounts are worked out on the
-// server for the days left; the action works them out again before saving.
-export function UpgradeForm({ choices, transfer, paidUntil }: { choices: UpgradeChoice[]; transfer: TransferOption; paidUntil: string }) {
-  const [state, action, pending] = useActionState(submitUpgrade, undefined)
+// Moving up a plan mid-period, through Paystack (card, bank, USSD or transfer)
+// and/or by sending a bank transfer yourself. Amounts are worked out on the
+// server for the days left; both actions work them out again before saving.
+export function UpgradeForm({
+  choices,
+  transfer,
+  paidUntil,
+  card = false,
+}: {
+  choices: UpgradeChoice[]
+  /** Manual bank transfer details, or null when the transfer account isn't set up. */
+  transfer: TransferOption | null
+  paidUntil: string
+  /** Paystack payment for the upgrade. */
+  card?: boolean
+}) {
+  const [transferState, transferAction, transferPending] = useActionState(submitUpgrade, undefined)
+  const [payState, payAction, payPending] = useActionState(startUpgradeCheckout, undefined)
   const [plan, setPlan] = useState<PlanId>(choices[0].plan)
   const amount = choices.find((c) => c.plan === plan)?.amount ?? 0
+  const busy = transferPending || payPending
+  const error = payState?.error ?? transferState?.error
 
   return (
-    <form action={action} className="space-y-4">
-      {state?.error && (
+    <form action={transferAction} className="space-y-4">
+      {error && (
         <div role="alert" className="flex items-start gap-2 bg-pepper-50 text-pepper-600 text-sm rounded-lg px-3 py-2">
           <IconAlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
-          {state.error}
+          {error}
         </div>
       )}
       <div className="grid gap-2">
@@ -42,28 +58,48 @@ export function UpgradeForm({ choices, transfer, paidUntil }: { choices: Upgrade
           </label>
         ))}
       </div>
-      <div className="rounded-xl bg-sand-100 px-4 py-3 grid grid-cols-2 gap-3 text-sm">
-        <Detail label="Amount" value={formatNaira(amount)} />
-        <Detail label="Reference" value={transfer.reference} mono />
-        <Detail label="Bank" value={transfer.bankName} />
-        <Detail label="Account number" value={transfer.accountNumber} mono />
-        <div className="col-span-2"><Detail label="Account name" value={transfer.accountName} /></div>
-      </div>
       <p className="text-xs text-ink/50">
-        You only pay the difference for the days left on your plan. Send exactly {formatNaira(amount)} with {transfer.reference} in the description, then tell us below. Your plan switches to {PLAN_NAMES[plan]} once the money arrives, and your renewal date stays the same.
+        You only pay the difference for the days left on your plan, and your renewal date stays the same.
       </p>
-      <label className="block text-sm">
-        <span className="block text-ink/60 mb-1">Name on the account you paid from</span>
-        <input
-          name="sender_name"
-          maxLength={120}
-          autoComplete="name"
-          className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2 text-base sm:text-sm focus:outline-none focus:border-indigo-600"
-        />
-      </label>
-      <Button type="submit" disabled={pending} className="w-full">
-        {pending ? 'Saving...' : `I’ve sent ${formatNaira(amount)}`}
-      </Button>
+
+      {card && (
+        <div className="space-y-2">
+          <Button type="submit" formAction={payAction} disabled={busy} className="w-full">
+            {payPending ? 'Opening Paystack...' : `Pay ${formatNaira(amount)} with Paystack`}
+          </Button>
+          <p className="text-xs text-ink/40 text-center">
+            Card, bank, USSD or transfer. Your plan switches to {PLAN_NAMES[plan]} as soon as the payment is confirmed.
+          </p>
+        </div>
+      )}
+
+      {transfer && (
+        <div className={`space-y-3 ${card ? 'border-t border-sand-200 pt-4' : ''}`}>
+          {card && <p className="text-sm font-medium">Or transfer to our account yourself</p>}
+          <div className="rounded-xl bg-sand-100 px-4 py-3 grid grid-cols-2 gap-3 text-sm">
+            <Detail label="Amount" value={formatNaira(amount)} />
+            <Detail label="Reference" value={transfer.reference} mono />
+            <Detail label="Bank" value={transfer.bankName} />
+            <Detail label="Account number" value={transfer.accountNumber} mono />
+            <div className="col-span-2"><Detail label="Account name" value={transfer.accountName} /></div>
+          </div>
+          <p className="text-xs text-ink/50">
+            Send exactly {formatNaira(amount)} with {transfer.reference} in the description, then tell us below. Your plan switches to {PLAN_NAMES[plan]} once the money arrives.
+          </p>
+          <label className="block text-sm">
+            <span className="block text-ink/60 mb-1">Name on the account you paid from</span>
+            <input
+              name="sender_name"
+              maxLength={120}
+              autoComplete="name"
+              className="w-full rounded-lg border border-sand-200 bg-white dark:bg-sand-100 px-3 py-2 text-base sm:text-sm focus:outline-none focus:border-indigo-600"
+            />
+          </label>
+          <Button type="submit" variant={card ? 'secondary' : undefined} disabled={busy} className="w-full">
+            {transferPending ? 'Saving...' : `I’ve sent ${formatNaira(amount)}`}
+          </Button>
+        </div>
+      )}
     </form>
   )
 }

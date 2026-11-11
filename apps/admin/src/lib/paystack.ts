@@ -146,6 +146,38 @@ export async function initializeOneOffPayment(input: {
   })
 }
 
+/**
+ * Starts a one-off payment for the difference to move up a plan for the rest
+ * of the paid period. `amount` is in naira and must come from upgradePrice() on
+ * the server; recordPayment works it out again before switching the plan.
+ * Nothing renews, so card is allowed here as well.
+ */
+export async function initializeUpgradePayment(input: {
+  email: string
+  merchantId: string
+  plan: PlanId // the plan they're moving to
+  interval: PlanInterval
+  amount: number
+  callbackUrl: string
+}) {
+  return paystack<{ authorization_url: string; reference: string }>('/transaction/initialize', {
+    method: 'POST',
+    body: {
+      email: input.email,
+      amount: input.amount * 100,
+      channels: ['card', ...ONE_OFF_CHANNELS],
+      callback_url: input.callbackUrl,
+      metadata: {
+        merchant_id: input.merchantId,
+        plan: input.plan,
+        interval: input.interval,
+        one_off: true,
+        kind: 'upgrade',
+      },
+    },
+  })
+}
+
 /** Subscribes a saved card to the full-price plan, first charged at `startDate`. */
 export async function createSubscription(input: {
   customerCode: string
@@ -165,7 +197,14 @@ export async function createSubscription(input: {
   })
 }
 
-type TransactionMetadata = { merchant_id?: string; plan?: string; interval?: string; discount_percent?: number; one_off?: boolean }
+type TransactionMetadata = {
+  merchant_id?: string
+  plan?: string
+  interval?: string
+  discount_percent?: number
+  one_off?: boolean
+  kind?: 'upgrade'
+}
 
 export type PaystackTransaction = {
   reference: string

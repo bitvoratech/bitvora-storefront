@@ -11,7 +11,7 @@ import { canPayByTransfer, canUpgradeByTransfer, cardPaymentsEnabled, higherPlan
 
 const PAYMENT_NOTE: Record<string, { text: string; tone: string }> = {
   success: { text: 'Payment received. Your plan is active.', tone: 'bg-palm-50 text-palm-600' },
-  pending: { text: 'We’re confirming your payment with Paystack. Refresh this page in a minute.', tone: 'bg-marigold-50 text-marigold-500' },
+  pending: { text: 'We’re confirming your payment with Paystack. Bank transfers and USSD can take a few minutes, so refresh this page shortly.', tone: 'bg-marigold-50 text-marigold-500' },
   failed: { text: 'That payment didn’t go through. You haven’t been charged for a plan.', tone: 'bg-pepper-50 text-pepper-600' },
 }
 
@@ -138,7 +138,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
   const periodEnd = merchant?.current_period_end ?? null
   const { daysLeft, pastEnd } = periodTimeLeft(periodEnd)
 
-  const upgrades: UpgradeChoice[] = account && plan && merchant && !pendingTransfer && canUpgradeByTransfer(merchant)
+  const upgrades: UpgradeChoice[] = (account || card) && plan && merchant && !pendingTransfer && canUpgradeByTransfer(merchant)
     ? higherPlans(plan)
         .map((to) => ({ plan: to, amount: upgradePrice(plan, to, interval, periodEnd) }))
         .filter((c) => c.amount > 0)
@@ -225,14 +225,15 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
             )}
           </Card>
 
-          {upgrades.length > 0 && transfer === null && account && merchant && (
+          {upgrades.length > 0 && transfer === null && (account || card) && merchant && (
             <Card>
               <p className="font-medium">Upgrade your plan</p>
               <p className="text-sm text-ink/50 mt-1 mb-4">Get more stores and products today. Pay only for the days left until {formatDate(periodEnd)}.</p>
               <UpgradeForm
                 choices={upgrades}
                 paidUntil={shortDate(periodEnd!)}
-                transfer={{ ...account, reference: transferReference(merchant.id), discountPercent: 0 }}
+                card={card}
+                transfer={account ? { ...account, reference: transferReference(merchant.id), discountPercent: 0 } : null}
               />
             </Card>
           )}
@@ -282,7 +283,7 @@ export default async function BillingPage({ searchParams }: { searchParams: Prom
           <CheckoutForm
             plan={parsePlan(merchant?.plan)}
             interval={parseInterval(merchant?.plan_interval) ?? 'monthly'}
-            discountPercent={planDiscountPercent()}
+            discountPercent={merchant && isFirstPayment(merchant) ? planDiscountPercent() : 0}
             card={card}
             transfer={transfer}
           />

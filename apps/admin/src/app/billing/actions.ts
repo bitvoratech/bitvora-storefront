@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '../../lib/supabase/server'
 import { createAdminClient } from '../../lib/supabase/admin'
 import { discountedPrice, firstPaymentDiscount, hasActivePlan, parseInterval, parsePlan, planDiscountPercent } from '../../lib/plans'
-import { initializeOneOffPayment, initializeSubscription, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
+import { initializeOneOffPayment, initializeSubscription, initializeUpgradePayment, subscriptionManageLink, upsertCustomer } from '../../lib/paystack'
 import { canOpenStore } from '../../lib/merchant-identity'
 import { canPayByTransfer, canUpgradeByTransfer, cardPaymentsEnabled, higherPlans, isFirstPayment, transferAccount, transferReference, upgradePrice } from '../../lib/bank-transfer'
 import { getClientIp, rateLimit } from '@bitvora/lib/rate-limit'
@@ -185,4 +185,55 @@ export async function submitUpgrade(prevState: TransferState, formData: FormData
 
   revalidatePath('/billing')
   return { sent: true }
+}
+
+// The merchant pays the difference to move up a plan through Paystack (card,
+// bank, USSD or transfer). The webhook or callback switches the plan on and
+// keeps the paid-until date; see the upgrade branch of recordPayment.
+export async function startUpgradeCheckout(prevState: BillingState, formData: FormData): Promise<BillingState> {
+  const { user, merchant } = await currentMerchant()
+  if (!merchant || !user.email) return { error: 'Could not find your account. Try logging in again.' }
+  if (merchant.is_owner || merchant.is_admin) return { error: 'Staff accounts don’t have a plan.' }
+  if (merchant.is_suspended) return { error: 'Your account is suspended.' }
+  if (!cardPaymentsEnabled()) return { error: 'Paystack isn’t available right now.' }
+  if (!canUpgradeByTransfer(merchant)) return { error: 'Your plan can’t be upgraded this way right now. Email help@bitvoratech.com and we’ll sort it out.' }
+
+  const admin = createAdminClient()
+  // One payment at a time: a transfer already being checked could otherwise be
+  // confirmed on top of a Paystack upgrade.
+  const { data: pendingRows } = await admin
+    .from('plan_transfers')
+    .select('id')
+    .eq('merchant_id', merchant.id)
+    .eq('status', 'pending')
+    .limit(1)
+  if (pendingRows?.length) return { error: 'We’re already checking a transfer from you. We’ll update you once it’s confirmed.' }
+
+  const from = parsePlan(merchant.plan)
+  const to = parsePlan(formData.get('plan'))
+  const interval = parseInterval(merchant.plan_interval) ?? 'monthly'
+  if (!from || !to || !higherPlans(from).includes(to)) return { error: 'Pick a plan above your current one.' }
+  const amount = upgradePrice(from, to, interval, merchant.current_period_end)
+  if (!amount) return { error: 'Your plan ends too soon to upgrade. Renew on the new plan instead.' }
+
+  const rl = await rateLimit('billing', await getClientIp(), 10, '10 m')
+  if (!rl.ok) return { error: 'Too many attempts. Try again in a few minutes.' }
+
+  const origin = (await headers()).get('origin') ?? process.env.NEXT_PUBLIC_ADMIN_URL ?? 'https://app.bitvoratech.com'
+  let authorizationUrl: string
+  try {
+    const tx = await initializeUpgradePayment({
+      email: user.email,
+      merchantId: merchant.id,
+      plan: to,
+      interval,
+      amount,
+      callbackUrl: `${origin}/billing/callback`,
+    })
+    authorizationUrl = tx.authorization_url
+  } catch (error) {
+    console.error('billing: upgrade checkout failed', error)
+    return { error: 'We couldn’t reach Paystack. Try again in a moment.' }
+  }
+  redirect(authorizationUrl)
 }

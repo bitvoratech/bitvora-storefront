@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
 
   try {
     const tx = await verifyTransaction(reference)
+    // Bank transfers and USSD can still be waiting on the bank: that isn't a failure.
+    if (tx.status !== 'success') {
+      return back(tx.status === 'failed' || tx.status === 'reversed' ? 'payment=failed' : 'payment=pending')
+    }
     const recorded = await recordPayment(tx, { expectMerchantId: merchant.id })
     if (!recorded) return back('payment=failed')
     // Signup goes phone → payment → compliance: carry on to the NIN/CAC step

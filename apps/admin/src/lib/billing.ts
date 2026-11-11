@@ -5,7 +5,7 @@
 import { createAdminClient } from './supabase/admin'
 import { discountedPrice, firstPaymentDiscount, parseInterval, parsePlan, planDiscountPercent, type SubscriptionStatus } from './plans'
 import { createSubscription, periodEnd, readMetadata, type PaystackTransaction } from './paystack'
-import { transferPeriodStart } from './bank-transfer'
+import { higherPlans, transferPeriodStart, upgradePrice } from './bank-transfer'
 
 type MerchantBilling = {
   id: string
@@ -43,6 +43,27 @@ export async function recordPayment(tx: PaystackTransaction, opts: { expectMerch
   if (!merchant) return null
   if (opts.expectMerchantId && merchant.id !== opts.expectMerchantId) return null
   if (merchant.last_payment_reference === tx.reference) return merchant.id
+
+  // An upgrade pays the difference for the days left, so it must not go through
+  // the full-price check below. It switches the plan and keeps the paid-until date.
+  if (meta.kind === 'upgrade') {
+    const from = parsePlan(merchant.plan)
+    const to = parsePlan(meta.plan)
+    const upgradeInterval = parseInterval(merchant.plan_interval)
+    if (!from || !to || !upgradeInterval || !higherPlans(from).includes(to)) return null
+    const due = upgradePrice(from, to, upgradeInterval, merchant.current_period_end)
+    if (!due || tx.amount < due * 100) {
+      console.error('billing: upgrade payment not applied', tx.reference)
+      return null
+    }
+    const { error: upgradeError } = await admin
+      .from('merchants')
+      // Period end and status stay as they are.
+      .update({ plan: to, last_payment_reference: tx.reference })
+      .eq('id', merchant.id)
+    if (upgradeError) throw new Error(`billing: recording upgrade ${tx.reference} failed: ${upgradeError.message}`)
+    return merchant.id
+  }
 
   const plan = parsePlan(meta.plan) ?? parsePlan(merchant.plan)
   const interval = parseInterval(meta.interval) ?? parseInterval(merchant.plan_interval) ?? 'monthly'
